@@ -10,34 +10,21 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
 	SET(CMAKE_C_FLAGS " -O3 -Wall -std=c99 -qopenmp -mcmodel=large -m64 -ipo -align")
 endif()
 
-add_executable(make1d
-	make1d.c
-	c_parseprogs.c
-	c_g_method.c
-	c_string_process.c
+SET(PROGS
+	make1d c2f sphfdloc sphrayderv runlsqr makenewmod
 )
-target_link_libraries(make1d m)
 
-add_executable(c2f
-	c2f.c
+SET(PROG_LIB
+	# common lib
 	c_parseprogs.c
 	c_string_process.c
-)
-target_link_libraries(c2f m)
-
-add_executable(sphfdloc
-	sphfdloc.c
-	c_parseprogs.c
 	c_g_method.c
+
+	# sphfdloc sphrayderv
 	c_time_process.c
 	c_earthquake_file_delimiter.c
-	c_string_process.c
-)
-target_link_libraries(sphfdloc m)
 
-add_executable(runlsqr
-	runlsqr.c
-	c_parseprogs.c
+	#runlsqr
 	c_makea.c
 	c_scopy.c
 	c_aprod.c
@@ -45,11 +32,15 @@ add_executable(runlsqr
 	c_sscal.c
 	c_snrm2.c
 )
-target_link_libraries(runlsqr m)
 
-add_executable(makenewmod
-	makenewmod.c
-	c_parseprogs.c
-	c_string_process.c
+foreach(prog ${PROGS})
+	add_executable(${prog}
+		${prog}.c
+		${PROG_LIB}
+	)
+	target_link_libraries(${prog} m)
+endforeach()
+
+add_executable(sphfd
+	sphfd.c
 )
-target_link_libraries(makenewmod m)
