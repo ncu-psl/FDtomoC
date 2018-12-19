@@ -16,21 +16,21 @@ SET(PROGS
 
 SET(PROG_LIB
 	# common lib
-	c_parseprogs.c
-	c_string_process.c
-	c_g_method.c
+	parseprogs.c
+	string_process.c
+	g_method.c
 
 	# sphfdloc sphrayderv
-	c_time_process.c
-	c_earthquake_file_delimiter.c
+	time_process.c
+	earthquake_file_delimiter.c
 
 	#runlsqr
-	c_makea.c
-	c_scopy.c
-	c_aprod.c
-	c_normlz.c
-	c_sscal.c
-	c_snrm2.c
+	makea.c
+	scopy.c
+	aprod.c
+	normlz.c
+	sscal.c
+	snrm2.c
 )
 
 foreach(prog ${PROGS})
