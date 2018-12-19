@@ -14,6 +14,25 @@ double glat(double hlat) {
 	}
 }
 
+// c------convert geocentric latitude back to geographic latitude------------ -
+// c       glatinv(output) = geographic latitude in radians(north positive)
+// c       hlat(input) = geocentric latitude in radians(north positive)
+// c-------------------------------------------------------------------- -
+double glatinv(double hlat) {
+	double halfpi = 1.570796;
+	if (halfpi - fabs(hlat) >= 0.05) {
+		return atan(sin(hlat) / cos(hlat) / 0.993277);
+	}
+	else {
+		if (hlat > 0) {
+			return (hlat + 0.010632)*0.993277;
+		}
+		else {
+			return (hlat - 0.010632)*0.993277;
+		}
+	}
+}
+
 // c--------------------------------------------------------------------
 // c
 // c       glath.f
