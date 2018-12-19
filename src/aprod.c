@@ -1,4 +1,4 @@
-#include "../include/c_aprod.h"
+#include "../include/runlsqr/aprod.h"
 
 // c
 // c  aprod performs the following functions:

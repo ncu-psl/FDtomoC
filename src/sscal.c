@@ -1,4 +1,4 @@
-#include "../include/c_sscal.h"
+#include "../include/runlsqr/sscal.h"
 
 // replace single precision sx by single precision sa*sx.
 // for i = 0 to n-1, replace sx(1+i*incx) with  sa * sx(1+i*incx)

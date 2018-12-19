@@ -1,4 +1,4 @@
-#include "../include/c_time_process.h"
+#include "../include/time_process.h"
 
 int isleap(int year) {
 	int leap = 0;
@@ -9,7 +9,7 @@ int isleap(int year) {
 }
 
 void etoh(double epoch, int *iyear, int *iday, int *ihour, int *imin,
-		double *sec) {
+	double *sec) {
 	int dayinmon[13] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31 };
 	/*
 	 char monname[12][4] = { "Jan\0", "Feb\0", "Mar\0", "Apr\0", "May\0", "Jun\0",
@@ -20,15 +20,15 @@ void etoh(double epoch, int *iyear, int *iday, int *ihour, int *imin,
 	double secleft = fmod(epoch, 86400.0);
 	int hour = 0;
 	int minute = 0;
-	float second = 0.0;
+	double second = 0.0;
 
-//---compute hours minutes seconds
+	//---compute hours minutes seconds
 	if (secleft != 0.0) {
-//---before 1970
+		//---before 1970
 		if (secleft < 0) {
-//---subtract a day
+			//---subtract a day
 			doy = doy - 1;
-//----add a day
+			//----add a day
 			secleft = secleft + 86400;
 		}
 		hour = (int)(secleft / 3600);
@@ -40,23 +40,24 @@ void etoh(double epoch, int *iyear, int *iday, int *ihour, int *imin,
 	int year, diy;
 	if (doy >= 0) {
 		year = 1970;
-		a5: diy = 365 + isleap(year);
+	a5: diy = 365 + isleap(year);
 		if (doy < diy) {
 			goto a10;
 		}
 		doy -= diy;
 		year++;
 		goto a5;
-	} else {
+	}
+	else {
 		year = 1969;
-		a7: diy = 365 + isleap(year);
+	a7: diy = 365 + isleap(year);
 		if (doy >= 0)
 			goto a10;
 		doy += diy;
 		year--;
 		goto a7;
 	}
-	a10: doy++;
+a10: doy++;
 	//int date = year * 1000 + doy;
 	int leap = isleap(year);
 	int day = doy;
@@ -96,7 +97,8 @@ void dtoepoch(int date, double *time) {
 			days += 365;
 			days += isleap(i);
 		}
-	} else if (year < 1970) {
+	}
+	else if (year < 1970) {
 		for (int i = year; i <= 1969; i++) {
 			days -= 365;
 			days -= isleap(i);

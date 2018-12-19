@@ -1,4 +1,4 @@
-#include "../include/c_scopy.h"
+#include "../include/runlsqr/scopy.h"
 
 //      copy single precision sx to single precision sy.
 //      for i = 0 to n-1, copy  sx(lx+i*incx) to sy(ly+i*incy),
