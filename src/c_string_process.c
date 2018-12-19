@@ -18,7 +18,7 @@ void d_blank(char *line, int *len) {
 	*len = len_tmp;
 }
 
-void trim(char *str) {
+char* trim(char *str) {
 	char *end;
 
 	// Trim leading space
@@ -26,7 +26,7 @@ void trim(char *str) {
 		str++;
 
 	if (*str == 0)  // All spaces?
-		return;  // str;
+		return str;
 
 	// Trim trailing space
 	end = str + (int)strlen(str) - 1;
@@ -36,7 +36,7 @@ void trim(char *str) {
 	// Write new null terminator
 	*(end + 1) = 0;
 
-	//return str;
+	return str;
 }
 
 char *strapp(char *dest, int *end, const char *src)
