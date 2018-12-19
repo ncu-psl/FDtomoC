@@ -16,7 +16,7 @@ void etoh(double epoch, int *iyear, int *iday, int *ihour, int *imin,
 	 "Jul\0", "Aug\0", "Sep\0", "Oct\0", "Nov\0", "Dec\0"
 	 };
 	 */
-	int doy = epoch / 86400.0;
+	int doy = (int)(epoch / 86400.0);
 	double secleft = fmod(epoch, 86400.0);
 	int hour = 0;
 	int minute = 0;
@@ -31,9 +31,9 @@ void etoh(double epoch, int *iyear, int *iday, int *ihour, int *imin,
 //----add a day
 			secleft = secleft + 86400;
 		}
-		hour = secleft / 3600;
+		hour = (int)(secleft / 3600);
 		secleft = fmod(secleft, 3600.0);
-		minute = secleft / 60;
+		minute = (int)(secleft / 60);
 		second = fmod(secleft, 60.0);
 	}
 
@@ -103,5 +103,5 @@ void dtoepoch(int date, double *time) {
 		}
 	}
 	days += (day - 1);
-	*time = days * 24 * 60 * 60;
+	*time = (double)(days * 24 * 60 * 60);
 }

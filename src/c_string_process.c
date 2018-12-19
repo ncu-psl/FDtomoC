@@ -1,7 +1,7 @@
 #include "../include/c_string_process.h"
 
 void d_blank(char *line, int *len) {
-	int len_line = strlen(line);
+	int len_line = (int)strlen(line);
 	char tmp[len_line];
 	int j = 0;
 	for (int i = 0; i < len_line; i++)
@@ -10,7 +10,7 @@ void d_blank(char *line, int *len) {
 			j++;
 		}
 	tmp[j] = '\0';
-	int len_tmp = strlen(tmp);
+	int len_tmp = (int)strlen(tmp);
 	for (int i = 0; i < len_tmp; i++)
 		line[i] = tmp[i];
 	for (int i = len_tmp; i < len_line; i++)
@@ -29,7 +29,7 @@ void trim(char *str) {
 		return;  // str;
 
 	// Trim trailing space
-	end = str + strlen(str) - 1;
+	end = str + (int)strlen(str) - 1;
 	while (end > str && ((unsigned char) *end) == ' ')
 		end--;
 
@@ -77,12 +77,12 @@ char * dtoa(char * str_output, double inp, int len) {
 void hdr_appender(char *hdr, int nhbyte, const char *head, const char *type, const char *syst, const char *quant, const char *flatten, const char *hcomm) {
 	hdr[0] = '\0';
 	sprintf(hdr, "%4s%4s%4s%4s%4s", head, type, syst, quant, flatten);
-	if(strlen(hcomm) > nhbyte - strlen(hdr)) {
-		printf("string length of hcomm is too long: strlen(hcomm) = %lu \n", strlen(hcomm));
+	if((int)strlen(hcomm) > nhbyte - (int)strlen(hdr)) {
+		printf("string length of hcomm is too long: strlen(hcomm) = %d \n", (int)strlen(hcomm));
 		assert(0);
 	}
 	strcat(hdr, hcomm);
-	for (int i = strlen(hdr); i < nhbyte; i++)
+	for (int i = (int)strlen(hdr); i < nhbyte; i++)
 		hdr[i] = ' ';
 	hdr[nhbyte] = '\0';
 }
