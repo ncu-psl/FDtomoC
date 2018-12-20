@@ -75,26 +75,26 @@
 */
 
 #include "pch.h"
-#include <stdio.h>
 #include <math.h>
-
+#include <stdio.h>
+#include "../include/gridspec.h"
 #include "../include/dirent.h"
-#include "../include/c_parameter.h"
-#include "../include/c_gridspec.h"
-#include "../include/c_parseprogs.h"
-#include "../include/c_g_method.h"
-#include "../include/c_string_process.h"
-#include "../include/c_earthquake_file_delimiter.h"
-#include "../include/c_time_process.h"
 #include "../include/environment_setting.h"
+#include "../include/g_method.h"
+#include "../include/parseprogs.h"
+#include "../include/parameter.h"
+#include "../include/sphrayderv.h"
+#include "../include/string_process.h"
+#include "../include/time_process.h"
 
+#define DEBUG_MSG 0
 //c--mustv is the number of variables that must be assigned in the parameter
 //c       file in order for this program to run correctly.The names of the
 //c       variables are specified in the mvals string array below.
 //c--mustf is the number of files that must be attached; see the files array below.
 #define MUSTV 4
 #define MUSTF 10
-#define nhbyte 58*4
+#define nhbyte 58 * 4
 
 #define MAXSTRLEN 132
 #define rearth 6371.0
@@ -102,27 +102,7 @@
 #define hpi 3.14159265358979323846 / 2
 
 #define _ATL_SECURE_NO_WARNINGS
-#pragma warning( disable : 4206 4221 4710 5045)
-
-
-double x0 = 0, y[1] = { 0 }, z0 = 0, h, dq = 0, df = 0;
-double  dpot;
-double stx, sty;
-double stz[maxlst];
-double a, b, c, quad;
-double tolmin, tolmax;
-double ex, ey, ez;
-double xx, yy, zz, xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
-double sx, sy, sz;
-double sf, sq, sr;
-double xo, yo, zo;
-double xold, yold, zold;
-double ro, r1, r2, q1, q2, f1, f2;
-double xs, ys, zs;
-double dl;
-
-// lzw added by lzw
-double sfq;
+#pragma warning(disable : 4206 4221 4464 4710 5045)
 
 float gx[nxcm], gy[nycm], gz[nzcm];
 float sp[nxyzm2];
@@ -143,20 +123,14 @@ float facstn[maxlst][2];
 float du[nxyzm];
 float slats[nxm][nym], slons[nxm][nym];
 
-// lzw	!# Vp / Vs part Scaling
-float vpvsscale;
-
-
 int nobstn[maxlst][2];
 int ind[maxnbk][maxobs];
 int mndm[maxkbl], jndx[maxmbl];
 int mndex[nxyzm2], indx[nxyzm2];
 int nhit[nxyzm2], mhit[nxyzm2];
 int inbk[maxobs];
-int isgood[maxobs];
 int jsave[maxkbl];
 int istn[maxobs];
-int nx, ny, nz, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
 
 char logfile[80];
 
@@ -168,24 +142,19 @@ char eqkdir[60 + 1] = "./eqkdir/";
 char evid[10];
 char sta[maxobs][6], stn[maxsta][6], stt[maxlst][6];
 char phs[maxobs], pha[maxsta];
-char  mark;
-
-double clato, clono, cz;
-double axo, ayo, azo, dx, dy, dz;
-float az;
-int nxh, nyh, nzh;
+char mark;
 
 // -- - the following are set so that the grid in the header can
 //    be read in without overridding the vaules in the spec file
 
 int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
-
+int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
 
 void ljust(char[6]);
 double pmin(double, double);
 
-int main(int argc, char **args) {
+int main(void) {
 	char specfile[MAXSTRLEN + 1], pval[MAXSTRLEN + 1], aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1], stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], shotfil[MAXSTRLEN + 1],
 		telefil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], pbasfil[MAXSTRLEN + 1],
 		sbasfil[MAXSTRLEN + 1], elipfil[MAXSTRLEN + 1], raystat[MAXSTRLEN + 1],
@@ -193,8 +162,8 @@ int main(int argc, char **args) {
 		hitfile[MAXSTRLEN + 1], dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1],
 		dotfile[MAXSTRLEN + 1], headfil[MAXSTRLEN + 1], entfile[MAXSTRLEN + 1],
 		stcfile[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];
-	char *mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
-	char *files[MUSTF] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
+	char* mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
+	char* files[MUSTF] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
 
 	int iread = 0, ivs = 1;
 	double vpvs = 1.78;
@@ -209,7 +178,7 @@ int main(int argc, char **args) {
 	//printf("Enter parameter specification file: ");
 	//scanf("%s", spec_file);
 	//spec_file[MAXSTRLEN] = '\0';
-	FILE *fp_spc = fopen(specfile, "r");
+	FILE* fp_spc = fopen(specfile, "r");
 	if (!fp_spc) {
 		printf("error on opening spec-file (%s)\n", specfile);
 		assert(0);
@@ -248,7 +217,7 @@ int main(int argc, char **args) {
 		printf("nzc is too large.\n");
 		assert(0);
 	}
-	char *file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
+	char* file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
 	for (int i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
 		if (ierr == 1) {
@@ -286,6 +255,7 @@ int main(int argc, char **args) {
 	}
 
 	//lzw
+	float vpvsscale = 0;
 	get_vars(fp_spc, "vpvsscale ", pval, &len, &ierr);
 	if (ierr == 0 && ivpvs == 1) {
 		sscanf(pval, "%f", &vpvsscale);
@@ -381,7 +351,8 @@ int main(int argc, char **args) {
 
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	rewind(fp_spc);
-a11: get_line(fp_spc, aline, &ierr);
+a11:
+	get_line(fp_spc, aline, &ierr);
 	aline[MAXSTRLEN] = '\0';
 	if (ierr == 1)
 		goto a12;
@@ -398,8 +369,10 @@ a11: get_line(fp_spc, aline, &ierr);
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &igridx[k]);
 	}
-a12: rewind(fp_spc);
-a13: get_line(fp_spc, aline, &ierr);
+a12:
+	rewind(fp_spc);
+a13:
+	get_line(fp_spc, aline, &ierr);
 	if (ierr == 1)
 		goto a14;
 	if (ierr != 0)
@@ -416,9 +389,11 @@ a13: get_line(fp_spc, aline, &ierr);
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &igridy[k]);
 	}
-a14: rewind(fp_spc);
+a14:
+	rewind(fp_spc);
 
-a15: get_line(fp_spc, aline, &ierr);
+a15:
+	get_line(fp_spc, aline, &ierr);
 	if (ierr != 1) {
 		if (ierr != 0)
 			goto a15;
@@ -544,11 +519,13 @@ a15: get_line(fp_spc, aline, &ierr);
 	df *= degrad;
 	//c-- - If dq and df have not been specified, then make them so that the
 	//c   interval at the surface is equal to h
-	if (fabs(dq) < 0.0001) dq = h / rearth;
-	if (fabs(df) < 0.0001) df = fabs(h / (rearth * sin(y[0])));
+	if (fabs(dq) < 0.0001)
+		dq = h / rearth;
+	if (fabs(df) < 0.0001)
+		df = fabs(h / (rearth * sin(y[0])));
 
-	tolmin = h * 1.E-6;
-	tolmax = h * 6.0;
+	double tolmin = h * 1.E-6;
+	double tolmax = h * 6.0;
 	if (DEBUG_PRINT) {
 		printf("  Origin:  %22.14lf %25.15lf %25.16lf       radians/km\n", x0, y[0], z0);
 		printf("  Radial Spacing: %24.16lf       km\n", h);
@@ -557,7 +534,7 @@ a15: get_line(fp_spc, aline, &ierr);
 		printf("  nxc, nyc, nzc: %12d%12d%12d\n", nxc, nyc, nzc);
 	}
 	sprintf(logfile, "sphrayderv.log%d", ittnum);
-	FILE *fp_log = fopen(logfile, "w");
+	FILE* fp_log = fopen(logfile, "w");
 	if (!fp_log) {
 		printf("create %s file error.\n", logfile);
 		assert(0);
@@ -683,7 +660,7 @@ a15: get_line(fp_spc, aline, &ierr);
 	fprintf(fp_log, "  Z Max: %12.6lf      km\n", zmax);
 	fprintf(fp_log, " \n");
 
-	char *doo[8] = { " not" , "" };
+	char doo[2][8] = { " not", "" };
 	fprintf(fp_log, "  Sphrayderv will%s do teleseisms (idotel = %d)\n", doo[idotel], idotel);
 	fprintf(fp_log, "  Sphrayderv will%s do shots (idoshot = %d)\n", doo[idoshot], idoshot);
 	fprintf(fp_log, "  Sphrayderv will%s demean shot residuals (idmean=%d)\n", doo[idmean], idmean);
@@ -716,52 +693,63 @@ a15: get_line(fp_spc, aline, &ierr);
 	//c     we can optionally make this m2 if we wish to match absolute times.
 	//c
 	//c     Note that at present this is hardwired(shots wired to m2)
-
 	int m1 = -1, m2 = -2;
-	FILE *fp_sta = fopen(stafile, "r");
-	FILE *fp_eqs = fopen(locdfil, "r");
-	FILE *fp_ray = NULL;
-	if (iraystat) {
-		fp_ray = fopen(raystat, "r");
+	FILE* fp_sta = fopen(stafile, "r");
+	if (!fp_sta) {
+		printf("Error on opening file: %s\n", stafile);
+		assert(0);
 	}
-	FILE *fp_err = fopen(telrerr, "w");
+	FILE* fp_eqs = fopen(locdfil, "r");
+	if (!fp_eqs) {
+		printf("Error on opening file: %s\n", locdfil);
+		assert(0);
+	}
+	FILE* fp_ray = NULL;
+	if (iraystat) {
+		fp_ray = fopen(raystat, "w");
+		if (!fp_ray) {
+			printf("create %s file error.\n", raystat);
+			assert(0);
+		}
+	}
+	FILE* fp_err = fopen(telrerr, "w");
 	if (!fp_err) {
 		printf("create %s file error.\n", telrerr);
 		assert(0);
 	}
-	FILE *fp_dts = fopen(dtdsfil, "wb");
+	FILE* fp_dts = fopen(dtdsfil, "wb");
 	if (!fp_dts) {
 		printf("create %s file error.\n", dtdsfil);
 		assert(0);
 	}
-	FILE *fp_dth = fopen(dtdhfil, "wb");
+	FILE* fp_dth = fopen(dtdhfil, "wb");
 	if (!fp_dth) {
 		printf("create %s file error.\n", dtdhfil);
 		assert(0);
 	}
-	FILE *fp_res = fopen(resfile, "wb");
+	FILE* fp_res = fopen(resfile, "wb");
 	if (!fp_res) {
 		printf("create %s file error.\n", resfile);
 		assert(0);
 	}
-	FILE *fp_hit = fopen(hitfile, "wb");
+	FILE* fp_hit = fopen(hitfile, "wb");
 	if (!fp_hit) {
 		printf("create %s file error.\n", hitfile);
 		assert(0);
 	}
-	FILE *fp_bok = fopen(bookfil, "wb");
+	FILE* fp_bok = fopen(bookfil, "wb");
 	if (!fp_bok) {
 		printf("create %s file error.\n", bookfil);
 		assert(0);
 	}
-	FILE *fp_msc = fopen(sclefil, "wb");
+	FILE* fp_msc = fopen(sclefil, "wb");
 	if (!fp_msc) {
 		printf("create %s file error.\n", sclefil);
 		assert(0);
 	}
 
-	FILE *fp_stc = NULL;
-	FILE *fp_mat = NULL;
+	FILE* fp_stc = NULL;
+	FILE* fp_mat = NULL;
 	FILE *fp_dot = NULL, *fp_hed = NULL;
 	/*
 	tabfile(local time input files - dynamically assigned)		.. / data / small / TTimes00
@@ -790,10 +778,20 @@ a15: get_line(fp_spc, aline, &ierr);
 		}
 	}
 
-	if (istacor) fp_stc = fopen(stcfile, "wb");
+	if (istacor) {
+		fp_stc = fopen(stcfile, "wb");
+		if (!fp_stc) {
+			printf("create %s file error.\n", stcfile);
+			assert(0);
+		}
+	}
 
 	if (nomat) {
 		fp_mat = fopen(entfile, "wb");
+		if (!fp_mat) {
+			printf("create %s file error.\n", entfile);
+			assert(0);
+		}
 	}
 	gx[0] = x0;
 	gy[0] = y[0];
@@ -821,10 +819,13 @@ a15: get_line(fp_spc, aline, &ierr);
 		maxvarc = nzc;
 		maxvarc2 = nzc * 2;
 	}
+
 	int nstr;
 	char str_inp[100];
+	double stz[maxlst];
+
 	for (nstr = 0; fgets(str_inp, sizeof(str_inp), fp_sta); nstr++) {
-		trim(str_inp);
+		strcpy(str_inp, trim(str_inp));
 		if (str_inp[0] == '\n')
 			break;
 		if (strlen(str_inp) > sizeof(str_inp)) {
@@ -845,6 +846,7 @@ a15: get_line(fp_spc, aline, &ierr);
 
 		int ielev;
 		double slat, slon;
+		double stx = 0, sty = 0;
 		sscanf(str_inp, "%lf %lf %d %s %lf %lf %f %f", &sty, &stx, &ielev, stt[nstr], &slat, &slon, &tcor[nstr][0], &tcor[nstr][1]);
 		// ---temp lines to reassign slat and slon as the reference locations
 		stx = slon;
@@ -862,8 +864,10 @@ a15: get_line(fp_spc, aline, &ierr);
 
 	// -- - header on station correction array
 	int nstr2 = 2 * nstr;
-	if (istacor)
+	if (istacor) {
 		fprintf(fp_stc, " %d", nstr2);
+	}
+
 	for (int i = 0; i < nstr; i++) {
 		for (int j = 0; j < 2; j++) {
 			avrstn[i][j] = 0;
@@ -874,467 +878,650 @@ a15: get_line(fp_spc, aline, &ierr);
 	}
 
 	// ---- - set the data file to the local earthquake data file
-	FILE *fp_din = fp_eqs;
+	FILE* fp_din = fp_eqs;
 	int mbl = 0;
 	for (int i1 = 0; i1 < nxyz2; i1++) {
 		nhit[i1] = 0;
 	}
-	int nev = 0, nshot = 0, ntel = 0, ntread = 0, iover = 0;
-	double avres = 0., rms = 0., wtmod = 0., facs = 0., rsq = 0.;
-	int knobs = 0, isshot = 0, istel = 0;
 
 	// ****************** Start Loop over events ******************
 	//    Read in event header
-	//
-	double xm, ym, zm;
-	double rdevs, rsx, rsy;
+	int nev = 0, nshot = 0, ntel = 0, iover = 0;
+	int knobs = 0, isshot = 0, istel = 0;
+	float facs = 0, facsev = 0, avres = 0, avresev = 0;
+	float rms = 0, rsq = 0, wtmod = 0;
+	float xm = 0, ym = 0, zm = 0;
+	double dsec = 0;
 a3:
-	while (fgets(str_inp, sizeof(str_inp), fp_din)) {
-		int j;
-		if (strlen(str_inp) > sizeof(str_inp)) {
-			printf("str_inp is too long: %s\n", str_inp);
+	fgets(str_inp, sizeof(str_inp), fp_din);
+	if (strlen(str_inp) > sizeof(str_inp)) {
+		printf("str_inp is too long: %s\n", str_inp);
+		assert(0);
+	}
+	int kyr, kday, khr, kmn;
+	double esec;
+	float xlat, xlon, dep;
+
+	sscanf(str_inp, "%d %d %d %d %lf %f %f %f %s\n", &kyr, &kday, &khr,
+		&kmn, &esec, &xlat, &xlon, &dep, evid);
+
+	//	c---convert to epochal time
+	dsec = esec;
+	double dpot = 0;
+	htoe(kyr, kday, khr, kmn, dsec, &dpot);
+
+	if (isshot == 0) {
+		if (istel == 0) {
+			nev++;
+		}
+		else {
+			ntel++;
+		}
+	}
+	else {
+		nshot++;
+	}
+	int ies = 0, jes = 0, kes = 0;
+	double ex = 0, ey = 0, ez = 0;
+	double xis = 0, yjs = 0, zks = 0;
+	if (istel == 0) {
+		ex = xlon * degrad;
+		ey = hpi - glat(xlat * degrad);
+		ez = dep;
+
+		// -- - Grid point 1 for the earthquake or shot
+		ies = (int)((ex - x0) / df);
+		jes = (int)((ey - y[0]) / dq);
+		kes = (int)((ez - z0) / h);
+
+		// -- - make sure event is within the model
+		if ((ex < x0 || ies >= nx)
+			|| (ey < y[0] || jes >= ny)
+			|| (ez < z0 || kes >= nz)) {
+			printf(" Error:  Earthquake out of bounds; skipping..\n");
+			fprintf(fp_err, " Error:  This event is out of bounds and skipped : \n");
+			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
+			fprintf(fp_err, "\n");
+			do {
+				fscanf(fp_din, "%s", aline);
+				d_blank(aline, &len);
+			} while (aline[0] != '\0');
+			goto a3;
+		}
+
+		// ----coordinates of point 1
+		xis = df * ies + x0;
+		yjs = dq * jes + y[0];
+		zks = h * kes + z0;
+	}
+
+	// ----Read in the times and stations
+	avresev = 0;
+	facsev = 0;
+	int nsta = 0;
+	int isgood[maxobs];
+	memset(isgood, 0, sizeof(isgood));
+	for (nsta = 0; fgets(str_inp, sizeof(str_inp), fp_din); nsta++) {
+		if (nsta >= maxobs) {
+			printf("Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
+			fprintf(fp_log, "Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
 			assert(0);
 		}
-		int kyr, kday, khr, kmn;
-		double esec;
-		float xlat, xlon, dep;
 
-		// ---START LOOP OVER EVENTS
-		// 	read in event header
-		sscanf(str_inp, "%d %d %d %d %lf %f %f %f %s\n", &kyr, &kday, &khr,
-			&kmn, &esec, &xlat, &xlon, &dep, evid);
+		strcpy(str_inp, trim(str_inp));
+		len = (int)strlen(str_inp);
+		if (str_inp[0] == '\n') {
+			break;
+		}
+		if (str_inp[len - 1] != '\n') {
+			printf("input length is too large. len=%d str_inp=%s\n", len,
+				str_inp);
+			assert(0);
+		}
 
-		//	c---convert to epochal time
-		htoe(kyr, kday, khr, kmn, esec, &dpot);
+		char str_tmp[100];
+		int iyr, jday, ihr, imn;
+		double sec = 0;
+		sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
+			&jday, &ihr, &imn, &sec, str_tmp);
+		if (str_tmp[0] == '*') {
+			str_tmp[0] = ' ';
+			//trim(str_tmp);
+		}
+		char str_t[10];
+		sscanf(str_tmp, " %c %f", str_t, &rwts[nsta]);
+		phs[nsta] = str_t[0];
+		// --- left justify station name
+		ljust(sta[nsta]);
+		// ---convert from "0 1" to "P S" if necessary
+		if (phs[nsta] == '0') {
+			phs[nsta] = 'P';
+		}
+		else if (phs[nsta] == '1') {
+			phs[nsta] = 'S';
+		}
+		d_blank(filen, &len);
 
+		pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
+		dsec = sec;
+
+		double tarr = 0;
+		htoe(iyr, jday, ihr, imn, dsec, &tarr);
+		obstime[nsta] = tarr - dpot;
+		if (nsta > maxobs) {
+			printf(" Error: too many observations!\n");
+			fprintf(fp_log, " Error: too many observations!\n");
+			assert(0);
+		}
+	}
+	if (DEBUG_PRINT) {
 		if (isshot == 0) {
 			if (istel == 0) {
-				nev++;
+				printf(" %d times read in for local event %d\n", nsta, nev);
+				printf(" Working on local event %s\n", evid);
 			}
 			else {
-				ntel++;
+				printf(" %d times read in for teleseismic event %d\n", nsta, ntel);
+				printf(" Working on tele event %s\n", evid);
 			}
 		}
 		else {
-			nshot++;
+			printf(" %d times read in for shot %d\n", nsta, nshot);
+			printf(" Working on shot %s\n", evid);
 		}
-		if (istel == 0) {
-			ex = xlon * degrad;
-			ey = hpi - glat(xlat * degrad);
-			ez = dep;
+	}
 
-			int ies, jes, kes;
-			// -- - Grid point 1 for the earthquake or shot
-			ies = (int)((ex - x0) / df);
-			jes = (int)((ey - y[0]) / dq);
-			kes = (int)((ez - z0) / h);
+	int kn = 0, iph = 0, kbl = 0;
+	int je = 0, ke = 0;
 
-			// -- - make sure event is within the model
-			if ((ex < x0 || ies >= nx) || (ey < y[0] || jes >= ny) || (ez < z0 || kes >= nz)) {
-				// not yet implement
-				printf(" Error:  Earthquake out of bounds; skipping..\n");
-				fprintf(fp_err, " Error:  This event is out of bounds and skipped : \n");
-				fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
-				fprintf(fp_err, "\n");
-				do {
-					fscanf(fp_din, "%s", aline);
-					int len = 0;
-					d_blank(aline, &len);
-				} while (aline[0] != '\0');
-				goto a3;
-			}
+	int i = 0, j = 0, ntread = 0;
+	double tc = 0, rdevs = 0;
 
-			// ----coordinates of point 1
-			double xis, yjs, zks;
-			xis = df * ies + x0;
-			yjs = dq * jes + y[0];
-			zks = h * kes + z0;
-		}
+	// *****Start Loop over Phases*****
+	for (i = 0; i < nsta; i++) {
 
-		// ----Read in the times and stations
-		int indsta[maxobs];
+		// ------clear derivative array
+		memset(du, 0, maxvar * sizeof(du[0]));
 
-		memset(isgood, 0, sizeof(isgood));
-		memset(indsta, 0, sizeof(indsta));
+		inbk[i] = 0;
+		rdevs = 0;
+		isgood[i] = 1;
 
-		double avresev = 0, facsev = 0;
-
-		int nsta = 0;
-		for (nsta = 0; fgets(str_inp, sizeof(str_inp), fp_din); nsta++) {
-			if (nsta >= maxobs) {
-				printf("Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
-				fprintf(fp_log, "Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
-				assert(0);
-			}
-
-			trim(str_inp);
-			len = (int)strlen(str_inp);
-			if (str_inp[0] == '\n') {
+		// Find this station in the station list
+		for (kn = 0; kn < nstr; kn++) {
+			if (strcmp(sta[i], stt[kn]) == 0) {
 				break;
 			}
-			if (str_inp[len - 1] != '\n') {
-				printf("input length is too large. len=%d str_inp=%s\n", len,
-					str_inp);
-				assert(0);
-			}
-
-			char str_tmp[100];
-			int iyr, jday, ihr, imn;
-			double sec = 0;
-			sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
-				&jday, &ihr, &imn, &sec, str_tmp);
-			if (str_tmp[0] == '*') {
-				str_tmp[0] = ' ';
-				//trim(str_tmp);
-			}
-			char str_t[10];
-			sscanf(str_tmp, " %c %f", str_t, &rwts[nsta]);
-			phs[nsta] = str_t[0];
-			// --- left justify station name
-			ljust(sta[nsta]);
-			// ---convert from "0 1" to "P S" if necessary
-			if (phs[nsta] == '0') {
-				phs[nsta] = 'P';
-			}
-			else if (phs[nsta] == '1') {
-				phs[nsta] = 'S';
-			}
-			isgood[nsta] = 1;
-
-			pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
-			double dsec = sec;
-
-			double tarr;
-			htoe(iyr, jday, ihr, imn, dsec, &tarr);
-			obstime[nsta] = tarr - dpot;
-			if (nsta > maxobs) {
-				printf(" Error: too many observations!\n");
-				fprintf(fp_log, " Error: too many observations!\n");
-				assert(0);
-			}
 		}
-		if (DEBUG_PRINT) {
-			if (isshot == 0) {
-				if (istel == 0) {
-					printf(" %d times read in for local event %d\n", nsta, nev);
-					printf(" Working on local event %s\n", evid);
-				}
-				else {
-					printf(" %d times read in for teleseismic event %d\n", nsta, ntel);
-					printf(" Working on tele event %s\n", evid);
-				}
-			}
-			else {
-				printf(" %d times read in for shot %d\n", nsta, nshot);
-				printf(" Working on shot %s\n", evid);
-			}
+		if (kn == nstr) {
+			printf(" Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
+			fprintf(fp_log, " Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
+			isgood[i] = 0;
+			goto a200;
+			// continue; // for(i=0;i<nsta;i++) {...}
 		}
+		float xs = stlon[kn];
+		float ys = stlat[kn];
+		double zs = stz[kn];
 
-		// *****Start Loop over Phases*****
-		int kn = 0, iph = 0, kbl = 0;;
-		int ie = 0, je = 0, ke = 0;
-		int iseg = 0, isegm1 = 0, isegm2 = 0;
+		iph = 0;
+		if (phs[i] == 'S')
+			iph = 1;
+		int iphm1 = iph;
+		tc = tcor[kn][iph];
+		istn[i] = kn + nstr * iphm1;
 
-		double tc = 0;
-		for (int i = 0; i < nsta; i++) {
-			// ------clear derivative array
-			memset(du, 0, maxvar * sizeof(du[0]));
+		//--- This is the nearest grid point to the Station
+		int is = (int)(round((xs - x0) / df));
+		int js = (int)(round((ys - y[0]) / dq));
+		int ks = (int)(round((zs - z0) / h));
 
-			inbk[i] = 0;
-			rdevs = 0;
-			isgood[i] = 1;
-			for (kn = 0; kn < nstr; kn++) {
-				if (strcmp(sta[i], stt[kn]) == 0) {
-					break;
-				}
-			}
-			if (kn == nstr) {
-				printf(" Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
-				fprintf(fp_log, " Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
-				isgood[i] = 0;
-			}
-			xs = stlon[kn];
-			ys = stlat[kn];
-			zs = stz[kn];
+		//--- This is the cell containing the Station
+		int iscell = (int)((xs - x0) / df);
+		int jscell = (int)((ys - y[0]) / dq);
+		int kscell = (int)((zs - z0) / h);
 
-			iph = 0;
-			if (phs[i] == 'S')
-				iph = 1;
-			int iphm1 = iph;
-			tc = tcor[kn][iph];
-			istn[i] = kn + nstr * iphm1;
-
-			//--- This is the nearest grid point to the Station
-			is = (int)(round((xs - x0) / df));
-			js = (int)(round((ys - y[0]) / dq));
-			ks = (int)(round((zs - z0) / h));
-			//--- This is the cell containing the Station
-			iscell = (int)((xs - x0) / df);
-			jscell = (int)((ys - y[0]) / dq);
-			kscell = (int)((zs - z0) / h);
-			if (ntread > 0) {
-				for (j = 0; j < ntread; j++) {
-					if (strcmp(sta[i], stn[j]) == 0 && ivs == 0 || phs[i] == pha[j]) {
+		//---See if the travel time tables for this station has been read in.  If not, read them in.
+		if (ntread > 0) {
+			for (j = 0; j < ntread; j++) {
+				if (strcmp(sta[i], stn[j]) == 0) {
+					if (ivs == 0 || phs[i] == pha[j]) {
 						goto a7;
 					}
 				}
 			}
-			int iuse = ntread;
-			ntread++;
-			if (ntread > maxsta) {
-				if (DEBUG_PRINT)
-					printf(" Limit reached...looking for one we do not need now.\n");
-				assert(0);
-				// ---Loop over the station-phases that have been read in.
-				// If it happens that one of these is not used by the current event, read over it.
-				// If there is no more space available, choose one at random to read over.
+		}
 
-				for (j = 0; j < ntread - 1; j++) {
-					int flag = 0;
-					for (int k = 0; k < nsta; k++) {
-						if (strcmp(sta[k], stn[j]) == 0) {
-							if (ivs == 0 || phs[k] == pha[j]) {
-								flag = 1;
-								break;
-							}
+		int iuse = ntread;
+		ntread++;
+		if (ntread > maxsta) {
+			if (DEBUG_PRINT)
+				printf(" Limit reached...looking for one we do not need now.\n");
+			assert(0);
+			// ---Loop over the station-phases that have been read in.
+			// If it happens that one of these is not used by the current event, read over it.
+			// If there is no more space available, choose one at random to read over.
+
+			for (j = 0; j < ntread - 1; j++) {
+				int flag = 0;
+				for (int k = 0; k < nsta; k++) {
+					if (strcmp(sta[k], stn[j]) == 0) {
+						if (ivs == 0 || phs[k] == pha[j]) {
+							flag = 1;
+							break;
 						}
 					}
-					if (flag)
-						continue;
-					goto a21;
 				}
-				iover++;
-				if (iover > maxsta) iover = 1;
-				iuse = iover;
-				j = iuse;
-			a21: ntread--;
-				iuse = j;
+				if (flag)
+					continue;
+				goto a21;
+			}
+			iover++;
+			if (iover > maxsta)
+				iover = 1;
+			iuse = iover;
+			j = iuse;
+		a21:
+			ntread--;
+			iuse = j;
+			if (DEBUG_PRINT)
+				printf("Overwriting %s  %c with  %s %c\n", stn[j], pha[j], sta[i], phs[i]);
+		}
+		strcpy(stn[iuse], sta[i]);
+		pha[iuse] = phs[i];
+		if (phs[i] == 'P' || ivs == 0) {
+			sprintf(filen, "%s/%s.ptimes", timedir, sta[i]);
+		}
+		else {
+			sprintf(filen, "%s/%s.stimes", timedir, sta[i]);
+		}
+
+		d_blank(filen, &len);
+		printf("Reading in %s\n", filen);
+
+		FILE* fp_tab = fopen(filen, "rb");
+		if (!fp_tab) {
+			printf("Error on opening file: %s\n", filen);
+			assert(0);
+		}
+
+		char hdr[nhbyte];
+		char head[5], type[5], syst[5];
+		char quant[5];
+		char flatten[5];
+		char hcomm[125];
+
+		fread(hdr, sizeof(hdr[0]), nhbyte, fp_tab);
+		char* offset = hdr;
+		sscanf(offset, "%4s", head);
+		offset += strlen(head);
+		sscanf(offset, "%4s", type);
+		offset += strlen(type);
+		sscanf(offset, "%4s", syst);
+		offset += strlen(syst);
+		sscanf(offset, "%4s", quant);
+		offset += strlen(quant);
+		sscanf(offset, "%4s", flatten);
+		offset += strlen(flatten);
+		sscanf(offset, "%[^\r\n]", hcomm);
+
+		// ---see if this the time file has a header on it.
+		if (strcmp(head, "HEAD") == 0) {
+			if (DEBUG_PRINT) {
+				printf(" File has a header...\n");
+			}
+			if (strcmp(type, "FINE") != 0) {
 				if (DEBUG_PRINT)
-					printf("Overwriting %s  %c with  %s %c\n", stn[j], pha[j], sta[i], phs[i]);
+					printf("WARNING: input mesh does not appear to be FINE: %s\n", type);
 			}
-			strcpy(stn[iuse], sta[i]);
-			pha[iuse] = phs[i];
-			if (phs[i] == 'P' || ivs == 0) {
-				sprintf(filen, "%s/%s.ptimes", timedir, sta[i]);
+			if (iread == 0) {
+				fread(t[iuse], sizeof(t[iuse][0]), nxyz, fp_tab);
 			}
-			else {
-				sprintf(filen, "%s/%s.stimes", timedir, sta[i]);
+		}
+		else {
+			rewind(fp_tab);
+			if (DEBUG_PRINT) {
+				printf(" File has no header...\n");
+			}
+			if (iread == 0) {
+				fread(t[iuse], sizeof(t[iuse][0]), nxyz, fp_tab);
+			}
+		}
+		fclose(fp_tab);
+		if (DEBUG_PRINT)
+			printf("...Done.\n");
+		j = iuse;
+
+		// ----test to see if all data can be read in correctly
+	a7:
+		if (iread == 1) {
+			goto a3;
+		}
+
+		// ----(rsx, rsy) is a unit vector from earthquake to station used in raypath stats only
+		double rsx = xs - ex;
+		double rsy = ys - ey;
+
+		// ----if this is a teleseism, find the entry point at the base of the model
+		double ttel = 0, ebx = 0, eby = 0, ebz = 0;
+		if (istel) {
+			// --- calculate the ellipticity correction for this station - event pair(need station at surface!)
+			double rlon = xlon * degrad;
+			double rlat = hpi - glat(xlat * degrad);
+			ez = dep;
+			float slat = stlat[kn];
+			float slon = stlon[kn];
+			float delt = 0, az1 = 0, az2 = 0;
+			bjdaz2(slat, slon, rlat, rlon, &delt, &az1, &az2, 0);
+			double tdelt = delt / degrad;
+			tdelts[i] = tdelt;
+			az1s[i] = az1 / degrad;
+			az2s[i] = az2 / degrad;
+			// ------elpcr gets the proper ellipticity correction for this ray
+			double elat = hpi - rlat;
+			double azdd = az2 / degrad;
+			double ezr4 = ez;
+			double elpc = 0;
+			elpcr(elat, tdelt, azdd, ezr4, &elpc, iphm1, 1);
+			double time = 0, tbase = 0;
+			int inbound = 0;
+			//entry(rlat, rlon, ezr4, &ebx, &eby, &ebz, iphm1, j, elpc, &time, &tbase, &inbound);
+
+			if (inbound == 0) {
+				printf(" Error: this station has an out of bounds start point: %s\n", sta[i]);
+				printf(" Skipping this station\n");
+				//write(lunerr, 102) kyr, kday, khr, kmn, esec, ex, ey, ez, evid
+				printf(" Error:  this station has an out of bounds start point: %s delt=%lf\n", sta[i], tdelt);
+				printf("\n");
+				isgood[i] = 0;
+				goto a200;
+				// continue; // for(i=0;i<nsta;i++){...
+			}
+			if (nomat) {
+				double xent = ebx / degrad;
+				double yent = glatinv(hpi - eby) / degrad;
+				fprintf(fp_mat, "%lf %lf %lf\n", xent, yent, ebz);
+				// --- extra output for testing
+			}
+			ttel = tbase;
+
+			// --- Grid point 1 for the entry point
+			ies = (int)((ebx - x0) / df);
+			jes = (int)((eby - y[0]) / dq);
+			kes = (int)((ebz - z0) / h);
+			if (((ebx - x0) < 0.) || (ies >= nx) ||
+				((eby - y[0]) < 0.) || (jes >= ny) ||
+				((ebz - z0) < 0.) || (kes >= nz)) {
+				printf(" Error:  this station has an out of bounds entry point: %s\n", sta[i]);
+				printf(" Skipping this station.\n");
+				fprintf(fp_err, " %d %d %d %d %lf %lf %lf %lf %s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
+				printf(" Error:  this station has an out of bounds entry point: %s\n", sta[i]);
+				printf("\n");
+				isgood[i] = 0;
+				goto a200;
+				// continue; // for(i=0;i<nsta;i++){...
 			}
 
-			d_blank(filen, &len);
-			printf("Reading in %s\n", filen);
+			// ----coordinates of point 1
+			xis = df * ies + x0;
+			yjs = dq * jes + y[0];
+			zks = h * kes + z0;
 
-			FILE *fp_tab = fopen(filen, "rb");
-			if (!fp_tab) {
-				printf("Error on opening file: %s\n", filen);
+			rsx = xs - ebx;
+			rsy = ys - eby;
+		}
+		double smag = sqrt(rsx * rsx + rsy * rsy);
+		rsx /= smag;
+		rsy /= smag;
+
+		// ----- Now Trace ray from the earthquake to the station
+		int nseg = 0;
+		int iseg = 0;
+		int isegm1 = 0;
+		int isegm2 = 0;
+
+		// ----start at the earthquake
+		double xx = 0, yy = 0, zz = 0;
+		if (istel == 0) {
+			xx = ex;
+			yy = ey;
+			zz = ez;
+		}
+		else {
+			xx = ebx;
+			yy = eby;
+			zz = ebz;
+		}
+		// --- (ie, je, ke) is point 1 for the current cell
+		ie = ies;
+		je = jes;
+		ke = kes;
+
+		// --- coordinates of point 1
+		double xi = xis;
+		double yj = yjs;
+		double zk = zks;
+
+		// --- Calculate the traveltime at the earthquake by trilinear interpolation
+
+		int nk = nxy * ke;
+		int nj = nx * je;
+		int nk2 = nxy * (ke + 1);
+		int nj2 = nx * (je + 1);
+
+		//c Point 1 = SW TOP = nk + nj + ie
+		//c Point 2 = SE TOP = nk + nj + ie + 1
+		//c Point 3 = NW TOP = nk + nj2 + ie
+		//c Point 4 = NE TOP = nk + nj2 + ie + 1
+		//c Point 5 = SW BOT = nk2 + nj + ie
+		//c Point 6 = SE BOT = nk2 + nj + ie + 1
+		//c Point 7 = NW BOT = nk2 + nj2 + ie
+		//c Point 8 = NE BOT = nk2 + nj2 + ie + 1
+
+		int ipt[8];
+		ipt[0] = nk + nj + ie;
+		ipt[1] = nk + nj + ie + 1;
+		ipt[2] = nk + nj2 + ie;
+		ipt[3] = nk + nj2 + ie + 1;
+		ipt[4] = nk2 + nj + ie;
+		ipt[5] = nk2 + nj + ie + 1;
+		ipt[6] = nk2 + nj2 + ie;
+		ipt[7] = nk2 + nj2 + ie + 1;
+
+		// Don't use this ray if it's in a region of the model where times are not
+		// alculated(see parameter "maxoff" in punch.c)
+
+		for (int iii = 0; iii < 8; iii++) {
+			if (t[j][ipt[iii]] > 1.E9) {
+				printf(" Ray out of bounds...skipping this observation\n");
+				fprintf(fp_err, " Ray out of bounds...skipping this observation\n");
+				isgood[i] = 0;
+			}
+		}
+		if (isgood[i] == 0) {
+			goto a200;
+			// continue; // for(i=0;i<nsta;i++){...
+		}
+		printf("1345 xx=%f xi=%f df=%f\n", xx, xi, df);
+		double fx = (xx - xi) / df;
+		double fy = (yy - yj) / dq;
+		double fz = (zz - zk) / h;
+		printf("1345 fx=%lf fy=%lf fz=%lf\n", fx, fy, fz);
+
+		double ds[8];
+		ds[0] = (1. - fz)*(1. - fy)*(1. - fx);
+		ds[1] = (1. - fz)*(1. - fy)*fx;
+		ds[2] = (1. - fz)*fy*(1. - fx);
+		ds[3] = (1. - fz) * fy * fx;
+		ds[4] = fz * (1. - fy) * (1. - fx);
+		ds[5] = fz * (1. - fy) * fx;
+		ds[6] = fz * fy * (1. - fx);
+		ds[7] = fz * fy * fx;
+
+		double dt = 0;
+		for (int iii = 0; iii < 8; iii++) {
+			if (DEBUG_MSG)
+				printf("1331 ds[%d]=%lf\t\t", iii, ds[iii]);
+			if (DEBUG_MSG)
+				printf("1332 t[%d][%d]=%lf\n", j, ipt[iii], t[j][ipt[iii]]);
+			dt += ds[iii] * t[j][ipt[iii]];
+		}
+		if (DEBUG_MSG)
+			printf("1333 dt_sum=%lf\n", dt);
+
+		// --- For local events, ttel = 0. For teles, ttel is the time to the base of the model.
+		dt += ttel;
+		// --- apply station correction
+		dt += tc;
+		dt = obstime[i] - dt;
+		resmin[i] = dt;
+		if (DEBUG_MSG)
+			printf("1333 ttel=%lf tc=%lf obstime=%lf dt=%lf\n", ttel, tc, obstime[i], dt);
+
+		//     This could be skipped for teles, but is innocuous
+		double dsdx[8];
+		dsdx[0] = -(1. - fz) * (1. - fy);
+		dsdx[1] = (1. - fz) * (1. - fy);
+		dsdx[2] = -(1. - fz) * fy;
+		dsdx[3] = (1. - fz) * fy;
+		dsdx[4] = -fz * (1. - fy);
+		dsdx[5] = fz * (1. - fy);
+		dsdx[6] = -fz * fy;
+		dsdx[7] = fz * fy;
+
+		double dsdy[8];
+		dsdy[0] = -(1. - fz) * (1. - fx);
+		dsdy[1] = -(1. - fz) * fx;
+		dsdy[2] = (1. - fz) * (1. - fx);
+		dsdy[3] = (1. - fz) * fx;
+		dsdy[4] = -fz * (1. - fx);
+		dsdy[5] = -fz * fx;
+		dsdy[6] = fz * (1. - fx);
+		dsdy[7] = fz * fx;
+
+		double dsdz[8];
+		dsdz[0] = -(1. - fy) * (1. - fx);
+		dsdz[1] = -(1. - fy) * fx;
+		dsdz[2] = -fy * (1. - fx);
+		dsdz[3] = -fy * fx;
+		dsdz[4] = (1. - fy) * (1. - fx);
+		dsdz[5] = (1. - fy) * fx;
+		dsdz[6] = fy * (1. - fx);
+		dsdz[7] = fy * fx;
+		double dtdx = 0, dtdy = 0, dtdz = 0;
+		for (int iii = 0; iii < 8; iii++) {
+			dtdx += dsdx[iii] * t[j][ipt[iii]];
+			dtdy += dsdy[iii] * t[j][ipt[iii]];
+			dtdz += dsdz[iii] * t[j][ipt[iii]];
+		}
+		dtdx /= df;
+		dtdy /= dq;
+		dtdz /= h;
+		if (DEBUG_MSG)
+			printf("1383 dt=%lf df=%lf dq=%lf h=%lf\n", dt, df, dq, h);
+		if (DEBUG_MSG)
+			printf("1384 dtdx=%lf dtdy=%lf dtdz=%lf\n", dtdx, dtdy, dtdz);
+
+		//----- wt = 1 / variance
+		//----- wet = 1 / standard deviation
+		double wt = pwt[i];
+		double wet = sqrt(wt);
+
+		double res1 = dt * wt;
+		double res2 = res1 * dt;
+		avres += res1;
+		avresev += res1;
+		rsq += res2;
+		rms += res1 * res1;
+		facs += wt;
+		facsev += wt;
+		wtmod += wt * wt;
+		knobs++;
+
+		// ----collect stats for station
+		avrstn[kn][iph] += res1;
+		rstnsq[kn][iph] += res2;
+		facstn[kn][iph] += wt;
+		nobstn[kn][iph]++;
+
+		// ***** Propagate ray from earthquake to station ******
+
+		//----location of cell
+		double dxs = 0, dys = 0, dzs = 0;
+		double rs = 0, dqs = 0, dfs = 0;
+	a100:
+		xi = df * ie + x0;
+		yj = dq * je + y[0];
+		zk = h * ke + z0;
+
+		//     Test to see if ray has reached the station.If so, accumulate normal equation
+		//     stuff and then go do next ray
+
+		dxs = xx - xs;
+		dys = yy - ys;
+		dzs = zz - zs;
+		rs = rearth - zz;
+		dqs = rs * dys;
+		dfs = rs * sin(yy) * dxs;
+		double dlen = sqrt(dfs * dfs + dqs * dqs + dzs * dzs);
+
+		if ((ie == iscell && je == jscell && ke == kscell) || (dlen < (h / 1000.))) {
+
+			// ----add on derivative for the station cell segment
+			xm = xx - dxs * 0.5;
+			ym = yy - dys * 0.5;
+			zm = zz - dzs * 0.5;
+			int i1 = -1, j1 = -1, k1 = -1;
+
+			//--- find xm in coarse grid
+			for (int iii = 1; iii < nxc; iii++) {
+				if (xm < gx[iii]) {
+					i1 = iii;
+					break;
+				}
+			}
+			if (i1 == -1) {
+				printf(" Error xm = %lf is out of bounds!\n", xm);
+				fprintf(fp_err, " Error xm = %lf is out of bounds!\n", xm);
+				fprintf(fp_log, " Error xm = %lf is out of bounds!\n", xm);
 				assert(0);
 			}
-
-			char hdr[nhbyte];
-			char head[5], type[5], syst[5];
-			char quant[5];
-			char flatten[5];
-			char hcomm[125];
-
-			fread(hdr, sizeof(hdr[0]), nhbyte, fp_tab);
-			char *offset = hdr;
-			sscanf(offset, "%4s", head);
-			offset += strlen(head);
-			sscanf(offset, "%4s", type);
-			offset += strlen(type);
-			sscanf(offset, "%4s", syst);
-			offset += strlen(syst);
-			sscanf(offset, "%4s", quant);
-			offset += strlen(quant);
-			sscanf(offset, "%4s", flatten);
-			offset += strlen(flatten);
-			sscanf(offset, "%[^\r\n]", hcomm);
-
-			// ---see if this the time file has a header on it.
-			if (strcmp(head, "HEAD") == 0) {
-				if (DEBUG_PRINT) {
-					printf(" File has a header...\n");
-				}
-				if (strcmp(type, "FINE") != 0) {
-					if (DEBUG_PRINT)
-						printf("WARNING: input mesh does not appear to be FINE: %s\n", type);
-				}
-				if (iread == 0) {
-					fread(t[iuse], sizeof(t[iuse][0]), nxyz, fp_tab);
+			for (int iii = 1; iii < nyc; iii++) {
+				if (ym < gy[iii]) {
+					j1 = iii;
+					break;
 				}
 			}
-			else {
-				rewind(fp_tab);
-				if (DEBUG_PRINT) {
-					printf(" File has no header...\n");
-				}
-				if (iread == 0) {
-					fread(t[iuse], sizeof(t[iuse][0]), nxyz, fp_tab);
-				}
+			if (j1 == -1) {
+				printf(" Error ym = %lf is out of bounds!\n", ym);
+				fprintf(fp_err, " Error ym = %lf is out of bounds!\n", ym);
+				fprintf(fp_log, " Error ym = %lf is out of bounds!\n", ym);
+				assert(0);
 			}
-			fclose(fp_tab);
-			if (DEBUG_PRINT)
-				printf("...Done.\n");
-			j = iuse;
-
-			// ----test to see if all data can be read in correctly
-		a7:
-			if (iread == 1) {
-				continue;
-			}
-
-			// ----(rsx, rsy) is a unit vector from earthquake to station used in raypath stats only
-			rsx = xs - ex;
-			rsy = ys - ey;
-
-			// ----if this is a teleseism, find the entry point at the base of the model
-			int ies = 0, jes = 0, kes = 0;
-			double xis = 0, yjs = 0, zks = 0;
-			double ttel = 0, ebx = 0, eby = 0, ebz = 0;
-			if (istel) {
-				// --- calculate the ellipticity correction for this station - event pair(need station at surface!)
-				double rlon = xlon * degrad;
-				double rlat = hpi - glat(xlat * degrad);
-				ez = dep;
-				float slat = stlat[kn];
-				float slon = stlon[kn];
-				float delt = 0, az1 = 0, az2 = 0;
-				//bjdaz2(slat, slon, rlat, rlon, &delt, &az1, &az2, 0);
-				double tdelt = delt / degrad;
-				tdelts[i] = tdelt;
-				az1s[i] = az1 / degrad;
-				az2s[i] = az2 / degrad;
-				// ------elpcr gets the proper ellipticity correction for this ray
-				double elat = hpi - rlat;
-				double azdd = az2 / degrad;
-				double ezr4 = ez;
-				double elpc = 0;
-				//elpcr(elat, tdelt, azdd, ezr4, &elpc, iphm1, 1);
-				double time = 0, tbase = 0;
-				int inbound = 0;
-				//entry(rlat, rlon, ezr4, &ebx, &eby, &ebz, iphm1, j, elpc, &time, &tbase, &inbound);
-
-				if (inbound == 0) {
-					printf(" Error: this station has an out of bounds start point: %s\n", sta[i]);
-					printf(" Skipping this station\n");
-					//write(lunerr, 102) kyr, kday, khr, kmn, esec, ex, ey, ez, evid
-					printf(" Error:  this station has an out of bounds start point: %s delt=%lf\n", sta[i], tdelt);
-					printf("\n");
-					isgood[i] = 0;
-					continue;
-				}
-				if (nomat) {
-					double xent = ebx / degrad;
-					double yent = glatinv(hpi - eby) / degrad;
-					fprintf(fp_mat, "%lf %lf %lf\n", xent, yent, ebz);
-					// --- extra output for testing
-				}
-				ttel = tbase;
-
-				// --- Grid point 1 for the entry point
-				ies = (int)((ebx - x0) / df);
-				jes = (int)((eby - y[0]) / dq);
-				kes = (int)((ebz - z0) / h);
-				if (((ebx - x0) < 0.) || (ies >= nx) ||
-					((eby - y[0]) < 0.) || (jes >= ny) ||
-					((ebz - z0) < 0.) || (kes >= nz)) {
-					printf(" Error:  this station has an out of bounds entry point: %s\n", sta[i]);
-					printf(" Skipping this station.\n");
-					fprintf(fp_err, " %d %d %d %d %lf %lf %lf %lf %s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
-					printf(" Error:  this station has an out of bounds entry point: %s\n", sta[i]);
-					printf("\n");
-					isgood[i] = 0;
-					continue;
-				}
-
-				// ----coordinates of point 1
-				xis = df * ies + x0;
-				yjs = dq * jes + y[0];
-				zks = h * kes + z0;
-
-				rsx = xs - ebx;
-				rsy = ys - eby;
-			}
-			double smag = sqrt(rsx * rsx + rsy * rsy);
-			rsx /= smag;
-			rsy /= smag;
-
-			// ----- Now Trace ray from the earthquake to the station
-
-			nseg = 0;
-			iseg = 0;
-			isegm1 = 0;
-			isegm2 = 0;
-
-			// ----start at the earthquake
-			if (istel == 0) {
-				xx = ex;
-				yy = ey;
-				zz = ez;
-			}
-			else {
-				xx = ebx;
-				yy = eby;
-				zz = ebz;
-			}
-			// --- (ie, je, ke) is point 1 for the current cell
-			ie = ies;
-			je = jes;
-			ke = kes;
-			ish = ie;
-			jsh = je;
-			ksh = ke;
-
-			// --- coordinates of point 1
-			xi = xis;
-			yj = yjs;
-			zk = zks;
-
-			// --- Calculate the traveltime at the earthquake by trilinear interpolation
-
-			nk = nxy * ke;
-			nj = nx * je;
-			nk2 = nxy * (ke + 1);
-			nj2 = nx * (je + 1);
-
-			//c Point 1 = SW TOP = nk + nj + ie
-			//c Point 2 = SE TOP = nk + nj + ie + 1
-			//c Point 3 = NW TOP = nk + nj2 + ie
-			//c Point 4 = NE TOP = nk + nj2 + ie + 1
-			//c Point 5 = SW BOT = nk2 + nj + ie
-			//c Point 6 = SE BOT = nk2 + nj + ie + 1
-			//c Point 7 = NW BOT = nk2 + nj2 + ie
-			//c Point 8 = NE BOT = nk2 + nj2 + ie + 1
-
-			int ipt[8];
-			ipt[0] = nk + nj + ie;
-			ipt[1] = nk + nj + ie + 1;
-			ipt[2] = nk + nj2 + ie;
-			ipt[3] = nk + nj2 + ie + 1;
-			ipt[4] = nk2 + nj + ie;
-			ipt[5] = nk2 + nj + ie + 1;
-			ipt[6] = nk2 + nj2 + ie;
-			ipt[7] = nk2 + nj2 + ie + 1;
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-			// Don't use this ray if it's in a region of the model where times are not
-			// alculated(see parameter "maxoff" in punch.c)
-
-			for (int iii = 0; iii < 8; iii++) {
-				if (t[j][ipt[iii]] > 1.E9) {
-					printf(" Ray out of bounds...skipping this observation\n");
-					fprintf(fp_err, " Ray out of bounds...skipping this observation\n");
-					isgood[i] = 0;
+			for (int iii = 1; iii < nzc; iii++) {
+				if (zm < gz[iii]) {
+					k1 = iii;
+					break;
 				}
 			}
-			if (isgood[i] == 0) {
-				continue;
+			if (k1 == -1) {
+				printf(" Error zm = %lf is out of bounds!\n", zm);
+				fprintf(fp_err, " Error zm = %lf is out of bounds!\n", zm);
+				fprintf(fp_log, " Error zm = %lf is out of bounds!\n", zm);
+				assert(0);
 			}
-			fx = (xx - xi) / df;
-			fy = (yy - yj) / dq;
-			fz = (zz - zk) / h;
+			float hx = gx[i1] - gx[i1 - 1];
+			float hy = gy[j1] - gy[j1 - 1];
+			float hz = gz[k1] - gz[k1 - 1];
+			float xci = gx[i1 - 1];
+			float ycj = gy[j1 - 1];
+			float zck = gz[k1 - 1];
 
-			double ds[8];
+			//--- derivatives
+			fx = (xm - xci) / hx;
+			fy = (ym - ycj) / hy;
+			fz = (zm - zck) / hz;
+
 			ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
 			ds[1] = (1. - fz) * (1. - fy) * fx;
 			ds[2] = (1. - fz) * fy * (1. - fx);
@@ -1344,290 +1531,132 @@ a3:
 			ds[6] = fz * fy * (1. - fx);
 			ds[7] = fz * fy * fx;
 
-			dt = 0;
-			for (int iii = 0; iii < 8; iii++) {
-				dt += ds[iii] * t[j][ipt[iii]];
+			nk = nxyc * (k1 - 1);
+			nj = nxc * (j1 - 1);
+			nk2 = nxyc * k1;
+			nj2 = nxc * j1;
+
+			int i1m1 = i1;
+
+			ipt[0] = nk + nj + i1m1;
+			ipt[1] = nk + nj + i1m1 + 1;
+			ipt[2] = nk + nj2 + i1m1;
+			ipt[3] = nk + nj2 + i1m1 + 1;
+			ipt[4] = nk2 + nj + i1m1;
+			ipt[5] = nk2 + nj + i1m1 + 1;
+			ipt[6] = nk2 + nj2 + i1m1;
+			ipt[7] = nk2 + nj2 + i1m1 + 1;
+
+			if (ido1d) {
+				for (int iii = 0; iii < 4; iii++) {
+					du[k1 - 1] += dlen * ds[iii];
+					du[k1] += dlen * ds[iii + 4];
+				}
 			}
-			// --- For local events, ttel = 0. For teles, ttel is the time to the base of the model.
-			dt += ttel;
-			// --- apply station correction
-			dt += tc;
-			dt = obstime[i] - dt;
-			resmin[i] = dt;
-
-			//     This could be skipped for teles, but is innocuous
-			double dsdx[8];
-			dsdx[0] = -(1. - fz) * (1. - fy);
-			dsdx[1] = (1. - fz) * (1. - fy);
-			dsdx[2] = -(1. - fz) * fy;
-			dsdx[3] = (1. - fz) * fy;
-			dsdx[4] = -fz * (1. - fy);
-			dsdx[5] = fz * (1. - fy);
-			dsdx[6] = -fz * fy;
-			dsdx[7] = fz * fy;
-
-			double dsdy[8];
-			dsdy[0] = -(1. - fz) * (1. - fx);
-			dsdy[1] = -(1. - fz) * fx;
-			dsdy[2] = (1. - fz) * (1. - fx);
-			dsdy[3] = (1. - fz) * fx;
-			dsdy[4] = -fz * (1. - fx);
-			dsdy[5] = -fz * fx;
-			dsdy[6] = fz * (1. - fx);
-			dsdy[7] = fz * fx;
-
-			double dsdz[8];
-			dsdz[0] = -(1. - fy) * (1. - fx);
-			dsdz[1] = -(1. - fy) * fx;
-			dsdz[2] = -fy * (1. - fx);
-			dsdz[3] = -fy * fx;
-			dsdz[4] = (1. - fy) * (1. - fx);
-			dsdz[5] = (1. - fy) * fx;
-			dsdz[6] = fy * (1. - fx);
-			dsdz[7] = fy * fx;
-			double dtdx = 0, dtdy = 0, dtdz = 0;
-			for (int iii = 0; iii < 8; iii++) {
-				dtdx += dsdx[iii] * t[j][ipt[iii]];
-				dtdy += dsdy[iii] * t[j][ipt[iii]];
-				dtdz += dsdz[iii] * t[j][ipt[iii]];
+			else {
+				for (int iii = 0; iii < 8; iii++)
+					du[ipt[iii]] += ds[iii] * dlen;
 			}
-			dtdx = dtdx / df;
-			dtdy = dtdy / dq;
-			dtdz = dtdz / h;
-			//----- wt = 1 / variance
-			//----- wet = 1 / standard deviation
-			double wt = pwt[i];
-			double wet = sqrt(wt);
 
-			double res1 = dt * wt;
-			double res2 = res1 * dt;
-			avres += res1;
-			avresev += res1;
-			rsq += res2;
-			rms += res1 * res1;
-			facs += wt;
-			facsev += wt;
-			wtmod += wt * wt;
-			knobs++;
+			if (iray) {
+				double xray1 = xx / degrad;
+				double yray1 = glatinv(hpi - yy) / degrad;
+				double xray2 = xs / degrad;
+				double yray2 = glatinv(hpi - ys) / degrad;
+				FILE* fp_pth = fopen("", "");
+				assert(0);
+				fprintf(fp_pth, "%12.7f %12.7f %12.7f", xray1, yray1, zz);
+				fprintf(fp_pth, "%12.7f %12.7f %12.7f", xray2, yray2, zs);
+				fclose(fp_pth);
+			}
 
-			// ----collect stats for station
-			avrstn[kn][iph] += res1;
-			rstnsq[kn][iph] += res2;
-			facstn[kn][iph] += wt;
-			nobstn[kn][iph]++;
-			length = 0.;
+			// ----rdevav is a measure of the deviation of ray from the source - station plane
+			if (iraystat) {
+				double rdevav = rdevs / nseg;
+				rdevs = 0.;
+				fprintf(fp_ray, " %10.4f %10.4f %10.4f %10.4f %10.4f %s %10.4f", ex, ey, ez, rsx, rsy, stt[kn], rdevav);
+			}
 
-			// ***** Propagate ray from earthquake to station ******
-
-			//----location of cell
-		a100:
-			xi = df * ie + x0;
-			yj = dq * je + y[0];
-			zk = h * ke + z0;
-
-			//     Test to see if ray has reached the station.If so, accumulate normal equation
-			//     stuff and then go do next ray
-
-			double dxs = xx - xs;
-			double dys = yy - ys;
-			double dzs = zz - zs;
-			double rs = rearth - zz;
-			double dqs = rs * dys;
-			double dfs = rs * sin(yy) * dxs;
-			dlen = sqrt(dfs * dfs + dqs * dqs + dzs * dzs);
-
-			if (ie == iscell && je == jscell && ke == kscell || dlen < (h / 1000.)) {
-
-				// ----add on derivative for the station cell segment
-				xm = xx - dxs * 0.5;
-				ym = yy - dys * 0.5;
-				zm = zz - dzs * 0.5;
-				int i1 = -1, j1 = -1, k1 = -1;
-				//--- find xm in coarse grid
-				for (int iii = nxc - 1; iii >= 1; iii--) {
-					if (xm < gx[iii]) {
-						i1 = iii;
-						break;
+			// ****** BEGIN STUFF FROM SPHYPIT
+			if (nomat == 0) {
+				//c------------------------------------------------------------------------------ -
+				//c----- Comments on the meaning of variables
+				//c  the following variables are accumulated for the observation
+				//c     nbk = records the number of hits for a ray
+				//c  the following are accumulated for each event
+				//c     ind(i, j) = the block number of the block i hit by obs j
+				//c     vm(i, j) = derivative of block i for obs j(weighted)
+				//c     dat2(i) = temporary data vector
+				//c     kbl = increment for unknowns, total number of blocks hit
+				//c     mndex(i) = records position of new unknown
+				//c     inbk(j) = number of blocks hit by obs j
+				//c     mndm(i) = inverse of mndex, tells unknown in a position
+				//c  the following are accumulated for the entire problem
+				//c     nhit(i) = all hits in block i
+				//c     indx(i) = position of new unknown
+				//c     mbl = total unknowns
+				//c----------------------------------------------------------------------------------
+				if (i == 0) {
+					kbl = 0;
+					for (i1 = 0; i1 < nxyzc2; i1++) {
+						mhit[i1] = 0;
 					}
 				}
-				if (i1 == -1) {
-					printf(" Error xm = %lf is out of bounds!\n", xm);
-					fprintf(fp_err, " Error xm = %lf is out of bounds!\n", xm);
-					fprintf(fp_log, " Error xm = %lf is out of bounds!\n", xm);
-					assert(0);
-				}
-				for (int iii = nyc - 1; iii >= 1; iii--) {
-					if (ym < gy[iii]) {
-						j1 = iii;
-						break;
-					}
-				}
-				if (j1 == -1) {
-					printf(" Error ym = %lf is out of bounds!\n", ym);
-					fprintf(fp_err, " Error ym = %lf is out of bounds!\n", ym);
-					fprintf(fp_log, " Error ym = %lf is out of bounds!\n", ym);
-					assert(0);
-				}
-				for (int iii = nzc - 1; iii >= 1; iii--) {
-					if (zm < gz[i]) {
-						k1 = i;
-						break;
-					}
-				}
-				if (k1 == -1) {
-					printf(" Error zm = %lf is out of bounds!\n", zm);
-					fprintf(fp_err, " Error zm = %lf is out of bounds!\n", zm);
-					fprintf(fp_log, " Error zm = %lf is out of bounds!\n", zm);
-					assert(0);
-				}
-				float hx = gx[i1] - gx[i1 - 1];
-				float hy = gy[j1] - gy[j1 - 1];
-				float hz = gz[k1] - gz[k1 - 1];
-				float xci = gx[i1 - 1];
-				float ycj = gy[j1 - 1];
-				float zck = gz[k1 - 1];
 
-				//--- derivatives
-				fx = (xm - xci) / hx;
-				fy = (ym - ycj) / hy;
-				fz = (zm - zck) / hz;
+				//c----Note on weighting : we weight each equation by sqrt(wt) because the
+				//c      least squares solution will solve GT(Cdd) - 1G x = Gt(Cdd) - 1d.The elemenets
+				//c       of Cdd are the variances(inverse is stored in pwt).We multiply both G and d by
+				//c       sqrt(pwt) so that subsequent multipication recovers(Cdd) - 1.
+				//
+				//c---- - data vector : Note that in cases where we fit the deviation about
+				//c   the mean we do not apply weights until after the residuals have been
+				//c   demeaned.
 
-				nk = nxyc * (k1 - 2);
-				nj = nxc * (j1 - 2);
-				nk2 = nxyc * (k1 - 1);
-				nj2 = nxc * (j1 - 1);
-
-				ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
-				ds[1] = (1. - fz) * (1. - fy) * fx;
-				ds[2] = (1. - fz) * fy * (1. - fx);
-				ds[3] = (1. - fz) * fy * fx;
-				ds[4] = fz * (1. - fy) * (1. - fx);
-				ds[5] = fz * (1. - fy) * fx;
-				ds[6] = fz * fy * (1. - fx);
-				ds[7] = fz * fy * fx;
-
-				nk = nxyc * (k1 - 2);
-				nj = nxc * (j1 - 2);
-				nk2 = nxyc * (k1 - 1);
-				nj2 = nxc * (j1 - 1);
-				int  i1m1 = i1 - 1;
-
-				ipt[0] = nk + nj + i1m1;
-				ipt[1] = nk + nj + i1m1 + 1;
-				ipt[2] = nk + nj2 + i1m1;
-				ipt[3] = nk + nj2 + i1m1 + 1;
-				ipt[4] = nk2 + nj + i1m1;
-				ipt[5] = nk2 + nj + i1m1 + 1;
-				ipt[6] = nk2 + nj2 + i1m1;
-				ipt[7] = nk2 + nj2 + i1m1 + 1;
-				if (ido1d) {
-					for (int iii = 0; iii < 4; iii++)
-						du[k1 - 1] += dlen * (ds[iii]);
-					for (int iii = 5; iii < 8; iii++)
-						du[k1] += dlen * (ds[iii]);
+				if ((isshot == 1 && idmean == 1) || istel == 1) {
+					dat[i] = dt;
 				}
 				else {
-					for (int iii = 0; iii < 8; iii++)
-						du[iii] = ds[iii] * dlen + du[ipt[iii]];
-				}
-				if (iray) {
-					double xray1 = xx / degrad;
-					double yray1 = glatinv(hpi - yy) / degrad;
-					double xray2 = xs / degrad;
-					double yray2 = glatinv(hpi - ys) / degrad;
-					FILE *fp_pth = fopen("", "");
-					fprintf(fp_pth, "%12.7f %12.7f %12.7f", xray1, yray1, zz);
-					fprintf(fp_pth, "%12.7f %12.7f %12.7f", xray2, yray2, zs);
-					fclose(fp_pth);
+					dat[i] = dt * wet;
 				}
 
-				// ----rdevav is a measure of the deviation of ray from the source - station plane
-				if (iraystat) { //1571
-					double rdevav = rdevs / nseg;
-					rdevs = 0.;
-					fprintf(fp_ray, " %10.4f %10.4f %10.4f %10.4f %10.4f %s %10.4f", ex, ey, ez, rsx, rsy, stt[kn], rdevav);
-				}
+				//----- form hypocenter matrix
+				am[i][0] = wet;
+				am[i][1] = dtdx * wet;
+				am[i][2] = dtdy * wet;
+				am[i][3] = dtdz * wet;
 
-				// ****** BEGIN STUFF FROM SPHYPIT
-				if (nomat == 0) {
-					//c------------------------------------------------------------------------------ -
-					//c----- Comments on the meaning of variables
-					//c  the following variables are accumulated for the observation
-					//c     nbk = records the number of hits for a ray
-					//c  the following are accumulated for each event
-					//c     ind(i, j) = the block number of the block i hit by obs j
-					//c     vm(i, j) = derivative of block i for obs j(weighted)
-					//c     dat2(i) = temporary data vector
-					//c     kbl = increment for unknowns, total number of blocks hit
-					//c     mndex(i) = records position of new unknown
-					//c     inbk(j) = number of blocks hit by obs j
-					//c     mndm(i) = inverse of mndex, tells unknown in a position
-					//c  the following are accumulated for the entire problem
-					//c     nhit(i) = all hits in block i
-					//c     indx(i) = position of new unknown
-					//c     mbl = total unknowns
-					//c----------------------------------------------------------------------------------
-					if (i == 1) {
-						kbl = 0;
-						for (i1 = 0; i1 < nxyzc2; i1++) {
-							mhit[i1] = 0;
+				// ----- form velocity matrix
+				int nbk = 0;
+				for (int jb = 0; jb < maxvarc; jb++) {
+					if (du[jb] == 0) {
+						j = jb;
+
+						// !if for S wave, add j, lzw
+						if (iph == 1) {
+							j += maxvarc;
 						}
-					}
 
-					//c----Note on weighting : we weight each equation by sqrt(wt) because the
-					//c      least squares solution will solve GT(Cdd) - 1G x = Gt(Cdd) - 1d.The elemenets
-					//c       of Cdd are the variances(inverse is stored in pwt).We multiply both G and d by
-					//c       sqrt(pwt) so that subsequent multipication recovers(Cdd) - 1.
-					//
-					//c---- - data vector : Note that in cases where we fit the deviation about
-					//c   the mean we do not apply weights until after the residuals have been
-					//c   demeaned.
+						// !===for Vp and Vs derivative, lzw
+						vm[nbk][i] = du[jb] * wet;
+						ind[nbk][i] = j;
+						nbk++;
+						if (nbk > maxnbk) {
+							printf(" Error: nbk too large, stopping\n");
+							fprintf(fp_log, " Error: nbk too large, stopping\n");
+							assert(0);
+						}
 
-					if ((isshot == 1 && idmean == 1) || istel) {
-						dat[i] = dt;
-					}
-					else {
-						dat[i] = dt * wet;
-					}
+						if (mhit[j] == 0) {
+							mndm[kbl] = j;
+							mndex[j] = kbl;
+							mhit[j] = 1;
 
-					//----- form hypocenter matrix
-					am[i][1] = wet;
-					am[i][2] = dtdx * wet;
-					am[i][3] = dtdy * wet;
-					am[i][4] = dtdz * wet;
-					// 1623
-
-					// ----- form velocity matrix
-					int nbk = 0;
-					for (int jb = 0; jb < maxvarc; jb++) {
-						if (fabs(du[jb]) < 0.0001) {
-							j = jb;
-
-							// !if for S wave, add j, lzw
-							if (iph == 1) {
-								j += maxvarc;
-							}
-							nbk++;
-							if (nbk > maxnbk) {
-								printf(" Error: nbk too large, stopping\n");
-								fprintf(fp_log, " Error: nbk too large, stopping\n");
-								assert(0);
-							}
-							// !===for Vp and Vs derivative, lzw
-							vm[nbk][i] = du[jb] * wet;
-							ind[nbk][i] = j;
-
-							if (mhit[j] == 0) {
-								mndm[kbl] = j;
-								mndex[j] = kbl;
-								mhit[j] = 1;
-							}
+							kbl++;
 							if (kbl > maxkbl) {
 								printf(" Error: kbl=%d\n", kbl);
 								fprintf(fp_log, " Error: kbl=%d\n", kbl);
 								assert(0);
 							}
-							kbl++;
 						}
 						if (nhit[j] == 0) {
 							indx[j] = mbl;
@@ -1648,20 +1677,28 @@ a3:
 						//c	  lzw   Only for the S wave raypath, and add some new factor to Vp part
 
 						// if is the S wave
-						if (ivpvs && iph) {
+						if (ivpvs == 1 && iph == 1) {
 							int jbp = jb;
 							int jbs = j;
 							if (ido1d) {
-								jbp = jb * nxyc;
-								jbs = jbp + nxyzc; ////////////////////////////////////////////////////////////////////////////////
+								jbp = jb * nxyc + 1;
+								jbs = jbp + nxyzc;
 							}
-							// lzw		    vm(nbk, i) = vm(nbk, i)*sp(jbp)            !sp(jbp) should be P wave slowness
-							vm[nbk][i] *= sp[jbp] * vpvsscale;
+							// vm(nbk, i) = vm(nbk, i)*sp(jbp)            !sp(jbp) should be P wave slowness
+							vm[nbk][i] = vm[nbk][i] * sp[jbp] * vpvsscale;
 
 							// ----Scale DUp derivative by r, and note that this is a new hit variable(Up)
 							// 	            vm(nbk, i) = du(jb)*wet*sp(j)
+							nbk++;
+							if (nbk > maxnbk) {
+								printf(" Error: nbk too large, stopping\n");
+								fprintf(fp_err, " Error: nbk too large, stopping\n");
+								fprintf(fp_log, " Error: nbk too large, stopping\n");
+								assert(0);
+							}
 							vm[nbk][i] = du[jb] * wet * sp[jbs];
 							ind[nbk][i] = jb;
+
 							if (mhit[jb] == 0) {
 								mndm[kbl] = jb;
 								mndex[jb] = kbl;
@@ -1669,6 +1706,7 @@ a3:
 								kbl++;
 								if (kbl > maxkbl) {
 									printf(" Error: kbl=%d\n", kbl);
+									fprintf(fp_err, " Error: kbl=%d\n", kbl);
 									fprintf(fp_log, " Error: kbl=%d\n", kbl);
 									assert(0);
 								}
@@ -1680,738 +1718,791 @@ a3:
 								mbl++;
 								if (mbl > maxmbl) {
 									printf(" Error: mbl too large, stopping\n");
+									fprintf(fp_err, " Error: kbl=%d\n", kbl);
 									fprintf(fp_log, " Error: mbl too large, stopping\n");
 									assert(0);
 								}
 							}
 							nhit[jb]++;
-							nbk++;
-							if (nbk > maxnbk) {
-								printf(" Error: nbk too large, stopping\n");
-								fprintf(fp_err, " Error: nbk too large, stopping\n");
-								fprintf(fp_log, " Error: nbk too large, stopping\n");
-								assert(0);
-							}
 						} //end if (ivpvs && iph)
-					} //end jb for
-				} // end if nomat
-			}
-			nk = nxy * ke;
-			nj = nx * je;
-			nk2 = nx * ny * ke;
-			nj2 = nx * je;
+					} //end if(fabs(du)<0.0001)
+				} //end jb for
+				inbk[i] = nbk;
+			} // ****** END STUFF FROM SPHYPIT
+			goto a200; // ----go do next phase
+		}
 
-			ipt[0] = nk + nj + ie;
-			ipt[1] = nk + nj + ie + 1;
-			ipt[2] = nk + nj2 + ie;
-			ipt[3] = nk + nj2 + ie + 1;
-			ipt[4] = nk2 + nj + ie;
-			ipt[5] = nk2 + nj + ie + 1;
-			ipt[6] = nk2 + nj2 + ie;
-			ipt[7] = nk2 + nj2 + ie + 1;
-			//c  Discussion : The wavefront is a zero time change surface, which means
-			//c	that the ray, perpendicular to the wavefront, is a maximum time
-			//c	change direction.We therefore calculate the time gradient in the
-			//c	cell to determine the local ray direction.
-			//c
-			//c  Note that because we are tracing the ray to the source, we are going
-			//c	backwards in time, and hence need to look for the maximum negative
-			//c	gradient.
-			//c
-			//c(1 / rsinQ)dt / df = [(pt2 - pt1) / (r1sinq1)+(pt4 - pt3) / (r1sinq2)
-			//c + (pt6 - pt5) / (r2sinq1)+(pt8 - pt7) / (r2sinq2)] / 4df
-			//c(1 / r)dt / dq = [(pt3 - pt1 + pt4 - pt2) / (r1)
-			//c + (pt7 - pt5 + pt8 - pt6) / (r2)] / 4dq
-			//c dt / dr = [(pt5 - pt1 + pt6 - pt2
-			//	c + pt7 - pt3 + pt8 - pt4)] / 4h
+		// FIND THE RAY[GRAD(T)]
+		nk = nxy * ke;
+		nj = nx * je;
+		nk2 = nx * ny * (ke + 1);
+		nj2 = nx * (je + 1);
 
-			r1 = rearth - zk;
-			r2 = r1 - h;
-			q1 = yj;
-			q2 = q1 + dq;
-			f1 = xi;
-			f2 = f1 + dq;
+		ipt[0] = nk + nj + ie;
+		ipt[1] = nk + nj + ie + 1;
+		ipt[2] = nk + nj2 + ie;
+		ipt[3] = nk + nj2 + ie + 1;
+		ipt[4] = nk2 + nj + ie;
+		ipt[5] = nk2 + nj + ie + 1;
+		ipt[6] = nk2 + nj2 + ie;
+		ipt[7] = nk2 + nj2 + ie + 1;
+		//c  Discussion : The wavefront is a zero time change surface, which means
+		//c	that the ray, perpendicular to the wavefront, is a maximum time
+		//c	change direction.We therefore calculate the time gradient in the
+		//c	cell to determine the local ray direction.
+		//c
+		//c  Note that because we are tracing the ray to the source, we are going
+		//c	backwards in time, and hence need to look for the maximum negative
+		//c	gradient.
+		//c
+		//c(1 / rsinQ)dt / df = [(pt2 - pt1) / (r1sinq1)+(pt4 - pt3) / (r1sinq2)
+		//c + (pt6 - pt5) / (r2sinq1)+(pt8 - pt7) / (r2sinq2)] / 4df
+		//c(1 / r)dt / dq = [(pt3 - pt1 + pt4 - pt2) / (r1)
+		//c + (pt7 - pt5 + pt8 - pt6) / (r2)] / 4dq
+		//c dt / dr = [(pt5 - pt1 + pt6 - pt2
+		//	c + pt7 - pt3 + pt8 - pt4)] / 4h
 
-			// not yet implemented
-			// dt/df=(1/rsinQ)dt/df
-			gradt[0] = (t[j][ipt[1]] - t[j][ipt[0]]) / (r1 * sin(q1)) +
-				(t[j][ipt[3]] - t[j][ipt[2]]) / (r1 * sin(q2)) +
-				(t[j][ipt[5]] - t[j][ipt[4]]) / (r2 * sin(q1)) +
-				(t[j][ipt[7]] - t[j][ipt[6]]) / (r2 * sin(q2)) / (4 * df);
-			// dt / dq' = (1/r)dt/dq
-			gradt[1] = (t[j][ipt[2]] + t[j][ipt[3]] -
-				(t[j][ipt[0]] + t[j][ipt[1]])) / r1 +
-				(((t[j][ipt[6]] + t[j][ipt[7]]) -
-				(t[j][ipt[4]] + t[j][ipt[5]])) / r2) / (4 * dq);
-			// dt / dr' = -dt/dr
-			gradt[2] = ((t[j][ipt[4]] + t[j][ipt[5]] + t[j][ipt[6]] + t[j][ipt[7]]) -
-				(t[j][ipt[0]] + t[j][ipt[1]] + t[j][ipt[2]] + t[j][ipt[3]])) / (4 * h);
-			//c-- - reverse sign on gradient since we are tracing the ray BACKWARDS(i.e.to the source, j).gradt3 is
-			//c   a double negative(-dtdz = -(-dtdr)) so we leave it as is, but recall that gradt(3) is now the r component
-			//c   of the ray.
-			gradt[0] = gradt[0] * -1;
-			gradt[1] = gradt[1] * -1;
+		double r1 = rearth - zk;
+		double r2 = r1 - h;
+		double q1 = yj;
+		double q2 = q1 + dq;
+		double f1 = xi;
+		double f2 = f1 + dq;
+		double gradt[3];
+		if (DEBUG_MSG)
+			printf("1723 r1=%lf\tr2=%lf\nq1=%lf\tq2=%lf\nf1=%lf\tf2=%lf\n", r1, r2, q1, q2, f1, f2);
+		for (int iii = 0; iii < 8; iii++) {
+			if (DEBUG_MSG)
+				printf("1726 t[0][%d]=%lf\n", ipt[iii], t[j][ipt[iii]]);
+		}
 
-			double sinf = sin(xx);
-			double cosf = cos(xx);
-			double sinq = sin(yy);
-			double cosq = cos(yy);
-			ro = rearth - zz;
-			xo = ro * sinq * cosf;
-			yo = ro * sinq * sinf;
-			zo = ro * cosq;
-			if (ie >= (is - 1) && ie < (is + 1) &&
-				je >= (js - 1) && je < (js + 1) &&
-				ke >= (ks - 1) && ke < (ks + 1)) {
-				r2 = rearth - zs;
-				double x2 = r2 * sin(ys) * cos(xs);
-				double y2 = r2 * sin(ys) * sin(xs);
-				double z2 = r2 * cos(ys);
-				dx = x2 - xo;
-				dy = y2 - yo;
-				dz = z2 - zo;
-				dl = sqrt(dx * dx + dy * dy + dz * dz);
-				sx = dx / dl;
-				sy = dy / dl;
-				sz = dz / dl;
-			}
-			else {
+		// dt/df=(1/rsinQ)dt/df
+		gradt[0] = ((t[j][ipt[1]] - t[j][ipt[0]]) / (r1 * sin(q1))
+			+ (t[j][ipt[3]] - t[j][ipt[2]]) / (r1 * sin(q2))
+			+ (t[j][ipt[5]] - t[j][ipt[4]]) / (r2 * sin(q1))
+			+ (t[j][ipt[7]] - t[j][ipt[6]]) / (r2 * sin(q2))) / (4 * df);
 
-				//c  NB : Because the spherical system is not orthoganal, the use of
-				//c	Pathagoras here is not really legitimate.However, since we don't
-				//c	use gradtm for anything after this step, all it does is scale the S
-				//c	vector in spherical coordinates.We take the extra step of normalizing
-				//c	S in the cartesian system by computing smag below.
-				//c	gradtm is thus not really necessary, and is kept here only for reasons
-				//c	of heritage.
+		// dt / dq' = (1/r)dt/dq
+		gradt[1] = ((t[j][ipt[2]] + t[j][ipt[3]]
+			- t[j][ipt[0]] - t[j][ipt[1]]) / r1
+			+ (t[j][ipt[6]] + t[j][ipt[7]]
+				- t[j][ipt[4]] - t[j][ipt[5]]) / r2) / (4 * dq);
 
-				gradtm = sqrt(gradt[0] * gradt[0] + gradt[1] * gradt[1] + gradt[2] * gradt[2]);
-				sf = gradt[0] / gradtm;
-				sq = gradt[1] / gradtm;
-				sr = gradt[2] / gradtm;
-				// Rotate to the cartesian frame
-				sx = -sinf * sf + cosq * cosf * sq + sinq * cosf * sr;
-				sy = cosf * sf + cosq * sinf * sq + sinq * sinf * sr;
-				sz = -sinq * sq + cosq * sr;
-				smag = sqrt(sx * sx + sy * sy + sz * sz);
-				sx /= smag;
-				sy /= smag;
-				sz /= smag;
-			}
+		// dt / dr' = -dt/dr
+		gradt[2] = (t[j][ipt[4]] + t[j][ipt[5]]
+			+ t[j][ipt[6]] + t[j][ipt[7]]
+			- t[j][ipt[0]] - t[j][ipt[1]]
+			- t[j][ipt[2]] - t[j][ipt[3]]) / (4 * h);
 
-			//----save ray direction from source for use in focal mechanisms
-			if (nseg == 0) {
-				sfq = sqrt(sf * sf + sq * sq);
-				az = atan2(sf, -sq) / degrad;
-				double ai = atan2(sfq, -sr) / degrad;
-				ais[i] = ai;
-				azs[i] = az;
-			}
-			//----- intersection points for R constant surfaces
-			dd[2] = -1e20;
-			if (gradt[2] != 0) {
-				if (gradt[2] > 0)
-					ro = rearth - zk;
-				else
-					ro = rearth - zk - h;
-				a = 1.0;
-				b = xo * sx + yo * sy + zo * sz;
-				c = xo * xo + yo * yo + zo * zo - ro * ro;
-				quad = b * b - c;
-				if (quad >= 0) {
-					dd[2] = pmin(-b + sqrt(quad), -b - sqrt(quad));
-				}
-			}
-			//----- intersection points for Q constant surfaces
-			dd[1] = -1e20;
-			if (gradt[1] != 0) {
-				if (gradt[1] < 0) {
-					sinq = sin(yj);
-					cosq = cos(yj);
-				}
-				else {
-					sinq = sin(yj + dq);
-					cosq = cos(yj + dq);
-				}
-				if (fabs(cosq) > fabs(sinq)) {
-					double tanq = sinq / cosq;
-					double tansq = tanq * tanq;
-					a = sx * sx + sy * sy - sz * sz * tansq;
-					b = xo * sx + yo * sy - zo * sz * tansq;
-					c = xo * xo + yo * yo - zo * zo * tansq;
-				}
-				else {
-					double ctanq = cosq * sinq;
-					double ctansq = ctanq * ctanq;
-					a = (sx * sx + sy * sy) * ctansq - sz * sz;
-					b = (xo * sx + yo * sy) * ctansq - zo * sz;
-					c = (xo * xo + yo * yo) * ctansq - zo * zo;
-				}
-				quad = b * b - a * c;
+		//c-- - reverse sign on gradient since we are tracing the ray BACKWARDS(i.e.to the source, j).gradt3 is
+		//c   a double negative(-dtdz = -(-dtdr)) so we leave it as is, but recall that gradt(3) is now the r component
+		//c   of the ray.
+		if (DEBUG_MSG)
+			printf("1746 gradt(0)=%lf gradt(1)=%lf gradt(2)=%lf\n", gradt[0], gradt[1], gradt[2]);
+		gradt[0] = gradt[0] * -1;
+		gradt[1] = gradt[1] * -1;
 
-				if (quad >= 0) {
-					pmin((-b + sqrt(quad)) / a, (-b - sqrt(quad)) / a);
-				}
-			}
-			//------intersection points for F constant surfaces
-			dd[0] = -1e20;
-			if (gradt[0] != 0) {
-				if (gradt[0] < 0) {
-					sinf = sin(xi);
-					cosf = cos(xi);
-				}
-				else {
-					sinf = sin(xi + df);
-					cosf = cos(xi + df);
-				}
-				double d1;
-				if (fabs(cosf) > fabs(sinf)) {
-					double tanf = sinf / cosf;
-					d1 = (xo * tanf - yo) / (sy - sx * tanf);
-				}
-				else {
-					double ctanf = cosf / sinf;
-					d1 = (yo * ctanf - xo) / (sx - sy * ctanf);
-				}
-				if (d1 > 0) {
-					dd[0] = d1;
-				}
-			}
+		double sinf = sin(xx);
+		double cosf = cos(xx);
+		double sinq = sin(yy);
+		double cosq = cos(yy);
+		double ro = rearth - zz;
+		double xo = ro * sinq * cosf;
+		double yo = ro * sinq * sinf;
+		double zo = ro * cosq;
 
-			// ---find the possible step scalars
-			if (gradt[0] < 0) {
-				if (dd[0] < h / 1000) {
-					//
-					// ---The following tests prevent the ray from doubling back on itself.  The
-					// 	  first is simply to keep the ray from going back to where it's just been.
-					// 	  The second prevents a loop over 4 cells.   In this particular blockif,
-					// 	  iseg will be -1, so a previous iseg of 1 means that the ray is simply
-					// 	  trying to return to the cell it just left.  An example of a 4 cell loop
-					// 	  would be isegs of 20, 1, -20, where an additional -1 would bring it
-					// 	  back to the original cell, and hence set up the possibility of a closed
-					// 	  loop.
-					//
-					if ((iseg == 1) || ((iseg + isegm1 + isegm2 == 1) && (nseg >= 3))) {
-						gradt[0] = 0.;
-						dd[0] = -1e20;
-					}
-				}
-			}
-			else if (gradt[0] > 0) {
-				if (dd[0] < h / 1000) {
-					if ((iseg == -1) || ((iseg + isegm1 + isegm2 == -1) && (nseg >= 3))) {
-						gradt[0] = 0;
-						dd[0] = -1e20;
-					}
-				}
-			}
-			else {
-				dd[0] = -1e20;
-			}
+		double sx = 0, sy = 0, sz = 0;
+		double sf = 0, sq = 0, sr = 0;
 
-			// ################## 1
+		// if ray in seismometer cube, use straight ray from source
+		if (ie >= (is - 1) && ie < (is + 1) &&
+			je >= (js - 1) && je < (js + 1) &&
+			ke >= (ks - 1) && ke < (ks + 1)) {
+			r2 = rearth - zs;
+			double x2 = r2 * sin(ys) * cos(xs);
+			double y2 = r2 * sin(ys) * sin(xs);
+			double z2 = r2 * cos(ys);
+			double dx = x2 - xo;
+			double dy = y2 - yo;
+			double dz = z2 - zo;
+			double dl = sqrt(dx * dx + dy * dy + dz * dz);
+			sx = dx / dl;
+			sy = dy / dl;
+			sz = dz / dl;
+		}
+		else {
+
+			//c  NB : Because the spherical system is not orthoganal, the use of
+			//c	Pathagoras here is not really legitimate.However, since we don't
+			//c	use gradtm for anything after this step, all it does is scale the S
+			//c	vector in spherical coordinates.We take the extra step of normalizing
+			//c	S in the cartesian system by computing smag below.
+			//c	gradtm is thus not really necessary, and is kept here only for reasons
+			//c	of heritage.
+
+			double gradtm = sqrt(gradt[0] * gradt[0] + gradt[1] * gradt[1] + gradt[2] * gradt[2]);
+			sf = gradt[0] / gradtm;
+			sq = gradt[1] / gradtm;
+			sr = gradt[2] / gradtm;
+			// Rotate to the cartesian frame
+			sx = -sinf * sf + cosq * cosf * sq + sinq * cosf * sr;
+			sy = cosf * sf + cosq * sinf * sq + sinq * sinf * sr;
+			sz = -sinq * sq + cosq * sr;
+			smag = sqrt(sx * sx + sy * sy + sz * sz);
+			sx /= smag;
+			sy /= smag;
+			sz /= smag;
+		}
+
+		//----save ray direction from source for use in focal mechanisms
+		if (nseg == 0) {
+			double sfq = sqrt(sf * sf + sq * sq);
+			double az = atan2(sf, -sq) / degrad;
+			double ai = atan2(sfq, -sr) / degrad;
+			ais[i] = ai;
+			azs[i] = az;
+		}
+
+		//----- intersection points for R constant surfaces
+		double dd[3];
+		dd[2] = -1e20;
+		if (gradt[2] != 0) {
+			if (gradt[2] > 0)
+				ro = rearth - zk;
+			else
+				ro = rearth - zk - h;
+			double b = xo * sx + yo * sy + zo * sz;
+			double c = xo * xo + yo * yo + zo * zo - ro * ro;
+			double quad = b * b - c;
+			if (quad >= 0) {
+				dd[2] = pmin(-b + sqrt(quad), -b - sqrt(quad));
+			}
+		}
+
+		//----- intersection points for Q constant surfaces
+		dd[1] = -1e20;
+		if (gradt[1] != 0) {
 			if (gradt[1] < 0) {
-				if (dd[1] < h / 1000) {
-					if ((iseg == 20) || ((iseg + isegm1 + isegm2 == 20) && (nseg >= 3))) {
-						gradt[1] = 0.;
-						dd[1] = -1e20;
-					}
-				}
-			}
-			else if (gradt[1] > 0) {
-				if (dd[1] < h / 1000) {
-					if ((iseg == -20) || ((iseg + isegm1 + isegm2 == -20) && (nseg >= 3))) {
-						gradt[1] = 0;
-						dd[1] = -1e20;
-					}
-				}
+				sinq = sin(yj);
+				cosq = cos(yj);
 			}
 			else {
-				dd[1] = -1e20;
+				sinq = sin(yj + dq);
+				cosq = cos(yj + dq);
 			}
-
-			// ################## 2
-			if (gradt[2] > 0) {
-				if (dd[2] < h / 1000) {
-					if ((iseg == 300) || ((iseg + isegm1 + isegm2 == 300) && (nseg >= 3))) {
-						gradt[2] = 0.;
-						dd[2] = -1e20;
-					}
-				}
-			}
-			else if (gradt[2] < 0) {
-				if (dd[2] < h / 1000) {
-					if ((iseg == -300) || ((iseg + isegm1 + isegm2 == -300) && (nseg >= 3))) {
-						gradt[2] = 0;
-						dd[2] = -1e20;
-					}
-				}
+			double a = 0, b = 0, c = 0;
+			if (fabs(cosq) > fabs(sinq)) {
+				double tanq = sinq / cosq;
+				double tansq = tanq * tanq;
+				a = sx * sx + sy * sy - sz * sz * tansq;
+				b = xo * sx + yo * sy - zo * sz * tansq;
+				c = xo * xo + yo * yo - zo * zo * tansq;
 			}
 			else {
-				dd[2] = -1e20;
+				double ctanq = cosq / sinq;
+				double ctansq = ctanq * ctanq;
+				a = (sx * sx + sy * sy) * ctansq - sz * sz;
+				b = (xo * sx + yo * sy) * ctansq - zo * sz;
+				c = (xo * xo + yo * yo) * ctansq - zo * zo;
 			}
 
-			//     determine which is desired
-			// dfind(dd, d, md, tolmin, tolmax);
-
-			dlen = d;
-			length += dlen;
-			xold = xx;
-			yold = yy;
-			zold = zz;
-
-			xn = xo + d * sx;
-			yn = yo + d * sy;
-			zn = zo + d * sz;
-
-			xx = atan2(yn, xn);
-			yy = atan2(sqrt(xn * xn + yn * yn), zn);
-			zz = rearth - sqrt(xn * xn + yn * yn + zn * zn);
-
-			nseg++;
-			isegm2 = isegm1;
-			isegm1 = iseg;
-
-			// ----x side intersected
-			if (md == 1) {
-				je = (int)(((yy - y[0]) / dq));
-				ke = (int)(((zz - z0) / h));
-				if (gradt[0] < 0) {
-					if (ie < 0) goto a150;
-					ie--;
-					iseg = -1;
-				}
-				else {
-					if (ie >= nx - 1) goto a150;
-					ie++;
-					iseg = 1;
-				}
-				// ----y side intersected
+			double quad = b * b - a * c;
+			if (quad >= 0) {
+				dd[1] = pmin((-b + sqrt(quad)) / a, (-b - sqrt(quad)) / a);
 			}
-			else if (md == 2) {
-				if (gradt[0] < 0) {
-					if (je < 0) goto a150;
-					je--;
-					iseg = -20;
-				}
-				else {
-					if (je >= nx - 1) goto a150;
-					je++;
-					iseg = 20;
-				}
-				ie = (int)(((xx - x0) / df));
-				ke = (int)(((zz - z0) / h));
-				// ----z side intersected
+		}
+
+		//------intersection points for F constant surfaces
+		dd[0] = -1e20;
+		if (gradt[0] != 0) {
+			if (gradt[0] < 0) {
+				sinf = sin(xi);
+				cosf = cos(xi);
 			}
 			else {
-				if (gradt[0] < 0) {
-					if (ke < 0) goto a150;
-					ke--;
-					iseg = -300;
-				}
-				else {
-					if (ke >= nx - 1) goto a150;
-					ke++;
-					iseg = 300;
-				}
-				ie = (int)(((xx - x0) / df));
-				je = (int)(((zz - z0) / dq));
+				sinf = sin(xi + df);
+				cosf = cos(xi + df);
 			}
-			if (((xx - x0) < 0) || (ie >= nx)) goto a150;
-			if (((yy - y[0]) < 0) || (je >= ny)) goto a150;
-			if (((zz - z0) < 0) || (ke >= nz)) goto a150;
+			double d1;
+			if (fabs(cosf) > fabs(sinf)) {
+				double tanf = sinf / cosf;
+				d1 = (xo * tanf - yo) / (sy - sx * tanf);
+			}
+			else {
+				double ctanf = cosf / sinf;
+				d1 = (yo * ctanf - xo) / (sx - sy * ctanf);
+			}
+			if (d1 > 0) {
+				dd[0] = d1;
+			}
+		}
 
-			xm = (xx + xold) * 0.5;
-			ym = (yy + yold) * 0.5;
-			zm = (zz + zold) * 0.5;
-
-			int i1, j1, k1;
-			float hx, hy, hz;
-			float xci, ycj, zck;
-			// ---find xm in coarse grid
-			for (i1 = 1; i1 < nxc; i1++) {
-				if (xm < gx[i1]) {
-					goto a120;
+		// ---find the possible step scalars
+		if (gradt[0] < 0) {
+			if (dd[0] < h / 1000) {
+				//
+				// ---The following tests prevent the ray from doubling back on itself.  The
+				// 	  first is simply to keep the ray from going back to where it's just been.
+				// 	  The second prevents a loop over 4 cells.   In this particular blockif,
+				// 	  iseg will be -1, so a previous iseg of 1 means that the ray is simply
+				// 	  trying to return to the cell it just left.  An example of a 4 cell loop
+				// 	  would be isegs of 20, 1, -20, where an additional -1 would bring it
+				// 	  back to the original cell, and hence set up the possibility of a closed
+				// 	  loop.
+				//
+				if ((iseg == 1) || ((iseg + isegm1 + isegm2 == 1) && (nseg >= 3))) {
+					gradt[0] = 0.;
+					dd[0] = -1e20;
 				}
 			}
+		}
+		else if (gradt[0] > 0) {
+			if (dd[0] < h / 1000) {
+				if ((iseg == -1) || ((iseg + isegm1 + isegm2 == -1) && (nseg >= 3))) {
+					gradt[0] = 0;
+					dd[0] = -1e20;
+				}
+			}
+		}
+		else {
+			dd[0] = -1e20;
+		}
+
+		// ################## 1
+		if (gradt[1] < 0) {
+			if (dd[1] < h / 1000) {
+				if ((iseg == 20) || ((iseg + isegm1 + isegm2 == 20) && (nseg >= 3))) {
+					gradt[1] = 0.;
+					dd[1] = -1e20;
+				}
+			}
+		}
+		else if (gradt[1] > 0) {
+			if (dd[1] < h / 1000) {
+				if ((iseg == -20) || ((iseg + isegm1 + isegm2 == -20) && (nseg >= 3))) {
+					gradt[1] = 0;
+					dd[1] = -1e20;
+				}
+			}
+		}
+		else {
+			dd[1] = -1e20;
+		}
+
+		// ################## 2
+		if (gradt[2] > 0) {
+			if (dd[2] < h / 1000) {
+				if ((iseg == 300) || ((iseg + isegm1 + isegm2 == 300) && (nseg >= 3))) {
+					gradt[2] = 0.;
+					dd[2] = -1e20;
+				}
+			}
+		}
+		else if (gradt[2] < 0) {
+			if (dd[2] < h / 1000) {
+				if ((iseg == -300) || ((iseg + isegm1 + isegm2 == -300) && (nseg >= 3))) {
+					gradt[2] = 0;
+					dd[2] = -1e20;
+				}
+			}
+		}
+		else {
+			dd[2] = -1e20;
+		}
+
+		// determine which is desired
+		double d = 0;
+		int md = 0;
+		if (DEBUG_MSG)
+			printf("1958 dd[0]=%lf\n1945 dd[1]=%lf\n1945 dd[2]=%lf\n1945 d=%lf\tmd=%d\n", dd[0], dd[1], dd[2], d, md);
+		dfind(dd, &d, &md, tolmin, tolmax);
+		if (DEBUG_MSG)
+			printf("1958 dd[0]=%lf\n1945 dd[1]=%lf\n1945 dd[2]=%lf\n1945 d=%lf\tmd=%d\n", dd[0], dd[1], dd[2], d, md);
+
+		dlen = d;
+		double xold = xx;
+		double yold = yy;
+		double zold = zz;
+
+		xn = xo + d * sx;
+		yn = yo + d * sy;
+		zn = zo + d * sz;
+
+		xx = atan2(yn, xn);
+		yy = atan2(sqrt(xn * xn + yn * yn), zn);
+		zz = rearth - sqrt(xn * xn + yn * yn + zn * zn);
+		printf("2034 xn=%lf\tyn=%lf\tzn=%lf\txx=%lf\tyy=%lf\tzz=%E\n", xn, yn, zn, xx, yy, zz);
+
+		nseg++;
+		isegm2 = isegm1;
+		isegm1 = iseg;
+		if (DEBUG_MSG)
+			printf("2041 xx=%lf xn=%lf\n", xx, xn);
+		// ----x side intersected
+		if (md == 0) {
+			je = (int)(((yy - y[0]) / dq));
+			ke = (int)(((zz - z0) / h));
+			if (gradt[0] < 0) {
+				if (ie < 0)
+					goto a150;
+				ie--;
+				iseg = -1;
+			}
+			else {
+				if (ie >= nx - 1)
+					goto a150;
+				ie++;
+				iseg = 1;
+			}
+			// ----y side intersected
+		}
+		else if (md == 1) {
+			if (gradt[1] < 0) {
+				if (je < 0)
+					goto a150;
+				je--;
+				iseg = -20;
+			}
+			else {
+				if (je >= nx - 1)
+					goto a150;
+				je++;
+				iseg = 20;
+			}
+			ie = (int)(((xx - x0) / df));
+			ke = (int)(((zz - z0) / h));
+			// ----z side intersected
+		}
+		else {
+			if (gradt[2] < 0) {
+				if (ke < 0)
+					goto a150;
+				ke--;
+				iseg = -300;
+			}
+			else {
+				if (ke >= nx - 1)
+					goto a150;
+				ke++;
+				iseg = 300;
+			}
+			ie = (int)(((xx - x0) / df));
+			je = (int)(((yy - y[0]) / dq));
+		}
+		if (((xx - x0) < 0) || (ie >= nx))
+			goto a150;
+		if (((yy - y[0]) < 0) || (je >= ny))
+			goto a150;
+		if (((zz - z0) < 0) || (ke >= nz))
+			goto a150;
+
+		xm = (xx + xold) * 0.5;
+		ym = (yy + yold) * 0.5;
+		zm = (zz + zold) * 0.5;
+		
+		printf("2103 xm=%lf\tym=%lf\tzm=%lf\n", xm, ym, zm);
+
+		int i1 = -1, j1 = -1, k1 = -1;
+
+		//--- find xm in coarse grid
+		for (int iii = 1; iii < nxc; iii++) {
+			if (xm < gx[iii]) {
+				i1 = iii;
+				break;
+			}
+		}
+		if (i1 == -1) {
+			printf(" Error xm = %lf is out of bounds!\n", xm);
 			fprintf(fp_err, " Error xm = %lf is out of bounds!\n", xm);
 			fprintf(fp_log, " Error xm = %lf is out of bounds!\n", xm);
-			printf(" Error xm = %lf is out of bounds!\n", xm);
 			assert(0);
+		}
+		for (int iii = 1; iii < nyc; iii++) {
+			if (ym < gy[iii]) {
+				j1 = iii;
+				break;
+			}
+		}
+		if (j1 == -1) {
+			printf(" Error ym = %lf is out of bounds!\n", ym);
+			fprintf(fp_err, " Error ym = %lf is out of bounds!\n", ym);
+			fprintf(fp_log, " Error ym = %lf is out of bounds!\n", ym);
+			assert(0);
+		}
+		for (int iii = 1; iii < nzc; iii++) {
+			if (zm < gz[iii]) {
+				k1 = iii;
+				break;
+			}
+		}
+		if (k1 == -1) {
+			printf(" Error zm = %lf is out of bounds!\n", zm);
+			fprintf(fp_err, " Error zm = %lf is out of bounds!\n", zm);
+			fprintf(fp_log, " Error zm = %lf is out of bounds!\n", zm);
+			assert(0);
+		}
 
-		a120:
-			for (j1 = 1; j1 < nyc; j1++) {
-				if (ym < gy[j1]) {
-					goto a140;
+		double hx = gx[i1] - gx[i1 - 1];
+		double hy = gy[j1] - gy[j1 - 1];
+		double hz = gz[k1] - gz[k1 - 1];
+		float xci = gx[i1];
+		float ycj = gy[j1];
+		float zck = gz[k1];
+
+		// --- derivatives
+		fx = (xm - xci) / hx;
+		fy = (ym - ycj) / hy;
+		fz = (zm - zck) / hz;
+
+		ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
+		ds[1] = (1. - fz) * (1. - fy) * fx;
+		ds[2] = (1. - fz) * fy * (1. - fx);
+		ds[3] = (1. - fz) * fy * fx;
+		ds[4] = fz * (1. - fy) * (1. - fx);
+		ds[5] = fz * (1. - fy) * fx;
+		ds[6] = fz * fy * (1. - fx);
+		ds[7] = fz * fy * fx;
+
+		nk = nxyc * (k1 - 1);
+		nj = nxc * (j1 - 1);
+		nk2 = nxyc * k1;
+		nj2 = nxc * j1;
+		int i1m1 = i1;
+
+		int jpt[8];
+		jpt[0] = nk + nj + i1m1;
+		jpt[1] = nk + nj + i1m1 + 1;
+		jpt[2] = nk + nj2 + i1m1;
+		jpt[3] = nk + nj2 + i1m1 + 1;
+		jpt[4] = nk2 + nj + i1m1;
+		jpt[5] = nk2 + nj + i1m1 + 1;
+		jpt[6] = nk2 + nj2 + i1m1;
+		jpt[7] = nk2 + nj2 + i1m1 + 1;
+		if (ido1d == 0) {
+			for (int iii = 0; iii < 8; iii++) {
+				du[jpt[iii]] += ds[iii] * dlen;
+				if (DEBUG_MSG)
+					printf("2118 du[%d]=%lf\n", jpt[iii], du[jpt[iii]]);
+			}
+		}
+		else {
+			for (int iii = 0; iii < 4; iii++) {
+				du[k1 - 1] += dlen * ds[iii];
+				du[k1] += dlen * ds[iii + 4];
+			}
+		}
+
+		if (iray == 1) {
+			FILE* fp_pth = NULL;
+			if (nseg == 1) {
+				if (isshot == 0) {
+					if (istel == 0) {
+						sprintf(rayfile, "%s_event%d_%c.ray\n", sta[i], nev, phs[i]);
+					}
+					else {
+						sprintf(rayfile, "%s_tele%d_%c.ray\n", sta[i], ntel, phs[i]);
+					}
+				}
+				else {
+					sprintf(rayfile, "%s_shot%d_%c.ray\n", sta[i], nshot, phs[i]);
+				}
+				d_blank(rayfile, &len);
+				printf("File: %s\n", rayfile);
+				///////////////////////////////////////////////////////////////////
+				fp_pth = fopen(rayfile, "r");
+				if (!fp_pth) {
+					printf("error on opening file (%s)\n", rayfile);
+					assert(0);
 				}
 			}
-			fprintf(fp_err, " Error xm = %lf is out of bounds!\n", ym);
-			fprintf(fp_log, " Error xm = %lf is out of bounds!\n", ym);
-			printf(" Error xm = %lf is out of bounds!\n", ym);
-			assert(0);
+			double xray1 = xold / degrad;
+			double yray1 = glatinv(hpi - yold) / degrad;
+			double xray2 = xx / degrad;
+			double yray2 = glatinv(hpi - yy) / degrad;
+			if (fp_pth) {
+				fprintf(fp_pth, "%12.5f %12.5f %12.5f\n", xray1, yray1, zold);
+				fprintf(fp_pth, "%12.5f %12.5f %12.5f\n", xray2, yray2, zz);
+			}
+		}
 
-		a140:
-			for (k1 = 1; k1 < nzc; k1++) {
-				if (zm < gz[k1]) {
-					goto a160;
+		// ---temporarly output for piercing point figure
+		// 	  write (31,fmt='(3f10.3)') xold,yold,-zold
+
+		// ----rdev is a measure of the deviation of ray from the source-station plane
+		double rx = xm - ex;
+		double ry = ym - ey;
+		double rmagsq = rx * rx + ry * ry;
+		double rds = rsx * rx + rsy * ry;
+		double rdev = sqrt(rmagsq - rds * rds);
+		rdevs += rdev;
+		// -----------------------------------------
+		// ---go back to get next ray segment
+		goto a100;
+	a150:
+		printf(" Warning: Ray has left the medium.  Skipping remainder\n");
+		fprintf(fp_err, " Warning: Ray has left the medium.  Skipping remainder\n");
+		isgood[i] = 0;
+	a200: {
+		}
+	} // ***** End of Loop over Observations *****
+
+	// --- demean the data vector if required
+	avresev /= facsev;
+	if ((isshot == 1 && idmean == 1) || istel == 1) {
+		if (isshot == 1) {
+			printf(" Average residual for shot %d is %lf", nshot, avresev);
+		}
+		if (istel == 1) {
+			printf(" Average residual for tele %d is %lf", ntel, avresev);
+		}
+		dpot += avresev;
+		for (int k = 0; k < nsta; k++) {
+			if (isgood[k] == 1) {
+				dat[k] -= avresev;
+
+				// --note multipyling by pwt will make sum of residuals be zero.
+				//  However, in order to be consistent with the local / shot weighting, we
+				//  multiply the data vectory by sqrt(pwt(k)) anticipating that another sqrt(wt)
+				//  will come from a weighted GT.
+				dat[k] = dat[k] * sqrt(pwt[k]);
+				resmin[k] = resmin[k] - avresev;
+				obstime[k] = obstime[k] - avresev;
+			}
+		}
+	}
+
+	// *** BEGIN STUFF FROM SPHYPIT
+	if (nomat == 0) {
+		for (int j1 = 0; j1 < nsta; j1++) {
+			for (int j2 = 0; j2 < kbl; j2++) {
+				vmp[j2][j1] = 0;
+			}
+		}
+
+		// Note that for shot data, if we demean the residuals we should also demean the
+		// partial derivatives, just like with teleseisms.
+		if ((isshot == 1 && idmean == 1) || istel == 1) {
+			for (int k = 0; k < kbl; k++) {
+				vsum[k] = 0;
+			}
+			wsum = 0;
+
+			// --Note on weighting:  we ultimately want vmp to be
+			//
+			//        vmp = sqrt(wt) * [ g - sum(wt*g)/sum(wt)]
+			//
+			//        Again, the sqrt(wt) at the beginning is because of postmultiplication in
+			//        Least Squares to construct (Cdd)-1 properly.  The data vector is multiplied
+			//        above by sqrt(wt) as well.
+			//
+			//        At this point, vm is sqrt(wt)*g.  vsum will wind up
+			//        being the average, so we sum sqrt(wt)*vm to get wt*g,
+			// 	vmp is then sqrt(wt)*sqrt(wt)*g = wt*g
+			//        At the end of this loop we have
+			//        vsum(nvar) = sum over nobs (wt(nobs)*g(nvar, nobs))
+			//        vmp(nvar, nobs) =  wt(nobs)*g(nvar,nobs)
+			//        and wsum is just sum over nobs (wt(nobs)).
+			for (int k = 0; k < nsta; k++) {
+				if (isgood[k]) {
+					float wt = pwt[k];
+					double wet = sqrt(wt);
+					int lim = inbk[k];
+					if (lim != 0) {
+						for (int j1 = 0; j1 < lim; j1++) {
+							int jnd = mndex[ind[j1][k]];
+							float valv = vm[j1][k];
+							vmp[jnd][k] = valv;
+							// vsum = sum over j of Wij*gijl
+							vsum[jnd] += valv * wet;
+						}
+						wsum += wt;
+					}
 				}
 			}
-			fprintf(fp_err, " Error xm = %lf is out of bounds!\n", zm);
-			fprintf(fp_log, " Error xm = %lf is out of bounds!\n", zm);
-			printf(" Error xm = %lf is out of bounds!\n", zm);
-			assert(0);
-		a160:
-			hx = gx[i1] - gx[i1 - 1];
-			hy = gy[j1] - gy[j1 - 1];
-			hz = gz[k1] - gz[k1 - 1];
-			xci = gx[i1 - 1];
-			ycj = gy[j1 - 1];
-			zck = gz[k1 - 1];
 
-			// -- - derivatives
-			fx = (xm - xci) / hx;
-			fy = (ym - ycj) / hy;
-			fz = (zm - zck) / hz;
-
-			ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
-			ds[1] = (1. - fz) * (1. - fy) * fx;
-			ds[2] = (1. - fz) * fy * (1. - fx);
-			ds[3] = (1. - fz) * fy * fx;
-			ds[4] = fz * (1. - fy) * (1. - fx);
-			ds[5] = fz * (1. - fy) * fx;
-			ds[6] = fz * fy * (1. - fx);
-			ds[7] = fz * fy * fx;
-
-			nk = nxyc * (k1 - 1);
-			nj = nxc * (j1 - 1);
-			nk2 = nxyc * (k1);
-			nj2 = nxc * (j1);
-			int i1m1 = i1;
-
-			int jpt[8];
-			jpt[0] = nk + nj + i1m1;
-			jpt[1] = nk + nj + i1m1 + 1;
-			jpt[2] = nk + nj2 + i1m1;
-			jpt[3] = nk + nj2 + i1m1 + 1;
-			jpt[4] = nk2 + nj + i1m1;
-			jpt[5] = nk2 + nj + i1m1 + 1;
-			jpt[6] = nk2 + nj2 + i1m1;
-			jpt[7] = nk2 + nj2 + i1m1 + 1;
-			if (ido1d == 0) {
-				for (int iii = 0; iii < 8; iii++) {
-					du[jpt[iii]] = ds[iii] * dlen + du[jpt[iii]];
+			// At this point, vmp is wt*g, vsum is sum(wt*g), and wsum = sum(wt)
+			for (int jnd = 0; jnd < kbl; jnd++) {
+				//--- valv is now sum(wt*g)/sum(wt)
+				float valv = vsum[jnd] / wsum;
+				for (int i1 = 0; i1 < nsta; i1++) {
+					if (isgood[i1]) {
+						vmp[jnd][i1] -= sqrt(pwt[i1]) * valv;
+					}
 				}
+			}
+		}
+		else {
+			for (int k = 0; k < nsta; k++) {
+				if (isgood[k]) {
+					int lim = inbk[k];
+					if (lim != 0) {
+						for (int j1 = 0; j1 < lim; j1++) {
+							int jnd = mndex[ind[j1][k]];
+							vmp[jnd][k] += vm[j1][k];
+						}
+					}
+				}
+			}
+		}
+
+		// ----station corrections terms
+		//   Some explanation:
+		//     We consider that for station j there is a True station correction
+		//     Cj and a current esimate of it cj. We define a station correction
+		//     as a number added to the ray travel time to obtain the "real" time.
+		//     This is why the time correction is added above (dt = dt + tc).
+		//     Thus, a residual (Observed - calculated) will involve a difference
+		//     between the real (or "observered") and estimated correction as
+		// 	dCj = Cj - cj
+		//     For teleseisms, we demean the residuals for a given event i,
+		//     and for the station correction term this looks like:
+		//
+		// 	Rij - 1/N(Ej Rij) = dCj - 1/N(Ej dCj)
+		//
+		//     In other words, we demean the correction term as well. In the
+		//     normal equations, these terms look like
+		//
+		// 	0  1-1/N 0 0 -1/N  -1/N 0 0
+		//
+		//     The column corresponding to the observation is 1-1/N and the remaining
+		//     observations of this event are -1/N.
+		//
+		//     When weighting, we replace N by wsum and the "1s" by the square
+		//     root of individual weights (as above with vmp).
+		//
+		// 	NB: this part has not been properly tested.
+
+		if (istel == 1 && istacor == 1) {
+			ncwrt = 0;
+			for (int k1 = 0; k1 < nsta; k1++) {
+				for (int j1 = 0; j1 < nstr2; j1++) {
+					dtc[j1] = 0;
+				}
+				if (isgood[k1]) {
+					int ja = 0;
+					for (int j1 = 0; j1 < nsta; j1++) {
+						if (isgood[j1]) {
+							jsave[ja] = j1;
+							ja++;
+							double sqrpwt = sqrt(pwt[j1]);
+							dtc[ja] = -sqrpwt / wsum;
+							if (k1 == j1) {
+								dtc[ja] = sqrpwt + dtc[ja];
+							}
+						}
+					}
+					fprintf(fp_stc, "%d\n", ja);
+					for (int i1 = 0; i1 < ja; i1++) {
+						fprintf(fp_stc, "%d %f\n", istn[jsave[i1]], dtc[i1]);
+					}
+					ncwrt++;
+				}
+			}
+		}
+		// Note: need equivalent to above for local events eventually.
+
+		// ----build equations for path terms
+		if (isshot == 0) {
+			if (istel == 0) {
+				printf(" Making path terms for eq = %d\n", nev);
 			}
 			else {
-				du[k1 - 1] = dlen * (ds[0] + ds[1] + ds[2] + ds[3]) + du[k1 - 1];
-				du[k1] = dlen * (ds[4] + ds[5] + ds[6] + ds[7]) + du[k1];
+				printf("Making path terms for tele = %d\n", ntel);
 			}
+		}
+		else {
+			printf("Making path terms for shot = %d\n", nshot);
+		}
 
-			if (iray == 1) {
-				FILE *fp_pth = NULL;
-				if (nseg == 1) {
+		int nwrt = 0;
+		for (int j1 = 0; j1 < nsta; j1++) {
+			if (isgood[j1]) {
+				int ja = 0;
+				for (int i1 = 0; i1 < kbl; i1++) {
+					float vm2 = vmp[i1][j1];
+					if (vm2 != 0) {
+						jsave[ja++] = i1;
+					}
+				}
+				if (ja > 0) {
+					fprintf(fp_dts, "%d\n", ja);
+					for (int i1 = 0; i1 < ja; i1++) {
+						fprintf(fp_dts, "%d %f\n", indx[mndm[jsave[i1]]], vmp[jsave[i1]][j1]);
+					}
+					fprintf(fp_res, "%f\n", dat[j1]);
 					if (isshot == 0) {
 						if (istel == 0) {
-							sprintf(rayfile, "%s_event%d_%c.ray\n", sta[i], nev, phs[i]);
+							for (int i1 = 0; i1 < 4; i1++) {
+								fprintf(fp_dth, "%f\n", am[j1][i1]);
+							}
 						}
-						else {
-							sprintf(rayfile, "%s_tele%d_%c.ray\n", sta[i], ntel, phs[i]);
-						}
+						// ---in the case of a shot, we choose to make the origin time a variable
 					}
 					else {
-						sprintf(rayfile, "%s_shot%d_%c.ray\n", sta[i], nshot, phs[i]);
+						fprintf(fp_dth, "%f\n", am[j1][0]);
 					}
-					d_blank(rayfile, &len);
-					printf("File: %s\n", rayfile);
-					///////////////////////////////////////////////////////////////////
-					fp_pth = fopen(rayfile, "r");
-					if (!fp_spc) {
-						printf("error on opening file (%s)\n", specfile);
-						assert(0);
-					}
+					nwrt++;
 				}
-				double xray1 = xold / degrad;
-				double yray1 = glatinv(hpi - yold) / degrad;
-				double xray2 = xx / degrad;
-				double yray2 = glatinv(hpi - yy) / degrad;
-				if (fp_pth) {
-					fprintf(fp_pth, "%12.5f %12.5f %12.5f\n", xray1, yray1, zold);
-					fprintf(fp_pth, "%12.5f %12.5f %12.5f\n", xray2, yray2, zz);
-				}
-			}
-
-			// ---temporarly output for piercing point figure
-			// 	  write (31,fmt='(3f10.3)') xold,yold,-zold
-
-			// ----rdev is a measure of the deviation of ray from the source-station plane
-			double rx = xm - ex;
-			double ry = ym - ey;
-			double rmagsq = rx * rx + ry * ry;
-			double rds = rsx * rx + rsy * ry;
-			double rdev = sqrt(rmagsq - rds * rds);
-			rdevs = rdevs + rdev;
-			// -----------------------------------------
-			// ---go back to get next ray segment
-			goto a100;
-		a150:
-			printf(" Warning: Ray has left the medium.  Skipping remainder\n");
-			fprintf(fp_err, " Warning: Ray has left the medium.  Skipping remainder\n");
-			isgood[i] = 0;
-		}// ***** End of Loop over Observations *****
-
-		// --- demean the data vector if required
-		avresev = avresev / facsev;
-		if ((isshot == 1 && idmean == 1) || istel == 1) {
-			if (isshot == 1) { printf(" Average residual for shot %d is %lf", nshot, avresev); }
-			if (istel == 1) { printf(" Average residual for tele %d is %lf", ntel, avresev); }
-			dpot = dpot + avresev;
-			for (int k = 0; k < nsta; k++) {
-				if (isgood[k] == 1) {
-					dat[k] -= avresev;
-
-					// --note multipyling by pwt will make sum of residuals be zero.
-					//  However, in order to be consistent with the local / shot weighting, we
-					//  multiply the data vectory by sqrt(pwt(k)) anticipating that another sqrt(wt)
-					//  will come from a weighted GT.
-					dat[k] = dat[k] * sqrt(pwt[k]);
-					resmin[k] = resmin[k] - avresev;
-					obstime[k] = obstime[k] - avresev;
+				else {
+					printf(" Warning: ray has no derivative!\n");
+					printf(" Potential problem for syncing with corrections!\n");
+					fprintf(fp_err, " Warning: ray has no derivative!\n");
+					fprintf(fp_err, " Potential problem for syncing with corrections!\n");
 				}
 			}
 		}
-
-		// *** BEGIN STUFF FROM SPHYPIT
-		if (nomat == 0) {
-			for (int j1 = 0; j1 < nsta; j1++) {
-				for (int j2 = 0; j2 < kbl; j2++) {
-					vmp[j2][j1] = 0;
-				}
-			}
-
-			// Note that for shot data, if we demean the residuals we should also demean the
-			// partial derivatives, just like with teleseisms.
-			float wsum = 0;
-			if ((isshot == 1 && idmean == 1) || istel == 1) {
-				for (int k = 0; k < kbl; k++) {
-					vsum[k] = 0;
-				}
-
-				// --Note on weighting:  we ultimately want vmp to be
-				//
-				//        vmp = sqrt(wt) * [ g - sum(wt*g)/sum(wt)]
-				//
-				//        Again, the sqrt(wt) at the beginning is because of postmultiplication in
-				//        Least Squares to construct (Cdd)-1 properly.  The data vector is multiplied
-				//        above by sqrt(wt) as well.
-				//
-				//        At this point, vm is sqrt(wt)*g.  vsum will wind up
-				//        being the average, so we sum sqrt(wt)*vm to get wt*g,
-				// 	vmp is then sqrt(wt)*sqrt(wt)*g = wt*g
-				//        At the end of this loop we have
-				//        vsum(nvar) = sum over nobs (wt(nobs)*g(nvar, nobs))
-				//        vmp(nvar, nobs) =  wt(nobs)*g(nvar,nobs)
-				//        and wsum is just sum over nobs (wt(nobs)).
-				for (int k = 0; k < nsta; k++) {
-					if (isgood[k]) {
-						float wt = pwt[k];
-						double wet = sqrt(wt);
-						int lim = inbk[k];
-						if (lim != 0) {
-							for (int j1 = 0; j1 < lim; j1++) {
-								int jnd = mndex[ind[j1][k]];
-								float valv = vm[j1][k];
-								vmp[jnd][k] = valv;
-								// vsum = sum over j of Wij*gijl
-								vsum[jnd] += valv * wet;
-							}
-							wsum += wt;
-						}
-					}
-				}
-				// At this point, vmp is wt*g, vsum is sum(wt*g), and wsum = sum(wt)
-				for (int jnd = 0; jnd < kbl; jnd++) {
-					float valv = vsum[jnd] / wsum;
-					for (int i1 = 0; i1 < nsta; i1++) {
-						if (isgood[i1]) {
-							vmp[jnd][i1] -= sqrt(pwt[i1]) * valv;
-						}
-					}
-				}
-			}
-			else {
-				for (int k = 0; k < nsta; k++) {
-					if (isgood[k]) {
-						int lim = inbk[k];
-						if (lim != 0) {
-							for (int j1 = 0; j1 < lim; j1++) {
-								int jnd = mndex[ind[j1][k]];
-								vmp[jnd][k] += vm[j1][k];
-							}
-						}
-					}
-				}
-			}
-
-			// ----station corrections terms
-			//   Some explanation:
-			//     We consider that for station j there is a True station correction
-			//     Cj and a current esimate of it cj. We define a station correction
-			//     as a number added to the ray travel time to obtain the "real" time.
-			//     This is why the time correction is added above (dt = dt + tc).
-			//     Thus, a residual (Observed - calculated) will involve a difference
-			//     between the real (or "observered") and estimated correction as
-			// 	dCj = Cj - cj
-			//     For teleseisms, we demean the residuals for a given event i,
-			//     and for the station correction term this looks like:
-			//
-			// 	Rij - 1/N(Ej Rij) = dCj - 1/N(Ej dCj)
-			//
-			//     In other words, we demean the correction term as well. In the
-			//     normal equations, these terms look like
-			//
-			// 	0  1-1/N 0 0 -1/N  -1/N 0 0
-			//
-			//     The column corresponding to the observation is 1-1/N and the remaining
-			//     observations of this event are -1/N.
-			//
-			//     When weighting, we replace N by wsum and the "1s" by the square
-			//     root of individual weights (as above with vmp).
-			//
-			// 	NB: this part has not been properly tested.
-
-			int ncwrt = 0;
-			if (istel == 1 && istacor == 1) {
-				ncwrt = 0;
-				for (int k1 = 0; k1 < nsta; k1++) {
-					for (int j1 = 0; j1 < nstr2; j1++) {
-						dtc[j1] = 0;
-					}
-					if (isgood[k1]) {
-						int ja = 0;
-						for (int j1 = 0; j1 < nsta; j1++) {
-							if (isgood[j1]) {
-								jsave[ja] = j1;
-								ja++;
-								double sqrpwt = sqrt(pwt[j1]);
-								dtc[ja] = -sqrpwt / wsum;
-								if (k1 == j1) {
-									dtc[ja] = sqrpwt + dtc[ja];
-								}
-							}
-						}
-						fprintf(fp_stc, "%d\n", ja);
-						for (int i1 = 0; i1 < ja; i1++) {
-							fprintf(fp_stc, "%d %f\n", istn[jsave[i1]], dtc[i1]);
-						}
-						ncwrt++;
-					}
-				}
-			}
-			// Note: need equivalent to above for local events eventually.
-
-			// ----build equations for path terms
-			if (isshot == 0) {
-				if (istel == 0) {
-					printf(" Making path terms for eq = %d\n", nev);
-				}
-				else {
-					printf("Making path terms for tele = %d\n", ntel);
-				}
-			}
-			else {
-				printf("Making path terms for shot = %d\n", nshot);
-			}
-
-			int nwrt = 0;
-			for (int j1 = 0; j1 < nsta; j1++) {
-				if (isgood[j1]) {
-					int ja = 0;
-					for (int i1 = 0; i1 < kbl; i1++) {
-						float vm2 = vmp[i1][j1];
-						if (vm2 != 0) {
-							jsave[ja++] = i1;
-						}
-					}
-					if (ja > 0) {
-						fprintf(fp_dts, "%d\n", ja);
-						for (int i1 = 0; i1 < ja; i1++) {
-							fprintf(fp_dts, "%d %f\n", indx[mndm[jsave[i1]]], vmp[jsave[i1]][j1]);
-						}
-						fprintf(fp_res, "%f\n", dat[j1]);
-						if (isshot == 0) {
-							if (istel == 0) {
-								for (int i1 = 0; i1 < 4; i1++) {
-									fprintf(fp_dth, "%f\n", am[j1][i1]);
-								}
-							}
-							// ---in the case of a shot, we choose to make the origin time a variable
-						}
-						else {
-							fprintf(fp_dth, "%f\n", am[j1][0]);
-						}
-						nwrt++;
-					}
-					else {
-						printf(" Warning: ray has no derivative!\n");
-						printf(" Potential problem for syncing with corrections!\n");
-						fprintf(fp_err, " Warning: ray has no derivative!\n");
-						fprintf(fp_err, " Potential problem for syncing with corrections!\n");
-					}
-				}
-			}
-			if (isshot == 0) {
-				if (istel == 0) {
-					fprintf(fp_bok, "%d %d\n", nev, nwrt);
-				}
-				else {
-					fprintf(fp_bok, "%d %d\n", m2, nwrt);
-					if (istacor && ncwrt != nwrt) {
-						printf(" Error: ncwrt, nwrt not equal = %d %d\n", ncwrt, nwrt);
-						fprintf(fp_err, " Error: ncwrt, nwrt not equal = %d %d\n", ncwrt, nwrt);
-					}
-				}
-			}
-			else {
-				// ---in this case we solve for shot origin times
-				// fprintf(fp_bok, "%d %d\n", m1, nwrt);
-				// ---in this case we do not solve for shot origin times
-				fprintf(fp_bok, "%d %d\n", m2, nwrt);
-			}
-		} // END STUFF FROM SPHYPIT
-
-// ----output a data file if requested
-		if (idatout == 1) {
-			int iyr = 0, jday = 0, ihr = 0, imn = 0;
-			double sec = 0, dsec = 0;
-			etoh(dpot, &iyr, &jday, &ihr, &imn, &dsec);
-			sec = dsec;
+		if (isshot == 0) {
 			if (istel == 0) {
-				xlon = ex / degrad;
-				xlat = glatinv(hpi - ey) / degrad;
+				fprintf(fp_bok, "%d %d\n", nev, nwrt);
 			}
-			fprintf(fp_hed, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
-			fprintf(fp_dot, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
-			for (int j = 0; j < nsta; j++) {
-				if (isgood[j]) {
-					double tarr = obstime[j] + dpot;
-					etoh(tarr, &iyr, &jday, &ihr, &imn, &dsec);
-					// ---call attention to residuals over resflag seconds in magnitude
-					if (fabs(resmin[j]) > resflag) {
-						mark = '*';
-					}
-					else {
-						mark = ' ';
-					}
-					if (istel == 1) {
-						fprintf(fp_dot, "%s  %4d %3d %2d %2d %7.3lf %c %15.3f %10.3lf %c %lf %lf %lf\n", sta[j], iyr, jday, ihr, imn, dsec, phs[j], rwts[j], resmin[j], mark, tdelts[j], az1s[j], az2s[j]);
-					}
-					else {
-						fprintf(fp_dot, "%s  %4d %3d %2d %2d %7.3lf %c %15.3f %10.3lf %c %lf %lf\n", sta[j], iyr, jday, ihr, imn, dsec, phs[j], rwts[j], resmin[j], mark, azs[j], ais[j]);
-					}
+			else {
+				fprintf(fp_bok, "%d %d\n", m2, nwrt);
+				if (istacor && ncwrt != nwrt) {
+					printf(" Error: ncwrt, nwrt not equal = %d %d\n", ncwrt, nwrt);
+					fprintf(fp_err, " Error: ncwrt, nwrt not equal = %d %d\n", ncwrt, nwrt);
 				}
 			}
-			fprintf(fp_dot, "\n");
 		}
+		else {
+			// ---in this case we solve for shot origin times
+			// fprintf(fp_bok, "%d %d\n", m1, nwrt);
+			// ---in this case we do not solve for shot origin times
+			fprintf(fp_bok, "%d %d\n", m2, nwrt);
+		}
+	} // END STUFF FROM SPHYPIT
+
+	// ----output a data file if requested
+	if (idatout == 1) {
+		int iyr = 0, jday = 0, ihr = 0, imn = 0;
+		double sec = 0;
+		etoh(dpot, &iyr, &jday, &ihr, &imn, &dsec);
+		sec = dsec;
+		if (istel == 0) {
+			xlon = ex / degrad;
+			xlat = glatinv(hpi - ey) / degrad;
+		}
+		fprintf(fp_hed, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
+		fprintf(fp_dot, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
+		for (j = 0; j < nsta; j++) {
+			if (isgood[j]) {
+				double tarr = obstime[j] + dpot;
+				etoh(tarr, &iyr, &jday, &ihr, &imn, &dsec);
+				// ---call attention to residuals over resflag seconds in magnitude
+				if (fabs(resmin[j]) > resflag) {
+					mark = '*';
+				}
+				else {
+					mark = ' ';
+				}
+				if (istel == 1) {
+					fprintf(fp_dot, "%s  %4d %3d %2d %2d %7.3lf %c %15.3f %10.3lf %c %lf %lf %lf\n", sta[j], iyr, jday, ihr, imn, dsec, phs[j], rwts[j], resmin[j], mark, tdelts[j], az1s[j], az2s[j]);
+				}
+				else {
+					fprintf(fp_dot, "%s  %4d %3d %2d %2d %7.3lf %c %15.3f %10.3lf %c %lf %lf\n", sta[j], iyr, jday, ihr, imn, dsec, phs[j], rwts[j], resmin[j], mark, azs[j], ais[j]);
+				}
+			}
+		}
+		fprintf(fp_dot, "\n");
 	} // 2474 go back and start on next earthquake
 
 	FILE *fp_sht = NULL, *fp_tel = NULL;
@@ -2428,12 +2519,12 @@ a3:
 				fp_din = fp_tel;
 
 				// ----- read in time tables - hardwire for test
-				FILE *fp_ptm = fopen(pbasfil, "r");
+				FILE* fp_ptm = fopen(pbasfil, "r");
 				if (!fp_ptm) {
 					printf("error on opening file (%s)\n", pbasfil);
 					assert(0);
 				}
-				FILE *fp_stm = fopen(sbasfil, "r");
+				FILE* fp_stm = fopen(sbasfil, "r");
 				if (!fp_stm) {
 					printf("error on opening file (%s)\n", sbasfil);
 					assert(0);
@@ -2441,7 +2532,7 @@ a3:
 				// readtbl3(fp_ptm, fp_stm);
 
 				// ----- read in ellipticity correction table
-				FILE *fp_elp = fopen(elipfil, "r");
+				FILE* fp_elp = fopen(elipfil, "r");
 				if (!fp_elp) {
 					printf("error on opening file (%s)\n", elipfil);
 					assert(0);
@@ -2449,10 +2540,10 @@ a3:
 				// redtab(fp_elp);
 
 				// -----translate local grid coordinates to lat-lon for points at the base of the model.
-				for (int j = 0; j < ny; j++) {
-					double xlat = y[0] + dq * j;
+				for (j = 0; j < ny; j++) {
+					xlat = y[0] + dq * j;
 					for (int i = 0; i < nx; i++) {
-						double xlon = x0 + df * i;
+						xlon = x0 + df * i;
 						slons[i][j] = xlon;
 						slats[i][j] = xlat;
 					}
@@ -2524,8 +2615,8 @@ a3:
 	fprintf(fp_err, "  No. Stn    Phs Average St.Dev. Nobs\n");
 	fprintf(fp_log, "  No. Stn    Phs Average St.Dev. Nobs\n");
 
-	for (int kn = 0; kn < nstr; kn++) {
-		for (int iph = 0; iph < 2; iph++) {
+	for (kn = 0; kn < nstr; kn++) {
+		for (iph = 0; iph < 2; iph++) {
 			facs = facstn[kn][iph];
 			int jnobs = nobstn[kn][iph];
 			rsq = rstnsq[kn][iph];
@@ -2556,7 +2647,7 @@ a3:
 			fprintf(fp_msc, "%d\n", ja);
 		}
 		if (istacor) {
-			fprintf(fp_stc, "%d\n", ja);;
+			fprintf(fp_stc, "%d\n", ja);
 		}
 		printf("\n");
 		printf(" Number of Wavespeed Variables: %d\n", mbl);
@@ -2583,43 +2674,3 @@ a3:
 	return 0;
 }
 
-double pmin(double d1, double d2) {
-	// --- return minimum of positive d1 and d2.If neither are positive return -1e20
-	if (d1 >= 0) {
-		if (d2 >= 0) {
-			if (d1 < d2) {
-				return  d1;
-			}
-			else {
-				return d2;
-			}
-		}
-		else {
-			return d1;
-		}
-	}
-	else {
-		if (d2 >= 0) {
-			return d2;
-		}
-		else {
-			return -1e20;
-		}
-	}
-}
-
-void ljust(char str[6]) {
-	//c-- - routine to left justify station names(no leading blanks)
-	//
-	//c-- - first make sure that string is not entirely blank
-	int i;
-	for (i = 0; i < 6; i++)
-		if (str[i] != ' ')
-			break;
-	while (str[0] == ' ') {
-		for (i = 0; i < 5; i++) {
-			str[i] = str[i + 1];
-		}
-		str[5] = ' ';
-	}
-}
