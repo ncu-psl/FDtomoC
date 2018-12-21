@@ -1,80 +1,63 @@
-//c	program sphrayderv
-//c
-//c	Arrival time inversion code for use in conjunction with FD travel
-//c	time tables.This is a version of telrayderv.f that uses spherical
-//c	coordinates.
-//c
-//c	This program accumulates derivatives in a "metagrid"
-//c	in which a coarse grid is overlain on the original fine grid.
-//c
-//c	In this version the fine and coarse grid points overlap exactly, so we specify the
-//c	the coarse grid in terms of multiples of the fine grid spacing "h".In this version
-//c	the grid spacing in any direction(hx, hy, hz) is a function ONLY of that particular
-//c	direction(hx(x), hy(y), hz(z)).There is no reason why these can't be, but it's easier
-//c	bookkeeping if they aren't.
-//c
-//c	We specify combinations of grid points by the number of CELLS they subsume.For example,
-//c	suppose we have a fine grid with 24 points in the x direction, which defines 23 cells.
-//c	A combination of cells could be(6, 4, 2, 1, 4, 6) - the sum must be 23 - which results in
-//c	7 grid points in the x direction.The x distance between grid points is(6h, 4h, 2h, h, 4h, 6h).
-//c
-//c	Usually, there are a lot more earthquakes than seismometers, so it is
-//c	generally more efficient to save travel time files from the individual
-//c	stations.The program will read in an earthquake data file(header
-//	c	followed by a station / phase list) and then read in the appropriate
-//	c	travel time files
-//	c
-//	c
-//	c	Local Earthquakes are read in first, followed by teleseisms, and finally shots.
-//	c
-//	c	Input file attachments :
-//c
-//c       fn      Name   Uname   U#  Comments
-//c	 1     stafile lunsta   8  Input station list
-//c	 2     locdfil luneqs   9  Local Earthquake data file
-//c	 3     shotfil lunsht  10  Local Shot data file(isshot / idoshot = 1)
-//c	 4     telefil luntel  11  Teleseismic data file(istel / idotel = 1)
-//c	 5     oldvfil luncor  12  Old coarse scale model(if ivpvs = 1)
-//c	14     tabfile luntab  22  local time input files - dynamically assigned
-//c	27     pbasfil lunptm  35  P base travel time file(istel / idotel = 1)
-//c	28     sbasfil lunstm  36  S base travel time file(istel / idotel = 1)
-//c	29     elipfil lunelp  37  Ellipticity correction  file(istel / idotel = 1)
-//c
-//c       Output file attachments :
-//c
-//c       fn      Name   Uname   U#  Comments
-//c	               lout     2  sphrayderv.log(log file)
-//c	 9     raystat lunray  17  Ray Statistics(if iraystat = 1)
-//c	10     telrerr lunerr  18  Error summary->now in log file
-//c	11     dtdsfil lundts  19  dt / ds output file
-//c	12     resfile lunres  20  residual output
-//c	13     hitfile lunhit  21  hit map / output
-//c	15     dtdhfil lundth  23  dt / dh(hypo derivatives)
-//c	16     bookfil lunbok  24  bookeeping file
-//c	17     dotfile lundot  25  data out file(used if idatout = 1)
-//c	18     headfil lunhed  26  output header file(used if idatout = 1)
-//c	19     entfile lunmat  27  output entry points of teleseisms at base(used if nomat = 1)
-//c	20     stcfile lunstc  28  Station correction derivative(used if istacor = 1)
-//c	25     raypfil lunpth  33  ray path output(if iray = 1) - dynamically assigned
-//c       34     sclefil lunmsc  43  Current index vector.This is used by makehyps, and is upgraded
-//c				   by all routines that add rows to the matrix(like addcovs, addpo, etc).
-//c
+// c	Arrival time inversion code for use in conjunction with FD travel
+// c	time tables.This is a version of telrayderv.f that uses spherical
+// c	coordinates.
+// c
+// c	This program accumulates derivatives in a "metagrid"
+// c	in which a coarse grid is overlain on the original fine grid.
+// c
+// c	In this version the fine and coarse grid points overlap exactly, so we specify the
+// c	the coarse grid in terms of multiples of the fine grid spacing "h".In this version
+// c	the grid spacing in any direction(hx, hy, hz) is a function ONLY of that particular
+// c	direction(hx(x), hy(y), hz(z)).There is no reason why these can't be, but it's easier
+// c	bookkeeping if they aren't.
+// c
+// c	We specify combinations of grid points by the number of CELLS they subsume.For example,
+// c	suppose we have a fine grid with 24 points in the x direction, which defines 23 cells.
+// c	A combination of cells could be(6, 4, 2, 1, 4, 6) - the sum must be 23 - which results in
+// c	7 grid points in the x direction.The x distance between grid points is(6h, 4h, 2h, h, 4h, 6h).
+// c
+// c	Usually, there are a lot more earthquakes than seismometers, so it is
+// c	generally more efficient to save travel time files from the individual
+// c	stations.The program will read in an earthquake data file(header
+// c	followed by a station / phase list) and then read in the appropriate
+// c	travel time files
+// c
+// c
+// c	Local Earthquakes are read in first, followed by teleseisms, and finally shots.
+// c
+// c	Input file attachments :
+// c
+// c       fn      Name   Uname   U#  Comments
+// c	 1     stafile lunsta   8  Input station list
+// c	 2     locdfil luneqs   9  Local Earthquake data file
+// c	 3     shotfil lunsht  10  Local Shot data file(isshot / idoshot = 1)
+// c	 4     telefil luntel  11  Teleseismic data file(istel / idotel = 1)
+// c	 5     oldvfil luncor  12  Old coarse scale model(if ivpvs = 1)
+// c	14     tabfile luntab  22  local time input files - dynamically assigned
+// c	27     pbasfil lunptm  35  P base travel time file(istel / idotel = 1)
+// c	28     sbasfil lunstm  36  S base travel time file(istel / idotel = 1)
+// c	29     elipfil lunelp  37  Ellipticity correction  file(istel / idotel = 1)
+// c
+// c       Output file attachments :
+// c
+// c       fn      Name   Uname   U#  Comments
+// c	               lout     2  sphrayderv.log(log file)
+// c	 9     raystat lunray  17  Ray Statistics(if iraystat = 1)
+// c	10     telrerr lunerr  18  Error summary->now in log file
+// c	11     dtdsfil lundts  19  dt / ds output file
+// c	12     resfile lunres  20  residual output
+// c	13     hitfile lunhit  21  hit map / output
+// c	15     dtdhfil lundth  23  dt / dh(hypo derivatives)
+// c	16     bookfil lunbok  24  bookeeping file
+// c	17     dotfile lundot  25  data out file(used if idatout = 1)
+// c	18     headfil lunhed  26  output header file(used if idatout = 1)
+// c	19     entfile lunmat  27  output entry points of teleseisms at base(used if nomat = 1)
+// c	20     stcfile lunstc  28  Station correction derivative(used if istacor = 1)
+// c	25     raypfil lunpth  33  ray path output(if iray = 1) - dynamically assigned
+// c	34     sclefil lunmsc  43  Current index vector.This is used by makehyps, and is upgraded
+// c	by all routines that add rows to the matrix(like addcovs, addpo, etc).
+// c
 
-/*
-	tabfile(local time input files - dynamically assigned)		.. / data / small / TTimes00
-	locdfil(Local Earthquake data file)							.. / data / small / local.data_re01
-	stafile(Input station list)									.. / data / small / runs_files / stationloc_out.txt
-
-	oldvfil(Old coarse scale model(if ivpvs = 1))				.. / data / small / TW_m30_wL.mod
-
-	shotfil(Local Shot data file(isshot / idoshot = 1))			.. / data / small / runs_files / arrivals / all_shot.data_04
-	telefil(Teleseismic data file(istel / idotel = 1))			.. / data / small / runs_files / arrivals / tele_01_09.dat
-	pbasfil(P base travel time file(istel / idotel = 1))		.. / data / small / runs_files / parameter / Ptimes.base293
-	sbasfil(S base travel time file(istel / idotel = 1))		.. / data / small / runs_files / parameter / Stimes.base293
-	elipfil(Ellipticity correction  file(istel / idotel = 1))	.. / data / small / runs_files / parameter / elpcor
-*/
-
-#include "pch.h"
 #include <math.h>
 #include <stdio.h>
 #include "../include/gridspec.h"
@@ -87,7 +70,6 @@
 #include "../include/string_process.h"
 #include "../include/time_process.h"
 
-#define DEBUG_MSG 0
 //c--mustv is the number of variables that must be assigned in the parameter
 //c       file in order for this program to run correctly.The names of the
 //c       variables are specified in the mvals string array below.
@@ -103,6 +85,25 @@
 
 #define _ATL_SECURE_NO_WARNINGS
 #pragma warning(disable : 4206 4221 4464 4710 5045)
+
+int kn = 0, iph = 0, kbl = 0;
+int je = 0, ke = 0;
+
+double h, dq, df;
+double dsec, tarr, dpot;
+double stx, sty;
+float xlat, xlon;
+double a, b, c, quad;
+double tolmin, tolmax;
+double ex, ey, ez;
+double xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
+double sx, sy, sz, sf, sq, sr;
+double xo, yo, zo;
+double xold, yold, zold;
+double ro, r1, r2, q1, q2, f1, f2;
+double xs, ys, zs;
+double sinq, cosq, tanq, ctanq, tansq, ctansq;
+double dl, tc, rdevs;
 
 float gx[nxcm], gy[nycm], gz[nzcm];
 float sp[nxyzm2];
@@ -131,6 +132,7 @@ int nhit[nxyzm2], mhit[nxyzm2];
 int inbk[maxobs];
 int jsave[maxkbl];
 int istn[maxobs];
+int nx, ny, nz, i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
 
 char logfile[80];
 
@@ -150,9 +152,6 @@ char mark;
 int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
 int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
-
-void ljust(char[6]);
-double pmin(double, double);
 
 int main(void) {
 	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],
@@ -185,7 +184,7 @@ int main(void) {
 		assert(0);
 	}
 	int len = 0, ierr = 0;
-	for (int i = 0; i < MUSTV; i++) {
+	for (i = 0; i < MUSTV; i++) {
 		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
 		if (ierr == 1) {
 			printf("Error trying to read variable %s", mvals[i]);
@@ -219,7 +218,7 @@ int main(void) {
 		assert(0);
 	}
 	char* file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
-	for (int i = 0; i < MUSTF; i++) {
+	for (i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
 		if (ierr == 1) {
 			printf("Error trying to read filename %s", files[i]);
@@ -227,6 +226,7 @@ int main(void) {
 		}
 		sscanf(pval, "%s", file_list[i]);
 	}
+
 	//--Optionally read in some variables
 	//---Reading option
 	get_vars(fp_spc, "iread ", pval, &len, &ierr);
@@ -366,7 +366,7 @@ a11:
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 	sscanf(parval, "%d", &igridx[0]);
-	for (int k = 1; k < nxc; k++) {
+	for (k = 1; k < nxc; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &igridx[k]);
@@ -386,7 +386,7 @@ a13:
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 	sscanf(parval, "%d", &igridy[0]);
-	for (int k = 1; k < nyc; k++) {
+	for (k = 1; k < nyc; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &igridy[k]);
@@ -406,7 +406,7 @@ a15:
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &igridz[0]);
-		for (int k = 1; k < nzc; k++) {
+		for (k = 1; k < nzc; k++) {
 			ib = ie;
 			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 			sscanf(parval, "%d", &igridz[k]);
@@ -470,15 +470,15 @@ a15:
 	ny = 1;
 	nz = 1;
 
-	for (int i = 1; i < nxc; i++) {
+	for (i = 1; i < nxc; i++) {
 		nx = nx + igridx[i - 1];
 	}
 
-	for (int i = 1; i < nyc; i++) {
+	for (i = 1; i < nyc; i++) {
 		ny = ny + igridy[i - 1];
 	}
 
-	for (int i = 1; i < nzc; i++) {
+	for (i = 1; i < nzc; i++) {
 		nz = nz + igridz[i - 1];
 	}
 	if (DEBUG_PRINT) {
@@ -526,8 +526,8 @@ a15:
 	if (fabs(df) < 0.0001)
 		df = fabs(h / (rearth * sin(y[0])));
 
-	double tolmin = h * 1.E-6;
-	double tolmax = h * 6.0;
+	tolmin = h * 1.E-6;
+	tolmax = h * 6.0;
 	if (DEBUG_PRINT) {
 		printf("  Origin:  %22.14lf %25.15lf %25.16lf       radians/km\n", x0, y[0], z0);
 		printf("  Radial Spacing: %24.16lf       km\n", h);
@@ -566,7 +566,7 @@ a15:
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", nxc);
 	fprintf(fp_log, "  X coarse grid node spacing: \n");
-	for (int i = 0; i < nxc - 1; i++) {
+	for (i = 0; i < nxc - 1; i++) {
 		fprintf(fp_log, "% 4d", igridx[i]);
 		if (i % 10 == 9) {
 			fprintf(fp_log, "\n");
@@ -575,7 +575,7 @@ a15:
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
 	fprintf(fp_log, "  Y coarse grid node spacing: \n");
-	for (int i = 0; i < nyc - 1; i++) {
+	for (i = 0; i < nyc - 1; i++) {
 		fprintf(fp_log, "% 4d", igridy[i]);
 		if (i % 10 == 9) {
 			fprintf(fp_log, "\n");
@@ -584,7 +584,7 @@ a15:
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
 	fprintf(fp_log, "  Z coarse grid node spacing: \n");
-	for (int i = 0; i < nzc - 1; i++) {
+	for (i = 0; i < nzc - 1; i++) {
 		fprintf(fp_log, "% 4d", igridz[i]);
 		if (i % 10 == 9) {
 			fprintf(fp_log, "\n");
@@ -795,18 +795,17 @@ a15:
 			assert(0);
 		}
 	}
+
 	gx[0] = x0;
 	gy[0] = y[0];
 	gz[0] = z0;
-	for (int i = 1; i < nxc; i++) {
+	for (i = 1; i < nxc; i++) {
 		gx[i] = gx[i - 1] + df * igridx[i - 1];
 	}
-
-	for (int i = 1; i < nyc; i++) {
+	for (i = 1; i < nyc; i++) {
 		gy[i] = gy[i - 1] + dq * igridy[i - 1];
 	}
-
-	for (int i = 1; i < nzc; i++) {
+	for (i = 1; i < nzc; i++) {
 		gz[i] = gz[i - 1] + h * igridz[i - 1];
 	}
 
@@ -848,7 +847,6 @@ a15:
 
 		int ielev;
 		double slat, slon;
-		double stx = 0, sty = 0;
 		sscanf(str_inp, "%lf %lf %d %s %lf %lf %f %f", &sty, &stx, &ielev, stt[nstr], &slat, &slon, &tcor[nstr][0], &tcor[nstr][1]);
 		// ---temp lines to reassign slat and slon as the reference locations
 		stx = slon;
@@ -870,8 +868,8 @@ a15:
 		fprintf(fp_stc, " %d", nstr2);
 	}
 
-	for (int i = 0; i < nstr; i++) {
-		for (int j = 0; j < 2; j++) {
+	for (i = 0; i < nstr; i++) {
+		for (j = 0; j < 2; j++) {
 			avrstn[i][j] = 0;
 			rstnsq[i][j] = 0;
 			facstn[i][j] = 0;
@@ -886,30 +884,32 @@ a15:
 		nhit[i1] = 0;
 	}
 
-	// ****************** Start Loop over events ******************
-	//    Read in event header
-	int nev = 0, nshot = 0, ntel = 0, iover = 0;
+	int nev = 0, nshot = 0, ntel = 0, ntread = 0, iover = 0;
 	int knobs = 0, isshot = 0, istel = 0;
 	float facs = 0, facsev = 0, avres = 0, avresev = 0;
 	float rms = 0, rsq = 0, wtmod = 0;
 	float xm = 0, ym = 0, zm = 0;
-	double dsec = 0;
+
+	// ****************** Start Loop over events ******************
+	//    Read in event header
 a3:
 	fgets(str_inp, sizeof(str_inp), fp_din);
+	if (feof(fp_din)) {
+		goto a60;
+	}
 	if (strlen(str_inp) > sizeof(str_inp)) {
 		printf("str_inp is too long: %s\n", str_inp);
 		assert(0);
 	}
 	int kyr, kday, khr, kmn;
 	double esec;
-	float xlat, xlon, dep;
+	float dep;
 
 	sscanf(str_inp, "%d %d %d %d %lf %f %f %f %s\n", &kyr, &kday, &khr,
 		&kmn, &esec, &xlat, &xlon, &dep, evid);
 
 	//	c---convert to epochal time
 	dsec = esec;
-	double dpot = 0;
 	htoe(kyr, kday, khr, kmn, dsec, &dpot);
 
 	if (isshot == 0) {
@@ -924,7 +924,6 @@ a3:
 		nshot++;
 	}
 	int ies = 0, jes = 0, kes = 0;
-	double ex = 0, ey = 0, ez = 0;
 	double xis = 0, yjs = 0, zks = 0;
 	if (istel == 0) {
 		ex = xlon * degrad;
@@ -1016,7 +1015,6 @@ a3:
 		pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
 		dsec = sec;
 
-		double tarr = 0;
 		htoe(iyr, jday, ihr, imn, dsec, &tarr);
 		obstime[nsta] = tarr - dpot;
 		if (nsta > maxobs) {
@@ -1042,12 +1040,6 @@ a3:
 		}
 	}
 
-	int kn = 0, iph = 0, kbl = 0;
-	int je = 0, ke = 0;
-
-	int i = 0, j = 0, ntread = 0;
-	double tc = 0, rdevs = 0;
-
 	// *****Start Loop over Phases*****
 	for (i = 0; i < nsta; i++) {
 
@@ -1071,9 +1063,9 @@ a3:
 			goto a200;
 			// continue; // for(i=0;i<nsta;i++) {...}
 		}
-		float xs = stlon[kn];
-		float ys = stlat[kn];
-		double zs = stz[kn];
+		xs = stlon[kn];
+		ys = stlat[kn];
+		zs = stz[kn];
 
 		iph = 0;
 		if (phs[i] == 'S')
@@ -1083,14 +1075,16 @@ a3:
 		istn[i] = kn + nstr * iphm1;
 
 		//--- This is the nearest grid point to the Station
-		int is = (int)(round((xs - x0) / df));
-		int js = (int)(round((ys - y[0]) / dq));
-		int ks = (int)(round((zs - z0) / h));
+		is = (int)(round((xs - x0) / df));
+		js = (int)(round((ys - y[0]) / dq));
+		ks = (int)(round((zs - z0) / h));
 
 		//--- This is the cell containing the Station
-		int iscell = (int)((xs - x0) / df);
-		int jscell = (int)((ys - y[0]) / dq);
-		int kscell = (int)((zs - z0) / h);
+		iscell = (int)((xs - x0) / df);
+		jscell = (int)((ys - y[0]) / dq);
+		kscell = (int)((zs - z0) / h);
+		// printf("1083 iscell=%d\tjsecll=%d\tkscell=%d\n", iscell, jscell, kscell);
+		// stop
 
 		//---See if the travel time tables for this station has been read in.  If not, read them in.
 		if (ntread > 0) {
@@ -1115,7 +1109,7 @@ a3:
 
 			for (j = 0; j < ntread - 1; j++) {
 				int flag = 0;
-				for (int k = 0; k < nsta; k++) {
+				for (k = 0; k < nsta; k++) {
 					if (strcmp(sta[k], stn[j]) == 0) {
 						if (ivs == 0 || phs[k] == pha[j]) {
 							flag = 1;
@@ -1138,6 +1132,7 @@ a3:
 			if (DEBUG_PRINT)
 				printf("Overwriting %s  %c with  %s %c\n", stn[j], pha[j], sta[i], phs[i]);
 		}
+
 		strcpy(stn[iuse], sta[i]);
 		pha[iuse] = phs[i];
 		if (phs[i] == 'P' || ivs == 0) {
@@ -1203,8 +1198,8 @@ a3:
 			printf("...Done.\n");
 		j = iuse;
 
-		// ----test to see if all data can be read in correctly
 	a7:
+		// ----test to see if all data can be read in correctly
 		if (iread == 1) {
 			goto a3;
 		}
@@ -1236,7 +1231,7 @@ a3:
 			elpcr(elat, tdelt, azdd, ezr4, &elpc, iphm1, 1);
 			double time = 0, tbase = 0;
 			int inbound = 0;
-			//entry(rlat, rlon, ezr4, &ebx, &eby, &ebz, iphm1, j, elpc, &time, &tbase, &inbound);
+			// entry(rlat, rlon, ezr4, &ebx, &eby, &ebz, iphm1, j, elpc, &time, &tbase, &inbound);
 
 			if (inbound == 0) {
 				printf(" Error: this station has an out of bounds start point: %s\n", sta[i]);
@@ -1286,7 +1281,7 @@ a3:
 		rsy /= smag;
 
 		// ----- Now Trace ray from the earthquake to the station
-		int nseg = 0;
+		nseg = 0;
 		int iseg = 0;
 		int isegm1 = 0;
 		int isegm2 = 0;
@@ -1309,16 +1304,16 @@ a3:
 		ke = kes;
 
 		// --- coordinates of point 1
-		double xi = xis;
-		double yj = yjs;
-		double zk = zks;
+		xi = xis;
+		yj = yjs;
+		zk = zks;
 
 		// --- Calculate the traveltime at the earthquake by trilinear interpolation
 
-		int nk = nxy * ke;
-		int nj = nx * je;
-		int nk2 = nxy * (ke + 1);
-		int nj2 = nx * (je + 1);
+		nk = nxy * ke;
+		nj = nx * je;
+		nk2 = nxy * (ke + 1);
+		nj2 = nx * (je + 1);
 
 		//c Point 1 = SW TOP = nk + nj + ie
 		//c Point 2 = SE TOP = nk + nj + ie + 1
@@ -1353,11 +1348,11 @@ a3:
 			goto a200;
 			// continue; // for(i=0;i<nsta;i++){...
 		}
-		printf("1345 xx=%f xi=%f df=%f\n", xx, xi, df);
-		double fx = (xx - xi) / df;
-		double fy = (yy - yj) / dq;
-		double fz = (zz - zk) / h;
-		printf("1345 fx=%lf fy=%lf fz=%lf\n", fx, fy, fz);
+		// printf("1345 xx=%f xi=%f df=%f\n", xx, xi, df);
+		fx = (xx - xi) / df;
+		fy = (yy - yj) / dq;
+		fz = (zz - zk) / h;
+		// printf("1345 fx=%lf fy=%lf fz=%lf\n", fx, fy, fz);
 
 		double ds[8];
 		ds[0] = (1. - fz)*(1. - fy)*(1. - fx);
@@ -1369,25 +1364,18 @@ a3:
 		ds[6] = fz * fy * (1. - fx);
 		ds[7] = fz * fy * fx;
 
-		double dt = 0;
+		dt = 0;
 		for (int iii = 0; iii < 8; iii++) {
-			if (DEBUG_MSG)
-				printf("1331 ds[%d]=%lf\t\t", iii, ds[iii]);
-			if (DEBUG_MSG)
-				printf("1332 t[%d][%d]=%lf\n", j, ipt[iii], t[j][ipt[iii]]);
 			dt += ds[iii] * t[j][ipt[iii]];
 		}
-		if (DEBUG_MSG)
-			printf("1333 dt_sum=%lf\n", dt);
 
 		// --- For local events, ttel = 0. For teles, ttel is the time to the base of the model.
 		dt += ttel;
+
 		// --- apply station correction
 		dt += tc;
 		dt = obstime[i] - dt;
 		resmin[i] = dt;
-		if (DEBUG_MSG)
-			printf("1333 ttel=%lf tc=%lf obstime=%lf dt=%lf\n", ttel, tc, obstime[i], dt);
 
 		//     This could be skipped for teles, but is innocuous
 		double dsdx[8];
@@ -1428,10 +1416,6 @@ a3:
 		dtdx /= df;
 		dtdy /= dq;
 		dtdz /= h;
-		if (DEBUG_MSG)
-			printf("1383 dt=%lf df=%lf dq=%lf h=%lf\n", dt, df, dq, h);
-		if (DEBUG_MSG)
-			printf("1384 dtdx=%lf dtdy=%lf dtdz=%lf\n", dtdx, dtdy, dtdz);
 
 		//----- wt = 1 / variance
 		//----- wet = 1 / standard deviation
@@ -1474,7 +1458,7 @@ a3:
 		rs = rearth - zz;
 		dqs = rs * dys;
 		dfs = rs * sin(yy) * dxs;
-		double dlen = sqrt(dfs * dfs + dqs * dqs + dzs * dzs);
+		dlen = sqrt(dfs * dfs + dqs * dqs + dzs * dzs);
 
 		if ((ie == iscell && je == jscell && ke == kscell) || (dlen < (h / 1000.))) {
 
@@ -1639,7 +1623,7 @@ a3:
 				// ----- form velocity matrix
 				int nbk = 0;
 				for (int jb = 0; jb < maxvarc; jb++) {
-					if (du[jb] == 0) {
+					if (du[jb] != 0) {
 						j = jb;
 
 						// !if for S wave, add j, lzw
@@ -1680,6 +1664,7 @@ a3:
 							}
 						}
 						nhit[j]++;
+
 						//c-- - Vp / Vs section : If we solve for dr instead of dUs, then
 						//c	  Tso - Tsc = sum(dt / dUs) DUs = sum(dt / dUs) D(rUp) =
 						//c	  	    sum(dt / dUs)[UpDr + rDUp].
@@ -1692,14 +1677,14 @@ a3:
 							int jbp = jb;
 							int jbs = j;
 							if (ido1d) {
-								jbp = jb * nxyc + 1;
+								jbp = jb * nxyc;
 								jbs = jbp + nxyzc;
 							}
-							// vm(nbk, i) = vm(nbk, i)*sp(jbp)            !sp(jbp) should be P wave slowness
+
+							// scale Dr part using P velocity
 							vm[nbk][i] = vm[nbk][i] * sp[jbp] * vpvsscale;
 
-							// ----Scale DUp derivative by r, and note that this is a new hit variable(Up)
-							// 	            vm(nbk, i) = du(jb)*wet*sp(j)
+
 							nbk++;
 							if (nbk > maxnbk) {
 								printf(" Error: nbk too large, stopping\n");
@@ -1707,6 +1692,9 @@ a3:
 								fprintf(fp_log, " Error: nbk too large, stopping\n");
 								assert(0);
 							}
+
+							// ----Scale DUp derivative by r, and note that this is a new hit variable(Up)
+							// 	            vm(nbk, i) = du(jb)*wet*sp(j)
 							vm[nbk][i] = du[jb] * wet * sp[jbs];
 							ind[nbk][i] = jb;
 
@@ -1729,7 +1717,7 @@ a3:
 								mbl++;
 								if (mbl > maxmbl) {
 									printf(" Error: mbl too large, stopping\n");
-									fprintf(fp_err, " Error: kbl=%d\n", kbl);
+									fprintf(fp_err, " Error: mbl=%d\n", kbl);
 									fprintf(fp_log, " Error: mbl too large, stopping\n");
 									assert(0);
 								}
@@ -1773,19 +1761,12 @@ a3:
 		//c dt / dr = [(pt5 - pt1 + pt6 - pt2
 		//	c + pt7 - pt3 + pt8 - pt4)] / 4h
 
-		double r1 = rearth - zk;
-		double r2 = r1 - h;
-		double q1 = yj;
-		double q2 = q1 + dq;
-		double f1 = xi;
-		double f2 = f1 + dq;
-		double gradt[3];
-		if (DEBUG_MSG)
-			printf("1723 r1=%lf\tr2=%lf\nq1=%lf\tq2=%lf\nf1=%lf\tf2=%lf\n", r1, r2, q1, q2, f1, f2);
-		for (int iii = 0; iii < 8; iii++) {
-			if (DEBUG_MSG)
-				printf("1726 t[0][%d]=%lf\n", ipt[iii], t[j][ipt[iii]]);
-		}
+		r1 = rearth - zk;
+		r2 = r1 - h;
+		q1 = yj;
+		q2 = q1 + dq;
+		f1 = xi;
+		f2 = f1 + dq;
 
 		// dt/df=(1/rsinQ)dt/df
 		gradt[0] = ((t[j][ipt[1]] - t[j][ipt[0]]) / (r1 * sin(q1))
@@ -1808,22 +1789,17 @@ a3:
 		//c-- - reverse sign on gradient since we are tracing the ray BACKWARDS(i.e.to the source, j).gradt3 is
 		//c   a double negative(-dtdz = -(-dtdr)) so we leave it as is, but recall that gradt(3) is now the r component
 		//c   of the ray.
-		if (DEBUG_MSG)
-			printf("1746 gradt(0)=%lf gradt(1)=%lf gradt(2)=%lf\n", gradt[0], gradt[1], gradt[2]);
 		gradt[0] = gradt[0] * -1;
 		gradt[1] = gradt[1] * -1;
 
 		double sinf = sin(xx);
 		double cosf = cos(xx);
-		double sinq = sin(yy);
-		double cosq = cos(yy);
-		double ro = rearth - zz;
-		double xo = ro * sinq * cosf;
-		double yo = ro * sinq * sinf;
-		double zo = ro * cosq;
-
-		double sx = 0, sy = 0, sz = 0;
-		double sf = 0, sq = 0, sr = 0;
+		sinq = sin(yy);
+		cosq = cos(yy);
+		ro = rearth - zz;
+		xo = ro * sinq * cosf;
+		yo = ro * sinq * sinf;
+		zo = ro * cosq;
 
 		// if ray in seismometer cube, use straight ray from source
 		if (ie >= (is - 1) && ie < (is + 1) &&
@@ -1836,7 +1812,7 @@ a3:
 			double dx = x2 - xo;
 			double dy = y2 - yo;
 			double dz = z2 - zo;
-			double dl = sqrt(dx * dx + dy * dy + dz * dz);
+			dl = sqrt(dx * dx + dy * dy + dz * dz);
 			sx = dx / dl;
 			sy = dy / dl;
 			sz = dz / dl;
@@ -1851,7 +1827,7 @@ a3:
 			//c	gradtm is thus not really necessary, and is kept here only for reasons
 			//c	of heritage.
 
-			double gradtm = sqrt(gradt[0] * gradt[0] + gradt[1] * gradt[1] + gradt[2] * gradt[2]);
+			gradtm = sqrt(gradt[0] * gradt[0] + gradt[1] * gradt[1] + gradt[2] * gradt[2]);
 			sf = gradt[0] / gradtm;
 			sq = gradt[1] / gradtm;
 			sr = gradt[2] / gradtm;
@@ -1875,16 +1851,16 @@ a3:
 		}
 
 		//----- intersection points for R constant surfaces
-		double dd[3];
+		dd[3];
 		dd[2] = -1e20;
 		if (gradt[2] != 0) {
 			if (gradt[2] > 0)
 				ro = rearth - zk;
 			else
 				ro = rearth - zk - h;
-			double b = xo * sx + yo * sy + zo * sz;
-			double c = xo * xo + yo * yo + zo * zo - ro * ro;
-			double quad = b * b - c;
+			b = xo * sx + yo * sy + zo * sz;
+			c = xo * xo + yo * yo + zo * zo - ro * ro;
+			quad = b * b - c;
 			if (quad >= 0) {
 				dd[2] = pmin(-b + sqrt(quad), -b - sqrt(quad));
 			}
@@ -1901,23 +1877,25 @@ a3:
 				sinq = sin(yj + dq);
 				cosq = cos(yj + dq);
 			}
-			double a = 0, b = 0, c = 0;
+			a = 0;
+			b = 0;
+			c = 0;
 			if (fabs(cosq) > fabs(sinq)) {
-				double tanq = sinq / cosq;
-				double tansq = tanq * tanq;
+				tanq = sinq / cosq;
+				tansq = tanq * tanq;
 				a = sx * sx + sy * sy - sz * sz * tansq;
 				b = xo * sx + yo * sy - zo * sz * tansq;
 				c = xo * xo + yo * yo - zo * zo * tansq;
 			}
 			else {
-				double ctanq = cosq / sinq;
-				double ctansq = ctanq * ctanq;
+				ctanq = cosq / sinq;
+				ctansq = ctanq * ctanq;
 				a = (sx * sx + sy * sy) * ctansq - sz * sz;
 				b = (xo * sx + yo * sy) * ctansq - zo * sz;
 				c = (xo * xo + yo * yo) * ctansq - zo * zo;
 			}
 
-			double quad = b * b - a * c;
+			quad = b * b - a * c;
 			if (quad >= 0) {
 				dd[1] = pmin((-b + sqrt(quad)) / a, (-b - sqrt(quad)) / a);
 			}
@@ -2022,18 +2000,12 @@ a3:
 		}
 
 		// determine which is desired
-		double d = 0;
-		int md = 0;
-		if (DEBUG_MSG)
-			printf("1958 dd[0]=%lf\n1945 dd[1]=%lf\n1945 dd[2]=%lf\n1945 d=%lf\tmd=%d\n", dd[0], dd[1], dd[2], d, md);
 		dfind(dd, &d, &md, tolmin, tolmax);
-		if (DEBUG_MSG)
-			printf("1958 dd[0]=%lf\n1945 dd[1]=%lf\n1945 dd[2]=%lf\n1945 d=%lf\tmd=%d\n", dd[0], dd[1], dd[2], d, md);
 
 		dlen = d;
-		double xold = xx;
-		double yold = yy;
-		double zold = zz;
+		xold = xx;
+		yold = yy;
+		zold = zz;
 
 		xn = xo + d * sx;
 		yn = yo + d * sy;
@@ -2042,26 +2014,27 @@ a3:
 		xx = atan2(yn, xn);
 		yy = atan2(sqrt(xn * xn + yn * yn), zn);
 		zz = rearth - sqrt(xn * xn + yn * yn + zn * zn);
-		printf("2034 xn=%lf\tyn=%lf\tzn=%lf\txx=%lf\tyy=%lf\tzz=%E\n", xn, yn, zn, xx, yy, zz);
+		// printf("2034 xn=%lf\tyn=%lf\tzn=%lf\txx=%lf\tyy=%lf\tzz=%E\n", xn, yn, zn, xx, yy, zz);
 
 		nseg++;
 		isegm2 = isegm1;
 		isegm1 = iseg;
-		if (DEBUG_MSG)
-			printf("2041 xx=%lf xn=%lf\n", xx, xn);
+
 		// ----x side intersected
 		if (md == 0) {
 			je = (int)(((yy - y[0]) / dq));
 			ke = (int)(((zz - z0) / h));
 			if (gradt[0] < 0) {
-				if (ie < 0)
+				if (ie < 0) {
 					goto a150;
+				}
 				ie--;
 				iseg = -1;
 			}
 			else {
-				if (ie >= nx - 1)
+				if (ie >= nx - 1) {
 					goto a150;
+				}
 				ie++;
 				iseg = 1;
 			}
@@ -2094,26 +2067,24 @@ a3:
 				iseg = -300;
 			}
 			else {
-				if (ke >= nx - 1)
+				if (ke >= nz - 1) {
 					goto a150;
+				}
 				ke++;
 				iseg = 300;
 			}
 			ie = (int)(((xx - x0) / df));
 			je = (int)(((yy - y[0]) / dq));
 		}
-		if (((xx - x0) < 0) || (ie >= nx))
+		if ((xx < x0 || ie >= nx) || (yy < y[0] || je >= ny) || (zz < z0 || ke >= nz)) {
 			goto a150;
-		if (((yy - y[0]) < 0) || (je >= ny))
-			goto a150;
-		if (((zz - z0) < 0) || (ke >= nz))
-			goto a150;
+		}
 
 		xm = (xx + xold) * 0.5;
 		ym = (yy + yold) * 0.5;
 		zm = (zz + zold) * 0.5;
-		
-		printf("2103 xm=%lf\tym=%lf\tzm=%lf\n", xm, ym, zm);
+
+		// printf("2103 xm=%lf\tym=%lf\tzm=%lf\n", xm, ym, zm);
 
 		int i1 = -1, j1 = -1, k1 = -1;
 
@@ -2194,8 +2165,6 @@ a3:
 		if (ido1d == 0) {
 			for (int iii = 0; iii < 8; iii++) {
 				du[jpt[iii]] += ds[iii] * dlen;
-				if (DEBUG_MSG)
-					printf("2118 du[%d]=%lf\n", jpt[iii], du[jpt[iii]]);
 			}
 		}
 		else {
@@ -2221,7 +2190,7 @@ a3:
 				}
 				d_blank(rayfile, &len);
 				printf("File: %s\n", rayfile);
-				///////////////////////////////////////////////////////////////////
+
 				fp_pth = fopen(rayfile, "r");
 				if (!fp_pth) {
 					printf("error on opening file (%s)\n", rayfile);
@@ -2269,7 +2238,7 @@ a3:
 			printf(" Average residual for tele %d is %lf", ntel, avresev);
 		}
 		dpot += avresev;
-		for (int k = 0; k < nsta; k++) {
+		for (k = 0; k < nsta; k++) {
 			if (isgood[k] == 1) {
 				dat[k] -= avresev;
 
@@ -2295,7 +2264,7 @@ a3:
 		// Note that for shot data, if we demean the residuals we should also demean the
 		// partial derivatives, just like with teleseisms.
 		if ((isshot == 1 && idmean == 1) || istel == 1) {
-			for (int k = 0; k < kbl; k++) {
+			for (k = 0; k < kbl; k++) {
 				vsum[k] = 0;
 			}
 			wsum = 0;
@@ -2315,7 +2284,7 @@ a3:
 			//        vsum(nvar) = sum over nobs (wt(nobs)*g(nvar, nobs))
 			//        vmp(nvar, nobs) =  wt(nobs)*g(nvar,nobs)
 			//        and wsum is just sum over nobs (wt(nobs)).
-			for (int k = 0; k < nsta; k++) {
+			for (k = 0; k < nsta; k++) {
 				if (isgood[k]) {
 					float wt = pwt[k];
 					double wet = sqrt(wt);
@@ -2345,7 +2314,7 @@ a3:
 			}
 		}
 		else {
-			for (int k = 0; k < nsta; k++) {
+			for (k = 0; k < nsta; k++) {
 				if (isgood[k]) {
 					int lim = inbk[k];
 					if (lim != 0) {
@@ -2499,7 +2468,7 @@ a3:
 		fprintf(fp_dot, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
 		for (j = 0; j < nsta; j++) {
 			if (isgood[j]) {
-				double tarr = obstime[j] + dpot;
+				tarr = obstime[j] + dpot;
 				etoh(tarr, &iyr, &jday, &ihr, &imn, &dsec);
 				// ---call attention to residuals over resflag seconds in magnitude
 				if (fabs(resmin[j]) > resflag) {
@@ -2517,52 +2486,69 @@ a3:
 			}
 		}
 		fprintf(fp_dot, "\n");
-	} // 2474 go back and start on next earthquake
+	}
 
-	FILE *fp_sht = NULL, *fp_tel = NULL;
-	// ---go back and do shots if necessary
-	if (isshot == 0) {
-		if (istel == 0) {
-			istel = idotel;
-			if (istel == 1) {
-				fp_tel = fopen(telefil, "r");
-				if (!fp_tel) {
-					printf("error on opening file (%s)\n", telefil);
-					assert(0);
-				}
-				fp_din = fp_tel;
+	goto a3; // 2474 go back and start on next earthquake
+a60:
+	{
+		FILE *fp_sht = NULL, *fp_tel = NULL;
+		// ---go back and do shots if necessary
+		if (isshot == 0) {
+			if (istel == 0) {
+				istel = idotel;
+				if (istel == 1) {
+					fp_tel = fopen(telefil, "r");
+					if (!fp_tel) {
+						printf("error on opening file (%s)\n", telefil);
+						assert(0);
+					}
+					fp_din = fp_tel;
 
-				// ----- read in time tables - hardwire for test
-				FILE* fp_ptm = fopen(pbasfil, "r");
-				if (!fp_ptm) {
-					printf("error on opening file (%s)\n", pbasfil);
-					assert(0);
-				}
-				FILE* fp_stm = fopen(sbasfil, "r");
-				if (!fp_stm) {
-					printf("error on opening file (%s)\n", sbasfil);
-					assert(0);
-				}
-				// readtbl3(fp_ptm, fp_stm);
+					// ----- read in time tables - hardwire for test
+					FILE* fp_ptm = fopen(pbasfil, "r");
+					if (!fp_ptm) {
+						printf("error on opening file (%s)\n", pbasfil);
+						assert(0);
+					}
+					FILE* fp_stm = fopen(sbasfil, "r");
+					if (!fp_stm) {
+						printf("error on opening file (%s)\n", sbasfil);
+						assert(0);
+					}
+					// readtbl3(fp_ptm, fp_stm);
 
-				// ----- read in ellipticity correction table
-				FILE* fp_elp = fopen(elipfil, "r");
-				if (!fp_elp) {
-					printf("error on opening file (%s)\n", elipfil);
-					assert(0);
-				}
-				// redtab(fp_elp);
+					// ----- read in ellipticity correction table
+					FILE* fp_elp = fopen(elipfil, "r");
+					if (!fp_elp) {
+						printf("error on opening file (%s)\n", elipfil);
+						assert(0);
+					}
+					// redtab(fp_elp);
 
-				// -----translate local grid coordinates to lat-lon for points at the base of the model.
-				for (j = 0; j < ny; j++) {
-					xlat = y[0] + dq * j;
-					for (int i = 0; i < nx; i++) {
-						xlon = x0 + df * i;
-						slons[i][j] = xlon;
-						slats[i][j] = xlat;
+					// -----translate local grid coordinates to lat-lon for points at the base of the model.
+					for (j = 0; j < ny; j++) {
+						xlat = y[0] + dq * j;
+						for (i = 0; i < nx; i++) {
+							xlon = x0 + df * i;
+							slons[i][j] = xlon;
+							slats[i][j] = xlat;
+						}
+					}
+					goto a3;
+				}
+				else {
+					isshot = idoshot;
+					if (isshot) {
+						fp_sht = fopen(shotfil, "r");
+						if (!fp_sht) {
+							printf("error on opening file (%s)\n", shotfil);
+							assert(0);
+						}
+						fp_din = fp_sht;
+						istel = 0;
+						goto a3;
 					}
 				}
-				goto a3;
 			}
 			else {
 				isshot = idoshot;
@@ -2578,114 +2564,101 @@ a3:
 				}
 			}
 		}
-		else {
-			isshot = idoshot;
-			if (isshot) {
-				fp_sht = fopen(shotfil, "r");
-				if (!fp_sht) {
-					printf("error on opening file (%s)\n", shotfil);
-					assert(0);
+		if (fp_eqs) {
+			fclose(fp_eqs);
+		}
+		if (fp_sht) {
+			fclose(fp_sht);
+		}
+		if (fp_tel) {
+			fclose(fp_tel);
+		}
+
+		// ---- global statistics
+		double avwt = facs / knobs;
+		double deb = (rsq - avres * avres / facs) / (knobs * avwt);
+		double std = sqrt(deb);
+		rms = sqrt(rms / wtmod);
+		avres = avres / facs;
+
+		char form[34 * 6 + 31 * 4 + 1] = " Overall data variance :  %10.4f\n";
+		strcat(form, "    standard deviation :  %10.4f\n");
+		strcat(form, "                   RMS :  %10.4f\n");
+		strcat(form, "      Average Residual :  %10.4f\n");
+		strcat(form, "        Average Weight :  %10.4f\n");
+		strcat(form, "            Chi-square :  %10.4f\n");
+		strcat(form, "Number of Observations :  %6d\n");
+		strcat(form, " Number of Earthquakes :  %6d\n");
+		strcat(form, "  Number of Teleseisms :  %6d\n");
+		strcat(form, "       Number of Shots :  %6d\n");
+		printf(form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
+		fprintf(fp_err, form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
+		fprintf(fp_log, form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
+
+		printf("\n");
+		fprintf(fp_err, "\n");
+		fprintf(fp_log, "\n");
+		fprintf(fp_err, "  No. Stn    Phs Average St.Dev. Nobs\n");
+		fprintf(fp_log, "  No. Stn    Phs Average St.Dev. Nobs\n");
+
+		for (kn = 0; kn < nstr; kn++) {
+			for (iph = 0; iph < 2; iph++) {
+				facs = facstn[kn][iph];
+				int jnobs = nobstn[kn][iph];
+				rsq = rstnsq[kn][iph];
+				avres = avrstn[kn][iph];
+				if (facs > 0) {
+					avwt = facs / knobs;
+					deb = (rsq - avres * avres / facs) / (jnobs * avwt);
+					std = sqrt(fabs(deb));
+					avres = avres / facs;
 				}
-				fp_din = fp_sht;
-				istel = 0;
-				goto a3;
+				else {
+					avres = 0.;
+					std = 0.;
+				}
+				fprintf(fp_err, "%d %s %d %lf %lf %d\n", kn, stt[kn], iph, avres, std, jnobs);
+				fprintf(fp_log, "%d %s %d %lf %lf %d\n", kn, stt[kn], iph, avres, std, jnobs);
 			}
 		}
-	}
-	if (fp_eqs) {
-		fclose(fp_eqs);
-	}
-	if (fp_sht) {
-		fclose(fp_sht);
-	}
-	if (fp_tel) {
-		fclose(fp_tel);
-	}
 
-	// ---- global statistics
-	double avwt = facs / knobs;
-	double deb = (rsq - avres * avres / facs) / (knobs * avwt);
-	double std = sqrt(deb);
-	rms = sqrt(rms / wtmod);
-	avres = avres / facs;
+		// ----output indexing array
+		if (nomat == 0) {
+			// -----tack on a marker to signify end of file
+			int ja = -1;
 			fwrite(&ja, sizeof(ja), 1, fp_dts);
 			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
 
-	char form[34 * 6 + 31 * 4 + 1] = " Overall data variance :  %10.4f\n";
-	strcat(form, "    standard deviation :  %10.4f\n");
-	strcat(form, "                   RMS :  %10.4f\n");
-	strcat(form, "      Average Residual :  %10.4f\n");
-	strcat(form, "        Average Weight :  %10.4f\n");
-	strcat(form, "            Chi-square :  %10.4f\n");
-	strcat(form, "Number of Observations :  %6d\n");
-	strcat(form, " Number of Earthquakes :  %6d\n");
-	strcat(form, "  Number of Teleseisms :  %6d\n");
-	strcat(form, "       Number of Shots :  %6d\n");
-	printf(form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
-	fprintf(fp_err, form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
-	fprintf(fp_log, form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
+			fprintf(fp_msc, "%d\n", mbl);
 
-	printf("\n");
-	fprintf(fp_err, "\n");
-	fprintf(fp_log, "\n");
-	fprintf(fp_err, "  No. Stn    Phs Average St.Dev. Nobs\n");
-	fprintf(fp_log, "  No. Stn    Phs Average St.Dev. Nobs\n");
-
-	for (kn = 0; kn < nstr; kn++) {
-		for (iph = 0; iph < 2; iph++) {
-			facs = facstn[kn][iph];
-			int jnobs = nobstn[kn][iph];
-			rsq = rstnsq[kn][iph];
-			avres = avrstn[kn][iph];
-			if (facs > 0) {
-				avwt = facs / knobs;
-				deb = (rsq - avres * avres / facs) / (jnobs * avwt);
-				std = sqrt(fabs(deb));
-				avres = avres / facs;
 			fwrite(jndx, sizeof(jndx[0]), mbl, fp_dts);
+			for (i = 0; i < mbl; i++) {
+				fprintf(fp_msc, "%d\n", jndx[i]);
 			}
-			else {
-				avres = 0.;
-				std = 0.;
+			if (istacor) {
+				fprintf(fp_stc, "%d\n", ja);
 			}
-			fprintf(fp_err, "%d %s %d %lf %lf %d\n", kn, stt[kn], iph, avres, std, jnobs);
-			fprintf(fp_log, "%d %s %d %lf %lf %d\n", kn, stt[kn], iph, avres, std, jnobs);
+			printf("\n");
+			printf(" Number of Wavespeed Variables: %d\n", mbl);
+			printf(" Degrees of freedom: %d\n", knobs - mbl);
+			fprintf(fp_err, "\n");
+			fprintf(fp_err, " Number of Wavespeed Variables: %d\n", mbl);
+			fprintf(fp_err, " Degrees of freedom: %d\n", knobs - mbl);
+
+			// ----ouput nhit array
+			fprintf(fp_hit, "%d", mbl);
+			for (i = 0; i < mbl; i++) {
+				fprintf(fp_hit, "%d %d\n", jndx[i], nhit[jndx[i]]);
+			}
+
+			// ----put a trailer on the hypo bookeeping file to signify the end of data
+			// ---we use m2 because the hypo programs will presume this is a tele.
+			fprintf(fp_bok, "%d %d\n", m2, m2);
 		}
+
+		fclose(fp_dts);
+		fclose(fp_msc);
+		fclose(fp_err);
 	}
-
-	// ----output indexing array
-	if (nomat == 0) {
-		// -----tack on a marker to signify end of file
-		int ja = -1;
-		for (int i = 0; i < mbl; i++) {
-			fprintf(fp_dts, "%d\n", ja);
-			fprintf(fp_msc, "%d\n", ja);
-		}
-		if (istacor) {
-			fprintf(fp_stc, "%d\n", ja);
-		}
-		printf("\n");
-		printf(" Number of Wavespeed Variables: %d\n", mbl);
-		printf(" Degrees of freedom: %d\n", knobs - mbl);
-		fprintf(fp_err, "\n");
-		fprintf(fp_err, " Number of Wavespeed Variables: %d\n", mbl);
-		fprintf(fp_err, " Degrees of freedom: %d\n", knobs - mbl);
-
-		// ----ouput nhit array
-		fprintf(fp_hit, "%d", mbl);
-		for (int i = 0; i < mbl; i++) {
-			fprintf(fp_hit, "%d %d\n", jndx[i], nhit[jndx[i]]);
-		}
-
-		// ----put a trailer on the hypo bookeeping file to signify the end of data
-		// ---we use m2 because the hypo programs will presume this is a tele.
-		fprintf(fp_bok, "%d %d\n", m2, m2);
-	}
-
-	fclose(fp_dts);
-	fclose(fp_msc);
-	fclose(fp_err);
-
 	return 0;
 }
-

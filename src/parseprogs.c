@@ -19,7 +19,7 @@ void get_vars(FILE *fp, char *vname, char *parval, int *len, int *error) {
 	*error = 1;
 
 	//c---recover the length of vname
-	while (i < strlen(vname)) {
+	while (i < (int)strlen(vname)) {
 		if (vname[i] == ' ') {
 			//go to a2
 			lenp = i;
@@ -160,7 +160,7 @@ a60: printf(" Error:  EOF encountered in get_field! \n");
 
 void get_line(FILE *fp, char *aline, int *ierr) {
 	if (strlen(aline) >= MAXSTRLEN) {
-		printf("(Error in get_field) aline's length is larger than %d: %s\n",
+		printf("(Error in get_line) aline's length is larger than %d: %s\n",
 			MAXSTRLEN, aline);
 		*ierr = 1;
 		return;
