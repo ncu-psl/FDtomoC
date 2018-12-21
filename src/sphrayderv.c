@@ -935,17 +935,26 @@ a3:
 		kes = (int)((ez - z0) / h);
 
 		// -- - make sure event is within the model
-		if ((ex < x0 || ies >= nx)
-			|| (ey < y[0] || jes >= ny)
-			|| (ez < z0 || kes >= nz)) {
+		if ((ex < x0 || ies >= nx - 1)
+			|| (ey < y[0] || jes >= ny - 1)
+			|| (ez < z0 || kes >= nz - 1)) {
 			printf(" Error:  Earthquake out of bounds; skipping..\n");
 			fprintf(fp_err, " Error:  This event is out of bounds and skipped : \n");
 			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
 			fprintf(fp_err, "\n");
-			do {
-				fscanf(fp_din, "%s", aline);
-				d_blank(aline, &len);
-			} while (aline[0] != '\0');
+			while (aline[0] != '\0') {
+				fgets(str_inp, sizeof(str_inp), fp_din);
+				len = (int)strlen(str_inp);
+				if (str_inp[len - 1] != '\n') {
+					printf("input length is too large. len=%d str_inp=%s\n", len,
+						str_inp);
+					assert(0);
+				}
+				strcpy(str_inp, trim(str_inp));
+				if (str_inp[0] == '\n') {
+					break;
+				}
+			}
 			goto a3;
 		}
 
