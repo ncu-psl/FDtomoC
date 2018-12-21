@@ -2436,9 +2436,10 @@ a3:
 					}
 				}
 				if (ja > 0) {
-					fprintf(fp_dts, "%d\n", ja);
+					fwrite(&ja, sizeof(ja), 1, fp_dts);
 					for (int i1 = 0; i1 < ja; i1++) {
-						fprintf(fp_dts, "%d %f\n", indx[mndm[jsave[i1]]], vmp[jsave[i1]][j1]);
+						fwrite(&indx[mndm[jsave[i1]]], sizeof(indx[mndm[jsave[i1]]]), 1, fp_dts);
+						fwrite(&vmp[jsave[i1]][j1], sizeof(vmp[jsave[i1]][j1]), 1, fp_dts);
 					}
 					fprintf(fp_res, "%f\n", dat[j1]);
 					if (isshot == 0) {
@@ -2605,6 +2606,8 @@ a3:
 	double std = sqrt(deb);
 	rms = sqrt(rms / wtmod);
 	avres = avres / facs;
+			fwrite(&ja, sizeof(ja), 1, fp_dts);
+			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
 
 	char form[34 * 6 + 31 * 4 + 1] = " Overall data variance :  %10.4f\n";
 	strcat(form, "    standard deviation :  %10.4f\n");
@@ -2637,6 +2640,7 @@ a3:
 				deb = (rsq - avres * avres / facs) / (jnobs * avwt);
 				std = sqrt(fabs(deb));
 				avres = avres / facs;
+			fwrite(jndx, sizeof(jndx[0]), mbl, fp_dts);
 			}
 			else {
 				avres = 0.;
@@ -2651,8 +2655,6 @@ a3:
 	if (nomat == 0) {
 		// -----tack on a marker to signify end of file
 		int ja = -1;
-		fprintf(fp_dts, "%d\n", ja);
-		fprintf(fp_dts, "%d\n", mbl);
 		for (int i = 0; i < mbl; i++) {
 			fprintf(fp_dts, "%d\n", ja);
 			fprintf(fp_msc, "%d\n", ja);
