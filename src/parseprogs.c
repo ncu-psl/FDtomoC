@@ -13,8 +13,8 @@ void get_vars(FILE *fp, char *vname, char *parval, int *len, int *error) {
 		assert(0);
 	}
 	memset(parval, 0, strlen(parval) * sizeof(char));
-	char aline[MAXSTRLEN + 1];
-	char varname[MAXSTRLEN + 1];
+	char aline[MAXSTRLEN];
+	char varname[MAXSTRLEN];
 	int ierr = 0, i = 0, lenp = (int)strlen(vname);
 	*error = 1;
 
@@ -132,7 +132,7 @@ a14: i1 = i + 1;
 		nch = nch + 1;
 		*len = nch;
 	}
-	field[MAXSTRLEN] = '\0';
+	field[MAXSTRLEN - 1] = '\0';
 	printf(" Error:  End of quoted string not found in getfield! \n");
 	*ierr = 1;
 	return;
@@ -165,7 +165,7 @@ void get_line(FILE *fp, char *aline, int *ierr) {
 		*ierr = 1;
 		return;
 	}
-	aline[MAXSTRLEN] = '\0';
+	aline[MAXSTRLEN - 1] = '\0';
 	char tab = '\t';
 
 a1: if (fgets(aline, MAXSTRLEN, fp) == NULL) {
@@ -173,7 +173,12 @@ a1: if (fgets(aline, MAXSTRLEN, fp) == NULL) {
 }
 	else {
 	//replace \n by \0
-	aline[strlen(aline) - 1] = '\0';
+	if (strlen(aline) > 0) {
+		aline[strlen(aline) - 1] = '\0';
+	}
+	else {
+		printf("(Error in get_line) is an empty line\n");
+	}
 }
 
 	//c------skip over comments

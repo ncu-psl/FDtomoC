@@ -155,13 +155,14 @@ void ljust(char[6]);
 double pmin(double, double);
 
 int main(void) {
-	char specfile[MAXSTRLEN + 1], pval[MAXSTRLEN + 1], aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1], stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], shotfil[MAXSTRLEN + 1],
-		telefil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], pbasfil[MAXSTRLEN + 1],
-		sbasfil[MAXSTRLEN + 1], elipfil[MAXSTRLEN + 1], raystat[MAXSTRLEN + 1],
-		telrerr[MAXSTRLEN + 1], dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1],
-		hitfile[MAXSTRLEN + 1], dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1],
-		dotfile[MAXSTRLEN + 1], headfil[MAXSTRLEN + 1], entfile[MAXSTRLEN + 1],
-		stcfile[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];
+	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],
+		stafile[MAXSTRLEN], locdfil[MAXSTRLEN], shotfil[MAXSTRLEN],
+		telefil[MAXSTRLEN], oldvfil[MAXSTRLEN], pbasfil[MAXSTRLEN],
+		sbasfil[MAXSTRLEN], elipfil[MAXSTRLEN], raystat[MAXSTRLEN],
+		telrerr[MAXSTRLEN], dtdsfil[MAXSTRLEN], resfile[MAXSTRLEN],
+		hitfile[MAXSTRLEN], dtdhfil[MAXSTRLEN], bookfil[MAXSTRLEN],
+		dotfile[MAXSTRLEN], headfil[MAXSTRLEN], entfile[MAXSTRLEN],
+		stcfile[MAXSTRLEN], sclefil[MAXSTRLEN], specfile[MAXSTRLEN];
 	char* mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
 	char* files[MUSTF] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
 
@@ -177,7 +178,7 @@ int main(void) {
 	strcpy(specfile, "../data/small.spec");
 	//printf("Enter parameter specification file: ");
 	//scanf("%s", spec_file);
-	//spec_file[MAXSTRLEN] = '\0';
+	//spec_file[MAXSTRLEN - 1] = '\0';
 	FILE* fp_spc = fopen(specfile, "r");
 	if (!fp_spc) {
 		printf("error on opening spec-file (%s)\n", specfile);
@@ -352,8 +353,9 @@ int main(void) {
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	rewind(fp_spc);
 a11:
+	aline[MAXSTRLEN - 1] = '\0';
 	get_line(fp_spc, aline, &ierr);
-	aline[MAXSTRLEN] = '\0';
+	aline[MAXSTRLEN - 1] = '\0';
 	if (ierr == 1)
 		goto a12;
 	if (ierr != 0)
