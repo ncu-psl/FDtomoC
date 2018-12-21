@@ -2073,8 +2073,9 @@ a3:
 				iseg = -20;
 			}
 			else {
-				if (je >= nx - 1)
+				if (je >= ny - 1) {
 					goto a150;
+				}
 				je++;
 				iseg = 20;
 			}
@@ -2083,9 +2084,10 @@ a3:
 			// ----z side intersected
 		}
 		else {
-			if (gradt[2] < 0) {
-				if (ke < 0)
+			if (gradt[2] > 0) {
+				if (ke < 0) {
 					goto a150;
+				}
 				ke--;
 				iseg = -300;
 			}
