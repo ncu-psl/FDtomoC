@@ -162,9 +162,6 @@ int main(void) {
 		hitfile[MAXSTRLEN], dtdhfil[MAXSTRLEN], bookfil[MAXSTRLEN],
 		dotfile[MAXSTRLEN], headfil[MAXSTRLEN], entfile[MAXSTRLEN],
 		stcfile[MAXSTRLEN], sclefil[MAXSTRLEN], specfile[MAXSTRLEN];
-	char* mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
-	char* files[MUSTF] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
-
 	int iread = 0, ivs = 1;
 	double vpvs = 1.78;
 	int idmean = 0, iray = 0, iraystat = 0, idatout = 1, nomat = 0;
@@ -184,6 +181,7 @@ int main(void) {
 		assert(0);
 	}
 	int len = 0, ierr = 0;
+	char mvals[MUSTV][10] = { "nxc", "nyc", "nzc", "h" };
 	for (i = 0; i < MUSTV; i++) {
 		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
 		if (ierr == 1) {
@@ -217,7 +215,8 @@ int main(void) {
 		printf("nzc is too large.\n");
 		assert(0);
 	}
-	char* file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
+	char files[MUSTF][10] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
+	char *file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
 	for (i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
 		if (ierr == 1) {
@@ -662,7 +661,7 @@ a15:
 	fprintf(fp_log, "  Z Max: %12.6lf      km\n", zmax);
 	fprintf(fp_log, " \n");
 
-	char doo[2][8] = { " not", "" };
+	char doo[2][10] = { " not", "" };
 	fprintf(fp_log, "  Sphrayderv will%s do teleseisms (idotel = %d)\n", doo[idotel], idotel);
 	fprintf(fp_log, "  Sphrayderv will%s do shots (idoshot = %d)\n", doo[idoshot], idoshot);
 	fprintf(fp_log, "  Sphrayderv will%s demean shot residuals (idmean=%d)\n", doo[idmean], idmean);
