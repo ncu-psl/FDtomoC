@@ -36,6 +36,9 @@ make -j # if you get Internal Compiler Error(ICE), try make without -j
 
 ## How to run
 ```
+pwd
+# please make sure current dir is in FDtomo/build
+
 # make1d
 ./make1d <<< ../data/small.spec
 
@@ -44,6 +47,10 @@ make -j # if you get Internal Compiler Error(ICE), try make without -j
 
 # sphfd
 # not yet parallel
+cp sphfd ../data/small/TTimes00/sphfd
+cd ../data/small/TTimes00
+sh runsphfd01
+cd ../../../build
 
 # sphfdloc
 ./sphfdloc <<< ../data/small.spec
