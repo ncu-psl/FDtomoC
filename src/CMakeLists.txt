@@ -24,6 +24,14 @@ SET(PROG_LIB
 	time_process.c
 	earthquake_file_delimiter.c
 
+	#sphrayderv
+	ljust.c
+	bjdaz2.c
+	elpcr.c
+	dfind.c
+	pmin.c
+	find.c
+	
 	#runlsqr
 	makea.c
 	scopy.c
