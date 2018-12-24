@@ -1,4 +1,4 @@
-#include "../include/c_g_method.h"
+#include "../include/g_method.h"
 
 // c------convert geographic latitude to geocentric latitude-------------
 // c        hlat (input) = geographic latitude in radians (north positive)
@@ -8,9 +8,29 @@ double glat(double hlat) {
 	double halfpi = 1.570796, polfac = 0.010632, elfac = 0.993277;
 	if (halfpi - fabs(hlat) >= (double) 0.05) {
 		return atan(elfac * sin(hlat) / cos(hlat));
-	} else {
-//c------special formula near pole
+	}
+	else {
+		//c------special formula near pole
 		return hlat / elfac - fabs(polfac) * (hlat >= 0 ? 1 : -1);
+	}
+}
+
+// c------convert geocentric latitude back to geographic latitude------------ -
+// c       glatinv(output) = geographic latitude in radians(north positive)
+// c       hlat(input) = geocentric latitude in radians(north positive)
+// c-------------------------------------------------------------------- -
+double glatinv(double hlat) {
+	double halfpi = 1.570796;
+	if (halfpi - fabs(hlat) >= 0.05) {
+		return atan(sin(hlat) / cos(hlat) / 0.993277);
+	}
+	else {
+		if (hlat > 0) {
+			return (hlat + 0.010632)*0.993277;
+		}
+		else {
+			return (hlat - 0.010632)*0.993277;
+		}
 	}
 }
 
@@ -38,18 +58,18 @@ double glat(double hlat) {
 // c
 
 double glath(double xlat, double h, double *r) {
-//c---ap is semi major axis, bp is semiminor axis, f is inverse flattening, esq is the square of
-//c       the ellipticity, which we compute from fi*(2.d0-fi) where fi is 1/f.
+	//c---ap is semi major axis, bp is semiminor axis, f is inverse flattening, esq is the square of
+	//c       the ellipticity, which we compute from fi*(2.d0-fi) where fi is 1/f.
 
 	double ap = 6378137.0; //, bp = 6356752.314245, f = 298.257223563;
 	double esq = 6.69437978616733379 * 0.001;	//-03;
 
 	double sinxl = sin(xlat);
 
-//c---convert depth in km to elevation in meters
+	//c---convert depth in km to elevation in meters
 	double hm = -h * 1000.0;
 
-//c       anu is the ellipsoidal radius of curvature at the current geographic latitude
+	//c       anu is the ellipsoidal radius of curvature at the current geographic latitude
 	double anu = ap / sqrt(1.0 - esq * sinxl * sinxl);
 
 	double x = (anu + hm) * cos(xlat);
@@ -86,17 +106,17 @@ double glath(double xlat, double h, double *r) {
 
 double glathinv(double xcent, double r, double *h) {
 
-//implicit real*8 (a-h,o-z)
+	//implicit real*8 (a-h,o-z)
 
-//c---ap is semi major axis, bp is semiminor axis, f is inverse flattening, esq is the square of
-//c       the ellipticity, which we compute from fi*(2.d0-fi) where fi is 1/f.
+	//c---ap is semi major axis, bp is semiminor axis, f is inverse flattening, esq is the square of
+	//c       the ellipticity, which we compute from fi*(2.d0-fi) where fi is 1/f.
 	double ap = 6378137.0;    //, bp = 6356752.314245, f = 298.257223563;
 	double esq = 6.69437978616733379 * 0.001;
-//c---After about 5 iterations, the precision should be on the order of cm. We should
-//c       probably set a tolerance for this in any event
+	//c---After about 5 iterations, the precision should be on the order of cm. We should
+	//c       probably set a tolerance for this in any event
 	int maxitt = 5;
 
-//c---convert to meters
+	//c---convert to meters
 	double rm = r * 1000.0;
 
 	double xlatr = xcent;
@@ -111,7 +131,7 @@ double glathinv(double xcent, double r, double *h) {
 		double hb = x / cos(xlatr) - anu;
 		double zp = z / (1.0 - esq * (anu / (anu + hb)));
 		xlatr = atan2(zp, x);
-//c         write(*,*) xlatr/degrad, hb
+		//c         write(*,*) xlatr/degrad, hb
 	}
 	*h = x / cos(xlatr) - anu;
 	*h = -*h / 1000.0;

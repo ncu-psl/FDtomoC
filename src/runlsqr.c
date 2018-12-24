@@ -57,16 +57,11 @@
 #include <math.h>
 #include <assert.h>
 #include <memory.h>
-#include "../include/c_string_process.h"
-#include "../include/c_g_method.h"
-#include "../include/c_parameter.h"
-#include "../include/c_gridspec.h"
-#include "../include/c_parseprogs.h"
-#include "../include/c_aprod.h"
-#include "../include/c_makea.h"
-#include "../include/c_scopy.h"
-#include "../include/c_sscal.h"
-#include "../include/c_normlz.h"
+#include "../include/string_process.h"
+#include "../include/g_method.h"
+#include "../include/parameter.h"
+#include "../include/gridspec.h"
+#include "../include/parseprogs.h"
 #include "../include/runlsqr.h"
 
 // c---gfortran objects to nout being declared here, so it is initialized below

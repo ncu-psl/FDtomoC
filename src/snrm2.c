@@ -1,4 +1,4 @@
-#include "../include/c_snrm2.h"
+#include "../include/runlsqr/snrm2.h"
 
 //      euclidean norm of the n-vector stored in sx() with storage
 //      increment incx .

@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "../include/c_normlz.h"
-#include "../include/c_snrm2.h"
-#include "../include/c_sscal.h"
+#include "../include/runlsqr/normlz.h"
+#include "../include/runlsqr/snrm2.h"
+#include "../include/runlsqr/sscal.h"
 
 //      normlz  is required by subroutine lsqr.  it computes the
 //      euclidean norm of  x  and returns the value in  beta.

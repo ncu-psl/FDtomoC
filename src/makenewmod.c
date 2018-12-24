@@ -88,10 +88,10 @@
 #include <limits.h>
 #include <memory.h>
 
-#include "../include/c_parameter.h"
-#include "../include/c_gridspec.h"
-#include "../include/c_parseprogs.h"
-#include "../include/c_string_process.h"
+#include "../include/parameter.h"
+#include "../include/gridspec.h"
+#include "../include/parseprogs.h"
+#include "../include/string_process.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132

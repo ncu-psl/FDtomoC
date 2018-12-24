@@ -43,8 +43,8 @@
 //    lunres = data vector
 // ----------------------------------------------------------------------------
 
-#include "../include/c_makea.h"
-#include "../include/c_parameter.h"
+#include "../include/runlsqr/makea.h"
+#include "../include/parameter.h"
 #include "../include/environment_setting.h"
 
 #define TYPE_INT 4
