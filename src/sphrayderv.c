@@ -2407,12 +2407,21 @@ a3:
 					}
 				}
 				if (ja > 0) {
+					int junk = 0;
+					fwrite(&junk, sizeof(junk), 1, fp_dts); // size
+					ja++;
 					fwrite(&ja, sizeof(ja), 1, fp_dts);
+					ja--;
+					fwrite(&junk, sizeof(junk), 1, fp_dts); // size
+					fwrite(&junk, sizeof(junk), 1, fp_dts); // header
 					for (int i1 = 0; i1 < ja; i1++) {
+						indx[mndm[jsave[i1]]]++;
 						fwrite(&indx[mndm[jsave[i1]]], sizeof(indx[mndm[jsave[i1]]]), 1, fp_dts);
+						indx[mndm[jsave[i1]]]--;
 						fwrite(&vmp[jsave[i1]][j1], sizeof(vmp[jsave[i1]][j1]), 1, fp_dts);
 					}
-					fprintf(fp_res, "%f\n", dat[j1]);
+					fwrite(&junk, sizeof(junk), 1, fp_dts); // ender
+					fwrite(&dat[j1], sizeof(dat[j1]), 1, fp_res);
 					if (isshot == 0) {
 						if (istel == 0) {
 							for (int i1 = 0; i1 < 4; i1++) {
@@ -2625,13 +2634,18 @@ a60:
 		// ----output indexing array
 		if (nomat == 0) {
 			// -----tack on a marker to signify end of file
+			int junk = 0;
+			fwrite(&junk, sizeof(junk), 1, fp_dts);
+			fwrite(&junk, sizeof(junk), 1, fp_dts);
+
 			int ja = -1;
 			fwrite(&ja, sizeof(ja), 1, fp_dts);
+			fwrite(&junk, sizeof(junk), 1, fp_dts);
+			fwrite(&junk, sizeof(junk), 1, fp_dts);
 			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
+			fwrite(jndx, sizeof(jndx[0]), mbl, fp_dts);
 
 			fprintf(fp_msc, "%d\n", mbl);
-
-			fwrite(jndx, sizeof(jndx[0]), mbl, fp_dts);
 			for (i = 0; i < mbl; i++) {
 				fprintf(fp_msc, "%d\n", jndx[i]);
 			}
