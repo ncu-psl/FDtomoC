@@ -171,10 +171,9 @@ int main(void) {
 	int total_earthquakes = 0;
 	float clat, clon;
 	double xn, yn, zn;
-	strcpy(specfile, "../data/small.spec");
-	//printf("Enter parameter specification file: ");
-	//scanf("%s", spec_file);
-	//spec_file[MAXSTRLEN - 1] = '\0';
+	printf("Enter parameter specification file: ");
+	scanf("%s", specfile);
+	specfile[MAXSTRLEN - 1] = '\0';
 	FILE* fp_spc = fopen(specfile, "r");
 	if (!fp_spc) {
 		printf("error on opening spec-file (%s)\n", specfile);
