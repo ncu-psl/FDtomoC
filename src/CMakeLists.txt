@@ -52,3 +52,4 @@ endforeach()
 add_executable(sphfd
 	sphfd.c
 )
+target_link_libraries(sphfd m)
