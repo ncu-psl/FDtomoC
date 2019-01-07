@@ -163,11 +163,26 @@
 #define FIX_SHORT(x) (*(unsigned short *)&(x) = SWAP_2(*(unsigned short *)&(x)))
 #define FIX_INT(x)   (*(unsigned int *)&(x)   = SWAP_4(*(unsigned int *)&(x)))
 #define FIX_FLOAT(x) FIX_INT(x)
+#include <omp.h>
 
 struct sorted {
 	float time;
 	int i1, i2;
 };
+
+struct ext_par /* global variables for getpar */
+{
+	char *progname;
+	int argflags;
+	struct arglist *arglist;
+	struct arglist *arghead;
+	char *argbuf;
+	int nlist;
+	int nbuf;
+	int listmax;
+	int bufmax;
+	FILE *listout;
+} ext_par;
 
 /* FUNCTION DECLARATIONS	*/
 int
@@ -175,10 +190,31 @@ compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
 double glat(), glath(), rcent, z0r;
 
+int sphfd(int , char **);
 int endian();
 int litend;
 
-int main(int ac, char **av) {
+#pragma omp threadprivate(ext_par, litend, rcent, z0r)
+
+int main(int ac, char **av)
+{
+	#pragma omp parallel for
+	for (int i = 1; i <= 100; i++)
+	{
+		if ((i != 31) && (i != 24)) {
+			char *fake_av[2];
+			char parameter_file_path[100];
+			sprintf(parameter_file_path, "par=../parfiles_P/M%.3d.par", i);
+			fake_av[0] = av[0];
+			fake_av[1] = parameter_file_path;
+			sphfd(2, fake_av);
+		}
+	}
+	return 0;
+}
+
+int sphfd(int ac, char **av)
+{
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
 	 VARIABLE BELOW, THEN THE VARIABLE IS REQUIRED;  IF A getpar
@@ -6159,19 +6195,6 @@ char *argname;
 char *argval;
 int hash;
 };
-struct ext_par /* global variables for getpar */
-{
-char *progname;
-int argflags;
-struct arglist *arglist;
-struct arglist *arghead;
-char *argbuf;
-int nlist;
-int nbuf;
-int listmax;
-int bufmax;
-FILE *listout;
-} ext_par;
 
 /* abbreviations: */
 #define AL 		struct arglist
@@ -6804,4 +6827,3 @@ cptr[4] = tmp;
 
 return (1);
 }
-

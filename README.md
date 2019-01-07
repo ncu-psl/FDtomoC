@@ -46,10 +46,9 @@ pwd
 ./c2f <<< ../data/small.spec
 
 # sphfd
-# not yet parallel
 cp sphfd ../data/small/TTimes00/sphfd
 cd ../data/small/TTimes00
-sh runsphfd01
+./sphfd
 cd ../../../build
 
 # sphfdloc
