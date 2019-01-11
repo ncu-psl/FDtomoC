@@ -40,27 +40,32 @@ pwd
 # please make sure current dir is in FDtomo/build
 
 # make1d
-./make1d <<< ../data/small.spec
+./make1d <<< "../data/small/FDtomo.spec"
 
 # c2f
-./c2f <<< ../data/small.spec
+./c2f <<< "../data/small/FDtomo.spec"
 
 # sphfd
 # not yet parallel
+
+# copy nesscressery files to data folder
+cp tempvel.pvel ../data/small/TTimes00/VP.mod
+cp tempvel.svel ../data/small/TTimes00/VS.mod
 cp sphfd ../data/small/TTimes00/sphfd
+
 cd ../data/small/TTimes00
 sh runsphfd01
 cd ../../../build
 
 # sphfdloc
-./sphfdloc <<< ../data/small.spec
+./sphfdloc <<< "../data/small/FDtomo.spec"
 
 # sphrayderv
-./sphrayderv <<< ../data/small.spec
+./sphrayderv <<< "../data/small/FDtomo.spec"
 
 # runlsqr
-./runlsqr <<< ../data/small.spec
+./runlsqr <<< "../data/small/FDtomo.spec"
 
 # makenewmod
-./makenewmod <<< ../data/small.spec
+./makenewmod <<< "../data/small/FDtomo.spec"
 ```
