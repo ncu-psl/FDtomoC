@@ -1715,7 +1715,7 @@ a3:
 								mbl++;
 								if (mbl > maxmbl) {
 									printf(" Error: mbl too large, stopping\n");
-									fprintf(fp_err, " Error: mbl=%d\n", kbl);
+									fprintf(fp_err, " Error: mbl=%d\n", mbl);
 									fprintf(fp_log, " Error: mbl too large, stopping\n");
 									assert(0);
 								}
@@ -2407,9 +2407,7 @@ a3:
 				if (ja > 0) {
 					int junk = 0;
 					fwrite(&junk, sizeof(junk), 1, fp_dts); // size
-					ja++;
 					fwrite(&ja, sizeof(ja), 1, fp_dts);
-					ja--;
 					fwrite(&junk, sizeof(junk), 1, fp_dts); // size
 					fwrite(&junk, sizeof(junk), 1, fp_dts); // header
 					for (int i1 = 0; i1 < ja; i1++) {
