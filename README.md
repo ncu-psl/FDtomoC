@@ -16,7 +16,7 @@ git clone https://github.com/ncu-psl/FDtomo-C.git
 # clone test data
 git clone https://github.com/ncu-psl/FDtomo.git
 cd FDtomo-C
-cp ../FDtomo/data ./
+cp -r ../FDtomo/data ./
 ```
 
 ## How to build
