@@ -54,7 +54,7 @@ cp tempvel.svel ../data/small/TTimes00/VS.mod
 cp sphfd ../data/small/TTimes00/sphfd
 
 cd ../data/small/TTimes00
-sh runsphfd01
+sh runsphfd01.sh
 cd ../../../build
 
 # sphfdloc
