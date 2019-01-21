@@ -199,20 +199,36 @@ int litend;
 
 int main(int ac, char **av)
 {
-	char parfiles[1000][100], pval[MAXSTRLEN + 1];
+	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[100], output_path[MAXSTRLEN + 1];
 	char filename[100];
 	int a=0,len,ierr;
-	FILE* fp_spc, *parlist;
+	FILE* fp_spc, *fp_parlist;
 	printf("Input the name spec file\n");
 	scanf("%s",filename);
 	fp_spc=fopen(filename,"r");
+	if(fp_spc == NULL) {
+	    printf("Error on opening spec file(%s)\n", fp_spc);
+	    assert(0);
+	}
 	get_vars(fp_spc, "parlist", pval, &len, &ierr);
-	get_vars(fp_spc, "timedir", output_path, &len, &ierr);
-	parlist=fopen(pval, "r");
+	if (ierr == 0) {
+    		sscanf(pval, "%s", parlist);
+	}
+	printf("%s\n",parlist );
+	fp_parlist=fopen(parlist, "r");
+	if(fp_parlist == NULL) {
+	    printf("Error on opening parlist(%s)\n", fp_parlist);
+	    assert(0);
+	}
+	get_vars(fp_spc, "timedir", pval, &len, &ierr);
+	if (ierr == 0) {
+    		sscanf(pval, "%s", output_path);
+	}
+	
+	fclose(fp_spc);
 
-
-	for(int i=0;fgets(tmp,200,parlist)!=NULL;i++){
+	for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
 		if (tmp[0]=='\n')
 			break;
 		strcpy(parfiles[i],tmp);
@@ -221,11 +237,12 @@ int main(int ac, char **av)
 		a++;
 		if (a>3000){
 			printf("number of parfiles exceed index\n");
-			return 0;
+			assert(0);
 		}
 		
 
 	}
+	fclose(fp_parlist);
 
 	#pragma omp parallel for firstprivate(parfiles) num_threads(8)
 	for (int i = 0; i < a; i++)
