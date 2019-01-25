@@ -201,12 +201,12 @@ int main(int ac, char **av)
 {
 	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[100], output_path[MAXSTRLEN + 1];
-	char filename[100];
+	char spec_file[100];
 	int a=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
 	printf("Input the name spec file\n");
-	scanf("%s",filename);
-	fp_spc=fopen(filename,"r");
+	scanf("%s",spec_file);
+	fp_spc=fopen(spec_file,"r");
 	if(fp_spc == NULL) {
 	    printf("Error on opening spec file(%s)\n", fp_spc);
 	    assert(0);
