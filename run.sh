@@ -3,6 +3,14 @@
 # please make sure current dir is in FDtomo/build
 pwd
 
+if [ $# -eq 0 ]; then
+	echo "Please input spec_file, example:"
+	echo ""
+	echo "sh run.sh ../data/small/FDtomo.spec"
+	echo ""
+	exit 1
+fi
+
 spec_file=${1}
 
 # make1d
