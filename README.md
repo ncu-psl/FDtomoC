@@ -8,7 +8,7 @@
 * [FDtomo-Python](https://github.com/ncu-psl/FDtomo-Python)
 
 ## How to download
-```
+```sh
 # clone source code
 cd <where you want FDtomo-C to live>
 git clone https://github.com/ncu-psl/FDtomo-C.git
@@ -16,11 +16,11 @@ git clone https://github.com/ncu-psl/FDtomo-C.git
 # clone test data
 git clone https://github.com/ncu-psl/FDtomo.git
 cd FDtomo-C
-cp ../FDtomo/data ./
+cp -r ../FDtomo/data ./
 ```
 
 ## How to build
-```
+```sh
 # GNU Compiler Collection
 export CC=gcc
 
@@ -28,38 +28,12 @@ export CC=gcc
 # export CC=icc
 
 # build
-mkdir build
-cd build
-cmake ../src/
-make -j # if you get Internal Compiler Error(ICE), try make without -j
+# if you get Internal Compiler Error(ICE), try make without -j
+sh build.sh
 ```
 
 ## How to run
-```
-pwd
-# please make sure current dir is in FDtomo/build
-
-# make1d
-./make1d <<< ../data/small.spec
-
-# c2f
-./c2f <<< ../data/small.spec
-
-# sphfd
-cp sphfd ../data/small/TTimes00/sphfd
-cd ../data/small/TTimes00
-./sphfd
-cd ../../../build
-
-# sphfdloc
-./sphfdloc <<< ../data/small.spec
-
-# sphrayderv
-./sphrayderv <<< ../data/small.spec
-
-# runlsqr
-./runlsqr <<< ../data/small.spec
-
-# makenewmod
-./makenewmod <<< ../data/small.spec
+```sh
+cd build
+sh run.sh "../data/small/FDtomo.spec"
 ```
