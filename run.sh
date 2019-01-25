@@ -15,13 +15,9 @@ spec_file=${1}
 # not yet parallel
 
 # copy nesscressery files to data folder
-cp tempvel.pvel ../data/small/TTimes00/VP.mod
-cp tempvel.svel ../data/small/TTimes00/VS.mod
-cp sphfd ../data/small/TTimes00/sphfd
-
-cd ../data/small/TTimes00
-sh runsphfd01.sh
-cd ../../../build
+cp tempvel.pvel VP.mod
+cp tempvel.svel VS.mod
+./sphfd <<< $spec_file
 
 # sphfdloc
 ./sphfdloc <<< $spec_file
