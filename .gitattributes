@@ -1,0 +1,23 @@
+*		text eol=lf
+
+# Source code
+*.h		text eol=lf
+*.c		text eol=lf
+*.f		text eol=lf
+*.sh	text eol=lf
+
+# Images
+*.jpg	-text
+*.png	-text
+*.svg	-text
+
+# Documents
+*.pdf	-text
+*.doc	-text	diff=word
+*.docx	-text	diff=word
+*.ppt	-text
+*.pptx	-text
+
+# Archive files
+*.zip	-text
+*.rar	-text
