@@ -208,7 +208,7 @@ int main(int ac, char **av)
 	scanf("%s",spec_file);
 	fp_spc=fopen(spec_file,"r");
 	if(fp_spc == NULL) {
-	    printf("Error on opening spec file(%s)\n", fp_spc);
+	    printf("Error on opening spec file(%s)\n", spec_file);
 	    assert(0);
 	}
 	get_vars(fp_spc, "parlist", pval, &len, &ierr);
@@ -218,7 +218,7 @@ int main(int ac, char **av)
 	printf("%s\n",parlist );
 	fp_parlist=fopen(parlist, "r");
 	if(fp_parlist == NULL) {
-	    printf("Error on opening parlist(%s)\n", fp_parlist);
+	    printf("Error on opening parlist(%s)\n", parlist);
 	    assert(0);
 	}
 	get_vars(fp_spc, "timedir", pval, &len, &ierr);
