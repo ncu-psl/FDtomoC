@@ -138,7 +138,8 @@
 #include    <fcntl.h>
 /* file header structure */
 #include  "../include/vhead.h"
-
+#include "../include/parseprogs.h"
+#define MAXSTRLEN 132
 #define PI  3.141592654
 #define HPI 1.570796327
 #define SQR2 1.414213562
@@ -190,7 +191,7 @@ compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
 double glat(), glath(), rcent, z0r;
 
-int sphfd(int , char **);
+int sphfd(int , char ** , char *);
 int endian();
 int litend;
 
@@ -198,22 +199,64 @@ int litend;
 
 int main(int ac, char **av)
 {
-	#pragma omp parallel for
-	for (int i = 1; i <= 100; i++)
-	{
-		if ((i != 31) && (i != 24)) {
-			char *fake_av[2];
-			char parameter_file_path[100];
-			sprintf(parameter_file_path, "par=../parfiles_P/M%.3d.par", i);
-			fake_av[0] = av[0];
-			fake_av[1] = parameter_file_path;
-			sphfd(2, fake_av);
+	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
+	char tmp[100], output_path[MAXSTRLEN + 1];
+	char filename[100];
+	int a=0,len,ierr;
+	FILE* fp_spc, *fp_parlist;
+	printf("Input the name spec file\n");
+	scanf("%s",filename);
+	fp_spc=fopen(filename,"r");
+	if(fp_spc == NULL) {
+	    printf("Error on opening spec file(%s)\n", fp_spc);
+	    assert(0);
+	}
+	get_vars(fp_spc, "parlist", pval, &len, &ierr);
+	if (ierr == 0) {
+    		sscanf(pval, "%s", parlist);
+	}
+	printf("%s\n",parlist );
+	fp_parlist=fopen(parlist, "r");
+	if(fp_parlist == NULL) {
+	    printf("Error on opening parlist(%s)\n", fp_parlist);
+	    assert(0);
+	}
+	get_vars(fp_spc, "timedir", pval, &len, &ierr);
+	if (ierr == 0) {
+    		sscanf(pval, "%s", output_path);
+	}
+	
+	fclose(fp_spc);
+
+	for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
+		if (tmp[0]=='\n')
+			break;
+		strcpy(parfiles[i],tmp);
+		parfiles[i][strlen(parfiles[i])-1]='\0';
+		printf("%d  %s\n",strlen(parfiles[i]),parfiles[i]);
+		a++;
+		if (a>3000){
+			printf("number of parfiles exceed index\n");
+			assert(0);
 		}
+		
+
+	}
+	fclose(fp_parlist);
+
+	#pragma omp parallel for firstprivate(parfiles) num_threads(8)
+	for (int i = 0; i < a; i++)
+	{
+		char *fake_av[2];
+		fake_av[0] = av[0];
+		fake_av[1] = parfiles[i];
+		sphfd(2, fake_av, output_path);
 	}
 	return 0;
 }
 
-int sphfd(int ac, char **av)
+
+int sphfd(int ac, char **av, char *output_path)
 {
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
@@ -324,7 +367,7 @@ int sphfd(int ac, char **av)
 
 	char velfile[80], /* file though which velocity structure is input */
 	oldtfile[80], /* file through which old travel times are input */
-	timefile[80], /* file in which travel times appear at the end */
+	timefile[160], /* file in which travel times appear at the end */
 	wallfile[80], /* file containing input wall values of traveltimes */
 	boxfile[80]; /* file containing precomputed traveltimes to fill in the start box */
 
@@ -478,7 +521,11 @@ int sphfd(int ac, char **av)
 		mstpar("boxfile", "s", boxfile);
 	}
 
-	mstpar("timefile", "s", timefile);
+	char ttmp[160];
+	mstpar("timefile", "s", ttmp);
+	strcpy(timefile,output_path);
+	strcat(timefile,"/");
+	strcat(timefile,ttmp);
 	mstpar("velfile", "s", velfile);
 	endpar();
 
@@ -6827,3 +6874,4 @@ cptr[4] = tmp;
 
 return (1);
 }
+
