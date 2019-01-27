@@ -37,11 +37,11 @@
 #include <math.h>
 #include <limits.h>
 
-#include "../include/environment_setting.h"
-#include "../include/parameter.h"
-#include "../include/gridspec.h"
-#include "../include/parseprogs.h"
-#include "../include/string_process.h"
+#include "common/environment_setting.h"
+#include "common/parameter.h"
+#include "common/gridspec.h"
+#include "common/parseprogs.h"
+#include "common/string_process.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132

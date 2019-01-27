@@ -1,0 +1,19 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+PROJECT(FDtomo)
+
+SET(CMAKE_CXX_STANDRAD 14)
+SET(MAIN_SRC_DIR     ${CMAKE_CURRENT_SOURCE_DIR})
+SET(MAIN_INCLUDE_DIR ${MAIN_SRC_DIR}/include)
+SET(MAIN_LIB_DIR     ${MAIN_SRC_DIR}/lib)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+	SET(CMAKE_C_FLAGS " -O3 -Wall -std=c99 -fopenmp -mcmodel=large -m64 -lm -fdata-sections -ffunction-sections -Wl,--gc-sections")
+elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
+	SET(CMAKE_C_FLAGS " -O3 -Wall -std=c99 -qopenmp -mcmodel=large -m64 -ipo -align")
+endif()
+
+ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(${MAIN_LIB_DIR})
+ADD_SUBDIRECTORY(${MAIN_INCLUDE_DIR})

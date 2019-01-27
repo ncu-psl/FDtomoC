@@ -48,14 +48,14 @@
 #include <assert.h>
 
 #include <dirent.h>
-#include "../include/environment_setting.h"
-#include "../include/time_process.h"
-#include "../include/g_method.h"
-#include "../include/parameter.h"
-#include "../include/gridspec.h"
-#include "../include/parseprogs.h"
-#include "../include/string_process.h"
-#include "../include/earthquake_file_delimiter.h"
+#include "common/environment_setting.h"
+#include "common/time_process.h"
+#include "common/geographic_method.h"
+#include "common/parameter.h"
+#include "common/gridspec.h"
+#include "common/parseprogs.h"
+#include "common/string_process.h"
+#include "common/earthquake_file_delimiter.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132

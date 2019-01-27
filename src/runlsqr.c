@@ -57,12 +57,19 @@
 #include <math.h>
 #include <assert.h>
 #include <memory.h>
-#include "../include/string_process.h"
-#include "../include/g_method.h"
-#include "../include/parameter.h"
-#include "../include/gridspec.h"
-#include "../include/parseprogs.h"
-#include "../include/runlsqr.h"
+#include "common/string_process.h"
+#include "common/geographic_method.h"
+#include "common/parameter.h"
+#include "common/gridspec.h"
+#include "common/parseprogs.h"
+#include "runlsqr/aprod.h"
+#include "runlsqr/makea.h"
+#include "runlsqr/normlz.h"
+#include "runlsqr/scopy.h"
+#include "runlsqr/snrm2.h"
+#include "runlsqr/sscal.h"
+
+void lsqr(int , int , float , int , int ,int *, float *, float *, float *, float *, float *, float *, float , float , float , int , FILE *, int , float , float , float *, float *, float *, FILE *);
 
 // c---gfortran objects to nout being declared here, so it is initialized below
 // c	parameter(nout=6)

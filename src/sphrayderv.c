@@ -60,15 +60,19 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "../include/gridspec.h"
-#include "../include/dirent.h"
-#include "../include/environment_setting.h"
-#include "../include/g_method.h"
-#include "../include/parseprogs.h"
-#include "../include/parameter.h"
-#include "../include/sphrayderv.h"
-#include "../include/string_process.h"
-#include "../include/time_process.h"
+#include "common/parseprogs.h"
+#include "common/parameter.h"
+#include "common/gridspec.h"
+#include "common/string_process.h"
+#include "common/time_process.h"
+#include "common/geographic_method.h"
+#include "common/environment_setting.h"
+// #include "common/dirent.h"
+#include "sphrayderv/bjdaz2.h"
+#include "sphrayderv/dfind.h"
+#include "sphrayderv/elpcr.h"
+#include "sphrayderv/ljust.h"
+#include "sphrayderv/pmin.h"
 
 //c--mustv is the number of variables that must be assigned in the parameter
 //c       file in order for this program to run correctly.The names of the

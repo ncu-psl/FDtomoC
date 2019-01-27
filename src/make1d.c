@@ -65,12 +65,12 @@ c		    change so that dx = df and dy = df.
 #include <string.h>
 #include <assert.h>
 #include <math.h>
-#include "../include/environment_setting.h"
-#include "../include/parseprogs.h"
-#include "../include/parameter.h"
-#include "../include/gridspec.h"
-#include "../include/g_method.h"
-#include "../include/string_process.h"
+#include "common/environment_setting.h"
+#include "common/parseprogs.h"
+#include "common/parameter.h"
+#include "common/gridspec.h"
+#include "common/geographic_method.h"
+#include "common/string_process.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132
