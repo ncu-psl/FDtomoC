@@ -137,8 +137,8 @@
 #include    <math.h>
 #include    <fcntl.h>
 /* file header structure */
-#include  "../include/vhead.h"
-#include "../include/parseprogs.h"
+#include "common/parseprogs.h"
+#include "sphfd/vhead.h"
 #define MAXSTRLEN 132
 #define PI  3.141592654
 #define HPI 1.570796327

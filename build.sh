@@ -2,7 +2,7 @@
 
 mkdir build
 cd build
-cmake ../src/
+cmake ..
 make -j # if you get Internal Compiler Error(ICE), try make without -j
 
 cd ..
