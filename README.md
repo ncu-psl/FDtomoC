@@ -16,7 +16,8 @@ git clone https://github.com/ncu-psl/FDtomo-C.git
 # clone test data
 git clone https://github.com/ncu-psl/FDtomo.git
 cd FDtomo-C
-cp -r ../FDtomo/data ./
+cp -r ../FDtomo/data .
+unzip data/cwb_12-15_S/runs_files/arrivals/cwb_12-15_S.zip -d data/cwb_12-15_S/runs_files/arrivals/
 ```
 
 ## How to build
