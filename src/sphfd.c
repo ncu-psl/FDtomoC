@@ -129,7 +129,7 @@
  Little		Little	Little	No Swaps	  0
 
  */
-
+#include <mpi.h>
 #include    <stdio.h>
 #include    <stdlib.h>
 // following needed for Linux?
@@ -137,8 +137,8 @@
 #include    <math.h>
 #include    <fcntl.h>
 /* file header structure */
-#include "common/parseprogs.h"
-#include "sphfd/vhead.h"
+#include "../include/common/parseprogs.h"
+#include "../include/sphfd/vhead.h"
 #define MAXSTRLEN 132
 #define PI  3.141592654
 #define HPI 1.570796327
@@ -195,63 +195,91 @@ int sphfd(int , char ** , char *);
 int endian();
 int litend;
 
-#pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
 int main(int ac, char **av)
 {
+	int numtasks, rank, tag;
+	MPI_Init(&ac,&av);
+	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Status Stat;
+	char recvbuf[200];
 	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
-	char tmp[100], output_path[MAXSTRLEN + 1];
+	char tmp[200], output_path[MAXSTRLEN + 1];
 	char spec_file[100];
-	int a=0,len,ierr;
+	int num_parfiles=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
-	printf("Input the name spec file\n");
-	scanf("%s",spec_file);
-	fp_spc=fopen(spec_file,"r");
-	if(fp_spc == NULL) {
-	    printf("Error on opening spec file(%s)\n", spec_file);
-	    assert(0);
-	}
-	get_vars(fp_spc, "parlist", pval, &len, &ierr);
-	if (ierr == 0) {
-    		sscanf(pval, "%s", parlist);
-	}
-	printf("%s\n",parlist );
-	fp_parlist=fopen(parlist, "r");
-	if(fp_parlist == NULL) {
-	    printf("Error on opening parlist(%s)\n", parlist);
-	    assert(0);
-	}
-	get_vars(fp_spc, "timedir", pval, &len, &ierr);
-	if (ierr == 0) {
-    		sscanf(pval, "%s", output_path);
-	}
-	
-	fclose(fp_spc);
 
-	for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
-		if (tmp[0]=='\n')
-			break;
-		strcpy(parfiles[i],tmp);
-		parfiles[i][strlen(parfiles[i])-1]='\0';
-		printf("%d  %s\n",strlen(parfiles[i]),parfiles[i]);
-		a++;
-		if (a>3000){
-			printf("number of parfiles exceed index\n");
-			assert(0);
+	if (rank==0){
+		printf("Input the name spec file\n");
+		scanf("%s",spec_file);
+		fp_spc=fopen(spec_file,"r");
+		if(fp_spc == NULL) {
+		    printf("Error on opening spec file(%s)\n", spec_file);
+		    assert(0);
 		}
+		get_vars(fp_spc, "parlist", pval, &len, &ierr);
+		if (ierr == 0) {
+	    		sscanf(pval, "%s", parlist);
+		}
+		printf("%s\n",parlist );
+		fp_parlist=fopen(parlist, "r");
+		if(fp_parlist == NULL) {
+		    printf("Error on opening parlist(%s)\n", parlist);
+		    assert(0);
+		}
+		get_vars(fp_spc, "timedir", pval, &len, &ierr);
+		if (ierr == 0) {
+	    		sscanf(pval, "%s", output_path);
+		}
+	
+		fclose(fp_spc);
+
+		for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
+			if (tmp[0]=='\n')
+				break;
+			strcpy(parfiles[i],tmp);
+			parfiles[i][strlen(parfiles[i])-1]='\0';
+			num_parfiles++;
+			if (num_parfiles>3000){
+				printf("number of parfiles exceed index\n");
+				assert(0);
+			}
 		
 
-	}
-	fclose(fp_parlist);
+		}
+		fclose(fp_parlist);
 
-	#pragma omp parallel for firstprivate(parfiles) num_threads(8)
-	for (int i = 0; i < a; i++)
-	{
+		for(int j=0;j<num_parfiles;j++){
+			MPI_Send(parfiles[j], 200, MPI_CHAR, j%numtasks, j, MPI_COMM_WORLD);
+		}
+
+		for(int i=0;i<numtasks;i++){
+			MPI_Send(&num_parfiles, 1, MPI_INT, i, 3000+i, MPI_COMM_WORLD);	
+			MPI_Send(output_path, MAXSTRLEN + 1, MPI_CHAR, i, 3000+i+numtasks, MPI_COMM_WORLD);	
+		} 
+
+	}
+
+	
+	for(int i=0;i<numtasks;i++){
+	  if(i==rank){ 
+		MPI_Recv(&num_parfiles, 1, MPI_INT, 0, 3000+i, MPI_COMM_WORLD, &Stat);
+		MPI_Recv(output_path, MAXSTRLEN + 1, MPI_CHAR, 0, 3000+i+numtasks, MPI_COMM_WORLD, &Stat);
+	  }		
+	} 
+
+	for(int i=0;i<num_parfiles;i++){
+	  if((i%numtasks)==rank){
+		MPI_Recv(recvbuf, 200, MPI_CHAR, 0, i, MPI_COMM_WORLD, &Stat);
 		char *fake_av[2];
 		fake_av[0] = av[0];
-		fake_av[1] = parfiles[i];
+		fake_av[1] = recvbuf;
 		sphfd(2, fake_av, output_path);
+	  }
 	}
+	
+	MPI_Finalize();
 	return 0;
 }
 
