@@ -11,7 +11,7 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
 	SET(CMAKE_C_FLAGS " -O3 -Wall -std=c99 -fopenmp -mcmodel=large -m64 -lm -fdata-sections -ffunction-sections -Wl,--gc-sections")
 elseif(CMAKE_C_COMPILER_ID MATCHES "Intel")
-	SET(CMAKE_C_FLAGS " -O3 -Wall -std=c99 -qopenmp -mcmodel=large -m64 -ipo -align")
+	SET(CMAKE_C_FLAGS " -O3 -Wall -std=c99 -qopenmp -mcmodel=large -m64 -align")
 endif()
 
 ADD_SUBDIRECTORY(src)
