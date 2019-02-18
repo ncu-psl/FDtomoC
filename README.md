@@ -30,11 +30,11 @@ export CC=gcc
 
 # build
 # if you get Internal Compiler Error(ICE), try make without -j
-sh build.sh
+bash build.sh
 ```
 
 ## How to run
 ```sh
 cd build
-sh run.sh "../data/small/FDtomo.spec"
+bash run.sh "../data/small/FDtomo.spec"
 ```
