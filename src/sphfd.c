@@ -140,6 +140,7 @@
 #include "common/parseprogs.h"
 #include "sphfd/vhead.h"
 #define MAXSTRLEN 132
+#define MAXNUMPAR 2000
 #define PI  3.141592654
 #define HPI 1.570796327
 #define SQR2 1.414213562
@@ -164,6 +165,7 @@
 #define FIX_SHORT(x) (*(unsigned short *)&(x) = SWAP_2(*(unsigned short *)&(x)))
 #define FIX_INT(x)   (*(unsigned int *)&(x)   = SWAP_4(*(unsigned int *)&(x)))
 #define FIX_FLOAT(x) FIX_INT(x)
+
 #include <omp.h>
 
 struct sorted {
@@ -199,10 +201,10 @@ int litend;
 
 int main(int ac, char **av)
 {
-	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
-	char tmp[100], output_path[MAXSTRLEN + 1];
-	char spec_file[100];
-	int a=0,len,ierr;
+	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
+	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
+	char spec_file[MAXSTRLEN + 1];
+	int num_parfiles=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
 	printf("Input the name spec file\n");
 	scanf("%s",spec_file);
@@ -228,14 +230,13 @@ int main(int ac, char **av)
 	
 	fclose(fp_spc);
 
-	for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
+	for(int i=0;fgets(tmp,MAXSTRLEN + 1,fp_parlist)!=NULL;i++){
 		if (tmp[0]=='\n')
 			break;
 		strcpy(parfiles[i],tmp);
 		parfiles[i][strlen(parfiles[i])-1]='\0';
-		printf("%d  %s\n",strlen(parfiles[i]),parfiles[i]);
-		a++;
-		if (a>3000){
+		num_parfiles++;
+		if (num_parfiles>MAXNUMPAR){
 			printf("number of parfiles exceed index\n");
 			assert(0);
 		}
@@ -245,7 +246,7 @@ int main(int ac, char **av)
 	fclose(fp_parlist);
 
 	#pragma omp parallel for firstprivate(parfiles) num_threads(8)
-	for (int i = 0; i < a; i++)
+	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
 		fake_av[0] = av[0];
