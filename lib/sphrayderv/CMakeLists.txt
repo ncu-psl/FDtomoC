@@ -1,4 +1,4 @@
-ADD_LIBRARY(_sphrayderv STATIC
+ADD_LIBRARY(_sphrayderv
 	bjdaz2.c
 	dfind.c
 	elpcr.c
