@@ -13,7 +13,7 @@ FOREACH(prog ${PROGS})
 		${prog}.c
 	)
 	TARGET_LINK_LIBRARIES(${prog}
-		common_libraries
+		_common
 		m
 	)
 	TARGET_INCLUDE_DIRECTORIES(${prog} PUBLIC
@@ -23,9 +23,9 @@ FOREACH(prog ${PROGS})
 ENDFOREACH()
 
 TARGET_LINK_LIBRARIES(sphrayderv
-	sphrayderv_libraries
+	_sphrayderv
 )
 
 TARGET_LINK_LIBRARIES(runlsqr
-	runlsqr_libraries
+	_runlsqr
 )

@@ -1,4 +1,4 @@
-ADD_LIBRARY(common_libraries STATIC
+ADD_LIBRARY(_common STATIC
 	parseprogs.c
 	geographic_method.c
 	string_process.c

@@ -1,4 +1,4 @@
-ADD_LIBRARY(runlsqr_libraries STATIC
+ADD_LIBRARY(_runlsqr STATIC
 	aprod.c
 	makea.c
 	normlz.c
