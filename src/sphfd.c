@@ -140,6 +140,7 @@
 #include "../include/common/parseprogs.h"
 #include "../include/sphfd/vhead.h"
 #define MAXSTRLEN 132
+#define MAXNUMPAR 2000
 #define PI  3.141592654
 #define HPI 1.570796327
 #define SQR2 1.414213562
@@ -203,78 +204,54 @@ int main(int ac, char **av)
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Status Stat;
-	char recvbuf[200];
-	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
-	char tmp[200], output_path[MAXSTRLEN + 1];
-	char spec_file[100];
+	char recvbuf[MAXSTRLEN + 1];
+	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
+	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
+	char spec_file[MAXSTRLEN + 1];
 	int num_parfiles=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
 
-	if (rank==0){
-		printf("Input the name spec file\n");
-		scanf("%s",spec_file);
-		fp_spc=fopen(spec_file,"r");
-		if(fp_spc == NULL) {
-		    printf("Error on opening spec file(%s)\n", spec_file);
-		    assert(0);
-		}
-		get_vars(fp_spc, "parlist", pval, &len, &ierr);
-		if (ierr == 0) {
-	    		sscanf(pval, "%s", parlist);
-		}
-		printf("%s\n",parlist );
-		fp_parlist=fopen(parlist, "r");
-		if(fp_parlist == NULL) {
-		    printf("Error on opening parlist(%s)\n", parlist);
-		    assert(0);
-		}
-		get_vars(fp_spc, "timedir", pval, &len, &ierr);
-		if (ierr == 0) {
-	    		sscanf(pval, "%s", output_path);
-		}
-	
-		fclose(fp_spc);
-
-		for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
-			if (tmp[0]=='\n')
-				break;
-			strcpy(parfiles[i],tmp);
-			parfiles[i][strlen(parfiles[i])-1]='\0';
-			num_parfiles++;
-			if (num_parfiles>3000){
-				printf("number of parfiles exceed index\n");
-				assert(0);
-			}
-		
-
-		}
-		fclose(fp_parlist);
-
-		for(int j=0;j<num_parfiles;j++){
-			MPI_Send(parfiles[j], 200, MPI_CHAR, j%numtasks, j, MPI_COMM_WORLD);
-		}
-
-		for(int i=0;i<numtasks;i++){
-			MPI_Send(&num_parfiles, 1, MPI_INT, i, 3000+i, MPI_COMM_WORLD);	
-			MPI_Send(output_path, MAXSTRLEN + 1, MPI_CHAR, i, 3000+i+numtasks, MPI_COMM_WORLD);	
-		} 
-
+	//scanf("%s",spec_file);
+	fp_spc=fopen(av[1],"r");
+	if(fp_spc == NULL) {
+	    printf("Error on opening spec file(%s)\n", spec_file);
+	    assert(0);
+	}
+	get_vars(fp_spc, "parlist", pval, &len, &ierr);
+	if (ierr == 0) {
+    		sscanf(pval, "%s", parlist);
+	}
+	printf("%s\n",parlist );
+	fp_parlist=fopen(parlist, "r");
+	if(fp_parlist == NULL) {
+	    printf("Error on opening parlist(%s)\n", parlist);
+	    assert(0);
+	}
+	get_vars(fp_spc, "timedir", pval, &len, &ierr);
+	if (ierr == 0) {
+    		sscanf(pval, "%s", output_path);
 	}
 
-	
-	for(int i=0;i<numtasks;i++){
-	  if(i==rank){ 
-		MPI_Recv(&num_parfiles, 1, MPI_INT, 0, 3000+i, MPI_COMM_WORLD, &Stat);
-		MPI_Recv(output_path, MAXSTRLEN + 1, MPI_CHAR, 0, 3000+i+numtasks, MPI_COMM_WORLD, &Stat);
-	  }		
-	} 
+	fclose(fp_spc);
+
+	for(int i=0;fgets(tmp,MAXSTRLEN + 1,fp_parlist)!=NULL;i++){
+		if (tmp[0]=='\n')
+			break;
+		strcpy(parfiles[i],tmp);
+		parfiles[i][strlen(parfiles[i])-1]='\0';
+		num_parfiles++;
+		if (num_parfiles>MAXNUMPAR){
+			printf("number of parfiles exceed index\n");
+			assert(0);
+		}
+	}
+	fclose(fp_parlist);
 
 	for(int i=0;i<num_parfiles;i++){
 	  if((i%numtasks)==rank){
-		MPI_Recv(recvbuf, 200, MPI_CHAR, 0, i, MPI_COMM_WORLD, &Stat);
 		char *fake_av[2];
 		fake_av[0] = av[0];
-		fake_av[1] = recvbuf;
+		fake_av[1] = parfiles[i];
 		sphfd(2, fake_av, output_path);
 	  }
 	}
