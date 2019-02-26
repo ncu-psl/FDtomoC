@@ -140,6 +140,7 @@
 #include "common/parseprogs.h"
 #include "sphfd/vhead.h"
 #define MAXSTRLEN 132
+#define MAXNUMPAR 2000
 #define PI  3.141592654
 #define HPI 1.570796327
 #define SQR2 1.414213562
@@ -164,6 +165,7 @@
 #define FIX_SHORT(x) (*(unsigned short *)&(x) = SWAP_2(*(unsigned short *)&(x)))
 #define FIX_INT(x)   (*(unsigned int *)&(x)   = SWAP_4(*(unsigned int *)&(x)))
 #define FIX_FLOAT(x) FIX_INT(x)
+
 #include <omp.h>
 
 struct sorted {
@@ -199,10 +201,10 @@ int litend;
 
 int main(int ac, char **av)
 {
-	char parfiles[2000][200], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
-	char tmp[100], output_path[MAXSTRLEN + 1];
-	char spec_file[100];
-	int a=0,len,ierr;
+	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
+	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
+	char spec_file[MAXSTRLEN + 1];
+	int num_parfiles=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
 	printf("Input the name spec file\n");
 	scanf("%s",spec_file);
@@ -228,14 +230,13 @@ int main(int ac, char **av)
 	
 	fclose(fp_spc);
 
-	for(int i=0;fgets(tmp,200,fp_parlist)!=NULL;i++){
+	for(int i=0;fgets(tmp,MAXSTRLEN + 1,fp_parlist)!=NULL;i++){
 		if (tmp[0]=='\n')
 			break;
 		strcpy(parfiles[i],tmp);
 		parfiles[i][strlen(parfiles[i])-1]='\0';
-		printf("%d  %s\n",strlen(parfiles[i]),parfiles[i]);
-		a++;
-		if (a>3000){
+		num_parfiles++;
+		if (num_parfiles>MAXNUMPAR){
 			printf("number of parfiles exceed index\n");
 			assert(0);
 		}
@@ -244,8 +245,8 @@ int main(int ac, char **av)
 	}
 	fclose(fp_parlist);
 
-	#pragma omp parallel for firstprivate(parfiles) num_threads(8)
-	for (int i = 0; i < a; i++)
+	#pragma omp parallel for 
+	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
 		fake_av[0] = av[0];
@@ -514,7 +515,7 @@ int sphfd(int ac, char **av, char *output_path)
 		mstpar("oldtfile", "s", oldtfile);
 	} else {
 		fprintf(stderr, "ERROR: incorrect value of srctype\n");
-		exit(-1);
+		assert(0);
 	}
 
 	if (fill == 1) {
@@ -533,7 +534,7 @@ int sphfd(int ac, char **av, char *output_path)
 			|| zs > nz - 1) {
 		fprintf(stderr, "Error: Source does not appear to be in the model;\n");
 		fprintf(stderr, "Please check the values in the parameter file.\n");
-		exit(-1);
+		assert(0);
 	}
 
 	if (xs < 2 || ys < 2 || zs < 2 || xs > nx - 3 || ys > ny - 3
@@ -561,28 +562,28 @@ int sphfd(int ac, char **av, char *output_path)
 	/* FORM AND FILL TT AND SLOWNESS ARRAYS */
 	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1) {
 		fprintf(stderr, "cannot open %s\n", timefile);
-		exit(-1);
+		assert(0);
 	}
 	if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1) {
 		fprintf(stderr, "cannot open %s\n", velfile);
-		exit(-1);
+		assert(0);
 	}
 	if (fill == 1) {
 		if ((bfint = open(boxfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", boxfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 	if (srctype == 2) {
 		if ((wfint = open(wallfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", wallfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 	if (srctype == 3) {
 		if ((ofint = open(oldtfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", oldtfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 
@@ -604,7 +605,7 @@ int sphfd(int ac, char **av, char *output_path)
 	wall = (float *) malloc(4 * nwall);
 	if (slow0 == NULL || time0 == NULL || sort == NULL || wall == NULL) {
 		fprintf(stderr, "cannot allocate memory\n");
-		exit(-1);
+		assert(0);
 	}
 	/* READ IN VELOCITY FILE */
 	read(vfint, &headin, 232);
@@ -656,12 +657,12 @@ int sphfd(int ac, char **av, char *output_path)
 		close(vfint);
 		if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", velfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 
 	read(vfint, slow0, nxyz * 4);
-
+	close(vfint);
 	/* swap bytes on input if necessary */
 	/*        if ((litend && swab==1) || swab==2) { */
 	if (swab == 1 || swab == 3) {
@@ -717,6 +718,7 @@ int sphfd(int ac, char **av, char *output_path)
 		read(bfint, &headbox, 232);
 		read(bfint, box0, nbox * 4);
 		fprintf(stderr, " Number of points read from boxfile = %d\n", nbox);
+		close(bfint);
 	}
 
 	if (srctype == 1) { /* POINT SOURCE */
@@ -884,7 +886,7 @@ int sphfd(int ac, char **av, char *output_path)
 				}
 			}
 		}
-
+		close(wfint);
 		/* SET LOCATIONS OF SIDES OF THE CELL SO THAT CELL IS A FACE  */
 		radius = 1;
 		if (srcwall == 1)
@@ -927,6 +929,8 @@ int sphfd(int ac, char **av, char *output_path)
 		/* READ IN OLD TIME FILE */
 		if (srctype == 3)
 			read(ofint, time0, nxyz * 4);
+		close(ofint);
+			
 		/* SET LOCATIONS OF SIDES OF THE CELL SO THAT CELL IS A FACE */
 		radius = 1;
 		if (srcwall == 1)
@@ -967,7 +971,7 @@ int sphfd(int ac, char **av, char *output_path)
 		}
 	} else {
 		fprintf(stderr, "incorrect value of srctype = %d\n", srctype);
-		exit(-1);
+		assert(0);
 	}
 
 	if (headpref > 0) { /* PREFERRED REVERSE DIRECTION */
@@ -5796,6 +5800,7 @@ fprintf(stdout, "fzss =  %g\n", headout.fzs);
 write(tfint, &headout, 232);
 write(tfint, time0, nxyz * 4);
 fprintf(stderr, "wavefront done \n");
+close(tfint);
 return 0;
 }
 
@@ -6874,4 +6879,3 @@ cptr[4] = tmp;
 
 return (1);
 }
-
