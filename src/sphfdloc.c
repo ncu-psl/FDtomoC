@@ -564,7 +564,7 @@ int main() {
 			printf("file not found: %s\n", filename);
 			assert(0);
 		}
-		char str_inp[100];
+		char str_inp[MAXSTRLEN];
 		if (fgets(str_inp, sizeof(str_inp), fp_leq) == 0) {
 			if (feof(fp_leq)) {
 				printf("eof on fp_leq(%s)\n", filename);
@@ -615,7 +615,7 @@ int main() {
 			if (str_inp[0] == '\n') {
 				break;
 			}
-			if (str_inp[len - 1] != '\n') {
+			if (len > MAXSTRLEN) {
 				printf("input length is too large. len=%d str_inp=%s\n", len,
 						str_inp);
 				assert(0);
