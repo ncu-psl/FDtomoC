@@ -8,7 +8,7 @@
 * [FDtomo-Python](https://github.com/ncu-psl/FDtomo-Python)
 
 ## How to download
-```sh
+```bash
 # clone source code
 cd <where you want FDtomo-C to live>
 git clone https://github.com/ncu-psl/FDtomo-C.git
@@ -21,7 +21,7 @@ unzip data/cwb_12-15_S/runs_files/arrivals/cwb_12-15_S.zip -d data/cwb_12-15_S/r
 ```
 
 ## How to build
-```sh
+```bash
 # GNU Compiler Collection
 export CC=gcc
 

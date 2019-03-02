@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # please make sure current dir is in FDtomo/build
 pwd
@@ -6,7 +6,7 @@ pwd
 if [ $# -eq 0 ]; then
 	echo "Please input spec_file, example:"
 	echo ""
-	echo "sh run.sh ../data/small/FDtomo.spec"
+	echo "bash run.sh ../data/small/FDtomo.spec"
 	echo ""
 	exit 1
 fi
