@@ -243,7 +243,7 @@ int main(int ac, char **av)
 	}
 	fclose(fp_parlist);
 
-	#pragma omp parallel for firstprivate(parfiles) num_threads(8)
+	#pragma omp parallel for firstprivate(parfiles)
 	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
