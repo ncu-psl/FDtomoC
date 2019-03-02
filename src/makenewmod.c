@@ -1143,7 +1143,6 @@ int main(void) {
 			du[i+nzc]/=igridz[i+nzc];
 		if(du[i+nzc]>-0.001 && du[i+nzc]<0.001)
 			du[i+nzc]=du[i]/1.78;
-		printf("%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 		fprintf(fp_1dm, "%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 	}
 	fclose(fp_1dm);
