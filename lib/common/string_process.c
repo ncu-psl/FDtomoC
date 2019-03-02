@@ -39,6 +39,37 @@ char* trim(char* str) {
 	return str;
 }
 
+size_t trimwhitespace(char *out, size_t len, const char *str) {
+	if(len == 0)
+		return 0;
+
+	const char *end;
+	size_t out_size;
+
+	// Trim leading space
+	while(isspace((unsigned char)*str)) str++;
+	
+	// All spaces?
+	if(*str == 0) {
+		*out = 0;
+		return 1;
+	}
+
+	// Trim trailing space
+	end = str + strlen(str) - 1;
+	while(end > str && isspace((unsigned char)*end)) end--;
+	end++;
+
+	// Set output size to minimum of trimmed string length and buffer size minus 1
+	out_size = (end - str) < len-1 ? (end - str) : len-1;
+
+	// Copy trimmed string and add null terminator
+	memcpy(out, str, out_size);
+	out[out_size] = 0;
+
+	return out_size;
+}
+
 char* strapp(char* dest, int* end, const char* src) {
 	if (*end >= 0 && dest && src) {
 		char* p = dest + *end;
