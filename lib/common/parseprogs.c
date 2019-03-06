@@ -57,8 +57,7 @@ a1: memset(aline, 0, sizeof(aline));
 
 	//c-----recover the variable setting
 	ib = ie;
-	/////////////////////
-	int nvl;
+	int nvl = 0;
 	get_field(fp, aline, ib, &ie, parval, &nvl, &ierr);
 	if (ierr != 0)
 		goto a15;

@@ -393,8 +393,7 @@ int main(void) {
 		printf("file open error: %s\n", nmodfil);
 		assert(0);
 	}
-	int nvar = 0, buffer = 0, header = 0, ender = 0;
-	fread(&buffer, sizeof(buffer), 1, fp_fmd);
+	int nvar = 0;
 	fread(&nvar, sizeof(nvar), 1, fp_fmd);
 	if (nvar > maxmbl) {
 		printf(
@@ -405,18 +404,11 @@ int main(void) {
 				nvar, maxmbl);
 		assert(0);
 	}
-	fread(&buffer, sizeof(buffer), 1, fp_fmd);
-	fread(&header, sizeof(header), 1, fp_fmd);
 	fread(vd, sizeof(vd[0]), nvar, fp_fmd);
-	fread(&ender, sizeof(ender), 1, fp_fmd);
-	assert(header == ender);
-	fread(&header, sizeof(header), 1, fp_fmd);
 	fread(jndx, sizeof(jndx[0]), nvar, fp_fmd);
 	for (int i = 0; i < nvar; i++) {
 		jndx[i]--;
 	}
-	fread(&ender, sizeof(ender), 1, fp_fmd);
-	assert(header == ender);
 	fclose(fp_fmd);
 
 	printf("  %10d perturbations read in\n", nvar);
@@ -1143,7 +1135,6 @@ int main(void) {
 			du[i+nzc]/=igridz[i+nzc];
 		if(du[i+nzc]>-0.001 && du[i+nzc]<0.001)
 			du[i+nzc]=du[i]/1.78;
-		printf("%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 		fprintf(fp_1dm, "%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 	}
 	fclose(fp_1dm);

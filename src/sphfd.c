@@ -166,8 +166,6 @@
 #define FIX_INT(x)   (*(unsigned int *)&(x)   = SWAP_4(*(unsigned int *)&(x)))
 #define FIX_FLOAT(x) FIX_INT(x)
 
-#include <omp.h>
-
 struct sorted {
 	float time;
 	int i1, i2;
@@ -245,7 +243,9 @@ int main(int ac, char **av)
 	}
 	fclose(fp_parlist);
 
+
 	#pragma omp parallel for 
+
 	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];

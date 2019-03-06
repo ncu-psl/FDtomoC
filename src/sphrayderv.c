@@ -824,15 +824,16 @@ a15:
 	}
 
 	int nstr;
-	char str_inp[100];
+	char str_inp[MAXSTRLEN];
 	double stz[maxlst];
 
 	for (nstr = 0; fgets(str_inp, sizeof(str_inp), fp_sta); nstr++) {
-		strcpy(str_inp, trim(str_inp));
-		if (str_inp[0] == '\n')
+		char str_inp_trimed[MAXSTRLEN];
+		trimwhitespace(str_inp_trimed, strlen(str_inp), str_inp);
+		if (str_inp_trimed[0] == '\n')
 			break;
-		if (strlen(str_inp) > sizeof(str_inp)) {
-			printf("str_inp is too long: %s\n", str_inp);
+		if (strlen(str_inp_trimed) > MAXSTRLEN) {
+			printf("str_inp is too long: %s\n", str_inp_trimed);
 			assert(0);
 		}
 		if (nstr >= maxlst) {
@@ -946,15 +947,17 @@ a3:
 			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
 			fprintf(fp_err, "\n");
 			while (aline[0] != '\0') {
-				fgets(str_inp, sizeof(str_inp), fp_din);
+				if(fgets(str_inp, sizeof(str_inp), fp_din)== NULL) {
+					break;
+				}
 				len = (int)strlen(str_inp);
-				if (str_inp[len - 1] != '\n') {
+				if (len > MAXSTRLEN) {
 					printf("input length is too large. len=%d str_inp=%s\n", len,
 						str_inp);
 					assert(0);
 				}
 				strcpy(str_inp, trim(str_inp));
-				if (str_inp[0] == '\n') {
+				if (str_inp[0] == '\n' || str_inp[0] == '\0') {
 					break;
 				}
 			}
@@ -979,22 +982,23 @@ a3:
 			fprintf(fp_log, "Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
 			assert(0);
 		}
+		char str_inp_trimed[100];
+		trimwhitespace(str_inp_trimed, strlen(str_inp), str_inp);
 
-		strcpy(str_inp, trim(str_inp));
-		len = (int)strlen(str_inp);
-		if (str_inp[0] == '\n') {
+		len = (int)strlen(str_inp_trimed);
+		if (str_inp_trimed[0] == '\0') {
 			break;
 		}
-		if (str_inp[len - 1] != '\n') {
+		if (len >= MAXSTRLEN) {
 			printf("input length is too large. len=%d str_inp=%s\n", len,
-				str_inp);
+				str_inp_trimed);
 			assert(0);
 		}
 
-		char str_tmp[100];
+		char str_tmp[MAXSTRLEN];
 		int iyr, jday, ihr, imn;
 		double sec = 0;
-		sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
+		sscanf(str_inp_trimed, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
 			&jday, &ihr, &imn, &sec, str_tmp);
 		if (str_tmp[0] == '*') {
 			str_tmp[0] = ' ';
@@ -2409,28 +2413,15 @@ a3:
 					}
 				}
 				if (ja > 0) {
-					int junk = 4;
-					fwrite(&junk, sizeof(junk), 1, fp_dts); // size
 					fwrite(&ja, sizeof(ja), 1, fp_dts);
-					junk = 4;
-					fwrite(&junk, sizeof(junk), 1, fp_dts); // size
-					junk = 1;
-					fwrite(&junk, sizeof(junk), 1, fp_dts); // header
 					for (int i1 = 0; i1 < ja; i1++) {
 						indx[mndm[jsave[i1]]]++;
 						fwrite(&indx[mndm[jsave[i1]]], sizeof(indx[mndm[jsave[i1]]]), 1, fp_dts);
 						indx[mndm[jsave[i1]]]--;
 						fwrite(&vmp[jsave[i1]][j1], sizeof(vmp[jsave[i1]][j1]), 1, fp_dts);
 					}
-					junk = 1;
-					fwrite(&junk, sizeof(junk), 1, fp_dts); // ender
-					junk = 4;
 
 					// write residual file
-					fwrite(&junk, sizeof(junk), 1, fp_res);
-					if (j1 != 0) {
-						fwrite(&junk, sizeof(junk), 1, fp_res);
-					}
 					fwrite(&dat[j1], sizeof(dat[j1]), 1, fp_res);
 
 					if (isshot == 0) {
@@ -2645,18 +2636,9 @@ a60:
 		// ----output indexing array
 		if (nomat == 0) {
 			// -----tack on a marker to signify end of file
-			int junk = 4;
-			fwrite(&junk, sizeof(junk), 1, fp_dts); // head
 			int ja = -1;
 			fwrite(&ja, sizeof(ja), 1, fp_dts);
-			fwrite(&junk, sizeof(junk), 1, fp_dts); // ender
-
-			fwrite(&junk, sizeof(junk), 1, fp_dts); // head
 			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
-			fwrite(&junk, sizeof(junk), 1, fp_dts); // ender
-			
-			junk = 1;
-			fwrite(&junk, sizeof(junk), 1, fp_dts); // head
 			fwrite(jndx, sizeof(jndx[0]), mbl, fp_dts);
 
 			fprintf(fp_msc, "%d\n", mbl);

@@ -307,19 +307,10 @@ int main() {
 // c	  x(j) = x(j)/sc
 // c	  se(j) = se(j)/sc
 // c200	continue
-	int buffer=4, header=15076,ender=15076;
-	fwrite(&buffer,sizeof(buffer), 1, fp_fmd);
 	fwrite(&n, sizeof(n), 1, fp_fmd);
-	fwrite(&buffer,sizeof(buffer), 1, fp_fmd);
-	fwrite(&header,sizeof(header), 1, fp_fmd);
 	fwrite(x, sizeof(x[0]), n, fp_fmd);
-	fwrite(&ender,sizeof(ender), 1, fp_fmd);
-	fwrite(&header,sizeof(header), 1, fp_fmd);
 	fwrite(jndx, sizeof(jndx[0]), n, fp_fmd);
-	fwrite(&ender,sizeof(ender), 1, fp_fmd);
-	fwrite(&header,sizeof(header), 1, fp_fmd);
 	fwrite(se, sizeof(se[0]), n, fp_fmd);
-	fwrite(&ender,sizeof(ender), 1, fp_fmd);
 	return 0;
 }
 
