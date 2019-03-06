@@ -243,7 +243,9 @@ int main(int ac, char **av)
 	}
 	fclose(fp_parlist);
 
-	#pragma omp parallel for firstprivate(parfiles)
+
+	#pragma omp parallel for 
+
 	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
@@ -513,7 +515,7 @@ int sphfd(int ac, char **av, char *output_path)
 		mstpar("oldtfile", "s", oldtfile);
 	} else {
 		fprintf(stderr, "ERROR: incorrect value of srctype\n");
-		exit(-1);
+		assert(0);
 	}
 
 	if (fill == 1) {
@@ -532,7 +534,7 @@ int sphfd(int ac, char **av, char *output_path)
 			|| zs > nz - 1) {
 		fprintf(stderr, "Error: Source does not appear to be in the model;\n");
 		fprintf(stderr, "Please check the values in the parameter file.\n");
-		exit(-1);
+		assert(0);
 	}
 
 	if (xs < 2 || ys < 2 || zs < 2 || xs > nx - 3 || ys > ny - 3
@@ -560,28 +562,28 @@ int sphfd(int ac, char **av, char *output_path)
 	/* FORM AND FILL TT AND SLOWNESS ARRAYS */
 	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1) {
 		fprintf(stderr, "cannot open %s\n", timefile);
-		exit(-1);
+		assert(0);
 	}
 	if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1) {
 		fprintf(stderr, "cannot open %s\n", velfile);
-		exit(-1);
+		assert(0);
 	}
 	if (fill == 1) {
 		if ((bfint = open(boxfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", boxfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 	if (srctype == 2) {
 		if ((wfint = open(wallfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", wallfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 	if (srctype == 3) {
 		if ((ofint = open(oldtfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", oldtfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 
@@ -603,7 +605,7 @@ int sphfd(int ac, char **av, char *output_path)
 	wall = (float *) malloc(4 * nwall);
 	if (slow0 == NULL || time0 == NULL || sort == NULL || wall == NULL) {
 		fprintf(stderr, "cannot allocate memory\n");
-		exit(-1);
+		assert(0);
 	}
 	/* READ IN VELOCITY FILE */
 	read(vfint, &headin, 232);
@@ -655,12 +657,12 @@ int sphfd(int ac, char **av, char *output_path)
 		close(vfint);
 		if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1) {
 			fprintf(stderr, "cannot open %s\n", velfile);
-			exit(-1);
+			assert(0);
 		}
 	}
 
 	read(vfint, slow0, nxyz * 4);
-
+	close(vfint);
 	/* swap bytes on input if necessary */
 	/*        if ((litend && swab==1) || swab==2) { */
 	if (swab == 1 || swab == 3) {
@@ -716,6 +718,7 @@ int sphfd(int ac, char **av, char *output_path)
 		read(bfint, &headbox, 232);
 		read(bfint, box0, nbox * 4);
 		fprintf(stderr, " Number of points read from boxfile = %d\n", nbox);
+		close(bfint);
 	}
 
 	if (srctype == 1) { /* POINT SOURCE */
@@ -883,7 +886,7 @@ int sphfd(int ac, char **av, char *output_path)
 				}
 			}
 		}
-
+		close(wfint);
 		/* SET LOCATIONS OF SIDES OF THE CELL SO THAT CELL IS A FACE  */
 		radius = 1;
 		if (srcwall == 1)
@@ -926,6 +929,8 @@ int sphfd(int ac, char **av, char *output_path)
 		/* READ IN OLD TIME FILE */
 		if (srctype == 3)
 			read(ofint, time0, nxyz * 4);
+		close(ofint);
+			
 		/* SET LOCATIONS OF SIDES OF THE CELL SO THAT CELL IS A FACE */
 		radius = 1;
 		if (srcwall == 1)
@@ -966,7 +971,7 @@ int sphfd(int ac, char **av, char *output_path)
 		}
 	} else {
 		fprintf(stderr, "incorrect value of srctype = %d\n", srctype);
-		exit(-1);
+		assert(0);
 	}
 
 	if (headpref > 0) { /* PREFERRED REVERSE DIRECTION */
@@ -5795,6 +5800,7 @@ fprintf(stdout, "fzss =  %g\n", headout.fzs);
 write(tfint, &headout, 232);
 write(tfint, time0, nxyz * 4);
 fprintf(stderr, "wavefront done \n");
+close(tfint);
 return 0;
 }
 
@@ -6873,4 +6879,3 @@ cptr[4] = tmp;
 
 return (1);
 }
-
