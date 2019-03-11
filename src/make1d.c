@@ -120,7 +120,7 @@ double axo, ayo, azo, dx, dy, dz;
 float az;
 int nxh, nyh, nzh;
 //--------------------------------------
-char hdr[nhbyte];
+char hdr[nhbyte + 1];
 
 double rearth = 6371.0;
 int lenhead = nhbyte * 4;

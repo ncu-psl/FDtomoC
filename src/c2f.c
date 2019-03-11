@@ -95,7 +95,7 @@ double axo, ayo, azo, dxh, dyh, dzh;
 float azh;
 int nxh, nyh, nzh;
 
-char hdr[nhbyte];
+char hdr[nhbyte + 1];
 
 double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
 int len_head = nhbyte;
