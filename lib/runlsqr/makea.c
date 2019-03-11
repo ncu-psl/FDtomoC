@@ -2,6 +2,9 @@
 #include "common/parameter.h"
 #include "runlsqr/makea.h"
 
+#define TYPE_INT 4
+#define TYPE_LONG 8
+
 // ---------------------------------------------------------------------------
 //
 //   a is the sparse matrix whose nonzero coefficients are stored by
@@ -51,6 +54,10 @@ void makea(int *m, int *nbl, FILE *fp_dts, FILE *fp_res, FILE *fp_out,
 	int l = 0, mm = 0, namm = 0;
 // c  read in velocity information, along with the data vector, first
 	while (get_namm(&namm, fp_dts, fp_out)) {
+		assert(get_size(fp_dts) == TYPE_INT);
+		int header = 0, ender = 0;
+		fread(&header, sizeof(header), 1, fp_dts);
+
 		if(get_b(b, mm, fp_res) == EOF) {
 			printf(" Error: Ran out of data! \n");
 			fprintf(fp_out, " Error: Ran out of data! \n");
@@ -75,6 +82,8 @@ void makea(int *m, int *nbl, FILE *fp_dts, FILE *fp_res, FILE *fp_out,
 			fread(a + i, sizeof(a[0]), 1, fp_dts);
 			ja[i]--;
 		}
+		fread(&ender, sizeof(ender), 1, fp_dts);
+		assert(header == ender);
 		
 		for (int i = l1; i < l2 - 1; i++) {
 			if (ja[i] > NMAX) {
@@ -105,6 +114,11 @@ void makea(int *m, int *nbl, FILE *fp_dts, FILE *fp_res, FILE *fp_out,
 // c---read in the index array
 
 	fread(nbl, sizeof(*nbl), 1, fp_dts);
+	fread(nbl, sizeof(*nbl), 1, fp_dts);
+	fread(nbl, sizeof(*nbl), 1, fp_dts);
+	get_size(fp_dts);
+	int header;
+	fread(&header, sizeof(header), 1, fp_dts);
 	if (!fread(jndx, sizeof(jndx[0]), *nbl, fp_dts)) {
 		printf("error on read jndx: fp_dts\n");
 	}
@@ -117,9 +131,23 @@ void makea(int *m, int *nbl, FILE *fp_dts, FILE *fp_res, FILE *fp_out,
 	fprintf(fp_out, "  Total number of variables = %14d \n", *nbl);
 }
 
+int get_size(FILE *fptr) {
+	int size;
+	if(fread(&size, sizeof(size), 1, fptr) == EOF) {
+		assert(0);
+		return -1;
+	}
+	if(size != TYPE_INT) {
+		printf("%d\n", size);
+		assert(0);
+	}
+	return TYPE_INT;
+}
+
 int get_namm(int *namm, FILE *fptr, FILE *fp_out) {
 // c----Abnormal Endings
 	*namm = 0;
+	assert(get_size(fptr) == TYPE_INT);
 	if (!fread(namm, sizeof(*namm), 1, fptr)) {
 		printf(" Error: Ran out of velocity info!\n");
 		fprintf(fp_out, " Error: Ran out of velocity info!\n");
@@ -129,6 +157,15 @@ int get_namm(int *namm, FILE *fptr, FILE *fp_out) {
 }
 
 int get_b(float *b, int mm, FILE *fptr) {
+	int header;
+	if(fread(&header, sizeof(header), 1, fptr) == EOF) {
+		return EOF;
+	}
+	if (mm != 0) {
+		if(fread(&header, sizeof(header), 1, fptr) == EOF) {
+			return EOF;
+		}
+	}
 	if(fread(&b[mm], sizeof(b[0]), 1, fptr) == EOF) {
 		return EOF;
 	}
