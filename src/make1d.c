@@ -143,6 +143,10 @@ int main() {
 	spec_file[MAXSTRLEN] = '\0';
 
 	fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in make1d.c)read fp_spc file error.\n");
+		assert(0);
+	}
 	int i;
 
 //---recover the variables needed to run this program
