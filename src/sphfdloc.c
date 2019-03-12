@@ -47,7 +47,6 @@
 #include <float.h>
 #include <assert.h>
 
-#include <dirent.h>
 #include "common/environment_setting.h"
 #include "common/time_process.h"
 #include "common/geographic_method.h"
@@ -260,8 +259,10 @@ int main() {
 	if (ierr == 0)
 		sscanf(pval, "%lf", &stdmax);
 	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
-	if (ierr == 0)
+	if (ierr == 0) {
 		sscanf(pval, "%d", &kmin);
+		kmin--;
+	}
 	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%d", &ittnum);
@@ -420,6 +421,8 @@ int main() {
 		char tmp[MAXSTRLEN];
 		dtoa(tmp, ittnum, 18);
 		fprintf(fp_log, " Iteration counter:          %s     \n", tmp);
+		fprintf(fp_log, "\n");
+
 		dtoa(tmp, x00, 18);
 		fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", tmp);
 		dtoa(tmp, y00, 18);
@@ -442,7 +445,6 @@ int main() {
 			fprintf(fp_log, "\n");
 		}
 	}
-	fprintf(fp_log, "\n");
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
 	fprintf(fp_log, "  Y coarse grid node spacing: \n");
@@ -452,7 +454,6 @@ int main() {
 			fprintf(fp_log, "\n");
 		}
 	}
-	fprintf(fp_log, "\n");
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
 	fprintf(fp_log, "  Z coarse grid node spacing: \n");
@@ -485,6 +486,8 @@ int main() {
 	fprintf(fp_log, " \n");
 
 	fprintf(fp_log, " Travel Time Table Directory: %s\n", timedir);
+	fprintf(fp_log, " \n");
+
 	if(DEBUG_PRINT) {
 		printf(" Origin:  x0=%.14lf y0=%.14lf z0=%.14lf\n", x0, y[0], z0r);
 		printf(" Spacing:  h=%lf\n", h);
@@ -499,11 +502,15 @@ int main() {
 	double xmax = x0 + (nx - 1) * df;
 	double ymax = y[0] + (ny - 1) * dq;
 	double zmax = z0 + (nz - 1) * h;
-	if(DEBUG_PRINT) {
-		printf(" Total Number of fine grid nodes:%13d\n", nxyz);
-		printf(" Total Number of coarse grid nodes:%13d\n", nxyzc);
-		printf("\n");
-	}
+
+	fprintf(fp_log, " Total Number of fine grid nodes:%13d\n", nxyz);
+	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", nxyzc);
+	fprintf(fp_log, "\n");
+
+	fprintf(fp_log, " X Max:%22.14lf\n", xmax/degrad);
+	fprintf(fp_log, " Y Max:%22.14lf\n", ymax/degrad);
+	fprintf(fp_log, " Z Max:%22.14lf\n", zmax);
+	fprintf(fp_log, "\n");
 
 //---write out some reminders so we know what's going on:
 	fprintf(fp_log, " Current settings: \n");
@@ -519,12 +526,12 @@ int main() {
 		fprintf(fp_log, " Ts calculated as Tp*vpvs (ivs = 0). vpvs = %lf\n",
 				vpvs);
 	}
-	fprintf(fp_log, " Default value for Vp/Vs = %lf", vpvs);
-	fprintf(fp_log, " Number of Phases Threshold    : %d", nthres);
-	fprintf(fp_log, " Absolute Residual Threshold   : %lf", resthres);
-	fprintf(fp_log, " Percentage Residual Threshold : %lf", resthrep);
-	fprintf(fp_log, " Standard Deviation Threshold  : %lf", stdmax);
-	fprintf(fp_log, " Beginning Depth grid          : %d", kmin);
+	fprintf(fp_log, " Default value for Vp/Vs = %lf\n", vpvs);
+	fprintf(fp_log, " Number of Phases Threshold    : %d\n", nthres);
+	fprintf(fp_log, " Absolute Residual Threshold   : %lf\n", resthres);
+	fprintf(fp_log, " Percentage Residual Threshold : %lf\n", resthrep);
+	fprintf(fp_log, " Standard Deviation Threshold  : %lf\n", stdmax);
+	fprintf(fp_log, " Beginning Depth grid          : %d\n", kmin + 1);
 	fprintf(fp_log, "\n");
 	fprintf(fp_log,
 			"*************************************************************** \n");
