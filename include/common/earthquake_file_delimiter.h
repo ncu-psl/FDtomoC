@@ -8,8 +8,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #ifdef _WIN32
-	#include <common/dirent.h>
-#else
+	#include "windows/dirent.h"
+#elif __linux__
 	#include <dirent.h>
 #endif
 
