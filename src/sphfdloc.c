@@ -76,6 +76,16 @@
 
 char timedir[60 + 1] = "./ttimes\0";
 char eqkdir[60 + 1] = "./eqkdir/\0";
+
+char spec_file[MAXSTRLEN + 1];
+char aline[MAXSTRLEN + 1];
+char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
+char *files[MUSTF] = { "leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0",
+		"fdatfil\0" };
+char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
+fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
+
 float t[maxsta][nxyzm];
 char str_fhd[160000][100], str_data[160000][10000];
 char str_sum[160000][20000], str_out[160000][10000];
@@ -86,15 +96,7 @@ void read_station_set(int *, int *, int *, int *, int *, double *, int *,
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1]);
 
 int main() {
-	char spec_file[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
-	char aline[MAXSTRLEN + 1];
-	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-	char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
-	char *files[MUSTF] = { "leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0",
-			"fdatfil\0" };
-	char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
-			fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
 
 //-----------------------------------------------------------------------------
 //
