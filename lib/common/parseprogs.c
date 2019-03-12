@@ -12,7 +12,9 @@ void get_vars(FILE *fp, char *vname, char *parval, int *len, int *error) {
 			vname);
 		assert(0);
 	}
-	memset(parval, 0, strlen(parval) * sizeof(char));
+	for (int i = 0; i < MAXSTRLEN; i++) {
+		parval[i] = 0;
+	}
 	char aline[MAXSTRLEN];
 	char varname[MAXSTRLEN];
 	int ierr = 0, i = 0, lenp = (int)strlen(vname);

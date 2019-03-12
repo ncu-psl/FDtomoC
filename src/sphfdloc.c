@@ -1433,7 +1433,7 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1]) {
 		offset += strlen(quant);
 		sscanf(offset, "%4s", flatten);
 		offset += strlen(flatten);
-		sscanf(offset, "%[^\r\n]", hcomm);
+		sscanf(offset, "%124s", hcomm);
 
 //---verify that this is a valid header
 		if (strcmp(head, "HEAD") == 0) {

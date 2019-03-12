@@ -524,7 +524,7 @@ int main(void) {
 		offset += strlen(quant);
 		sscanf(offset, "%4s", flatten);
 		offset += strlen(flatten);
-		sscanf(offset, "%[^\r\n]", hcomm);
+		sscanf(offset, "%124s", hcomm);
 	}
 
 // c---see if this is a valid header
@@ -1062,7 +1062,7 @@ int main(void) {
 	// if (iz2d==1) nzs = 1;
 
 	trim(fmodfil);
-	char vpfile[strlen(fmodfil)+6], vsfile[strlen(fmodfil)+6];
+	char vpfile[MAXSTRLEN + 1], vsfile[MAXSTRLEN + 1];
 	sprintf(vpfile,"%s.pvel", fmodfil);
 	sprintf(vsfile,"%s.svel", fmodfil);
 
