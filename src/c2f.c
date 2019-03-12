@@ -434,20 +434,20 @@ int main() {
 		assert(0);
 	}
 	fread(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
-	{
-		char *offset = hdr;
-		sscanf(offset, "%4s", head);
-		offset += strlen(head);
-		sscanf(offset, "%4s", type);
-		offset += strlen(type);
-		sscanf(offset, "%4s", syst);
-		offset += strlen(syst);
-		sscanf(offset, "%4s", quant);
-		offset += strlen(quant);
-		sscanf(offset, "%4s", flatten);
-		offset += strlen(flatten);
-		sscanf(offset, "%[^\t\n]", hcomm);
-	}
+	
+	char *offset = hdr;
+	sscanf(offset, "%4s", head);
+	offset += strlen(head);
+	sscanf(offset, "%4s", type);
+	offset += strlen(type);
+	sscanf(offset, "%4s", syst);
+	offset += strlen(syst);
+	sscanf(offset, "%4s", quant);
+	offset += strlen(quant);
+	sscanf(offset, "%4s", flatten);
+	offset += strlen(flatten);
+	sscanf(offset, "%100s", hcomm);
+	
 	for (int i = 0; i < nxyzm2; i++)
 		vsave[i] = 0.;
 

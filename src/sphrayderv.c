@@ -1175,7 +1175,7 @@ a3:
 		offset += strlen(quant);
 		sscanf(offset, "%4s", flatten);
 		offset += strlen(flatten);
-		sscanf(offset, "%[^\r\n]", hcomm);
+		sscanf(offset, "%124s", hcomm);
 
 		// ---see if this the time file has a header on it.
 		if (strcmp(head, "HEAD") == 0) {
