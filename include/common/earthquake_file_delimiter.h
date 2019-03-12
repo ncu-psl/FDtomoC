@@ -7,7 +7,11 @@
 #include <memory.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <dirent.h>
+#ifdef _WIN32
+	#include <common/dirent.h>
+#else
+	#include <dirent.h>
+#endif
 
 #include "parameter.h"
 void clean_dir(char *);
