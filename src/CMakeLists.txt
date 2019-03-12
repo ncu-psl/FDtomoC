@@ -14,8 +14,12 @@ FOREACH(prog ${PROGS})
 	)
 	TARGET_LINK_LIBRARIES(${prog}
 		_common
-		m
 	)
+	IF(UNIX)
+		TARGET_LINK_LIBRARIES(${prog}
+			m
+		)
+	ENDIF(UNIX)
 	TARGET_INCLUDE_DIRECTORIES(${prog} PUBLIC
 		${MAIN_INCLUDE_DIR}
 		${MAIN_INCLUDE_DIR}/common
