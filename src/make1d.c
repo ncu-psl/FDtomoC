@@ -86,12 +86,12 @@ c		    change so that dx = df and dy = df.
 #define nhbyte 58 * 4
 
 double gx[nxcm], gy[nxcm], gz[nxcm];
-double vp[MAX1D][2], z[MAX1D];
+float vp[MAX1D][2], z[MAX1D];
 
 int iflat = 0, isph = 0;
 double z0r;
-double hpi = 1.570796;
-double degrad = (double) 0.017453292;
+double hpi = 1.570796f;
+double degrad = 0.017453292f;
 double y00;
 
 float vsave[nxyzcm2];
@@ -122,17 +122,17 @@ int nxh, nyh, nzh;
 //--------------------------------------
 char hdr[nhbyte + 1];
 
-double rearth = 6371.0;
 int lenhead = nhbyte * 4;
+float rearth = 6371.0f;
 
 FILE *fp_log;
 FILE *fp_spc;
 FILE *fp_cor;
 FILE *fp_one;
 
-double flatvel(double, double);
-double uflatz(double);
-double flatz(double);
+float flatvel(float, float);
+float uflatz(float);
+float flatz(float);
 char * dtoa(char *, double, int);
 
 int main() {
@@ -534,12 +534,12 @@ int main() {
 	sscanf(pval, "%lf", &h);
 	ib = ie;
 	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-	double p;
-	sscanf(pval, "%lf", &p);
+	float p = 0;
+	sscanf(pval, "%f", &p);
 	ib = ie;
 	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-	double s;
-	sscanf(pval, "%lf", &s);
+	float s = 0;
+	sscanf(pval, "%f", &s);
 	ib = ie;
 	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
 
@@ -577,24 +577,24 @@ int main() {
 				"  Lay   Dep      D1      D2      V1      V2      V      ZFL     VFL\n");
 		for (k = 0; k < nzc; k++) {
 			int koff = nxyc * k + noff;
-			double zg = gz[k];
+			float zg = gz[k];
 			int ik;
 			for (ik = 1; ik < nl; ik++) {
 				if (z[ik] > zg)
 					break;
 			}
 			ik--;
-			double v;
+			float v = 0;
 			if (terp[ik] == 'I') {
 				int zk = z[ik];
 				int hz = z[ik + 1] - zk;
-				double fz = (zg - zk) / hz;
+				float fz = (zg - zk) / hz;
 				v = (1.0f - fz) * vp[ik][n] + fz * vp[ik + 1][n];
 			} else {
 				v = vp[ik][n];
 			}
 //----flatten this wavespeed if necessary
-			double zfl, vfl;
+			float zfl = 0, vfl = 0;
 			if (iflat == 1) {
 				zfl = flatz(zg);
 				vfl = flatvel(v, zfl);
@@ -636,27 +636,27 @@ int main() {
 	return 0;
 }
 
-double flatvel(double v, double z) {
+float flatvel(float v, float z) {
 // --- does earth-flattening correction for velocity, at depth z.
 //     assumes z is the flat-earth depth (already corrected). 12/87 gaa.
 //     a different transform is done for blocks, which have integrated
 //     average velocities
-	double r = 6371.00;
-	return exp(z / r) * v;
+	float r = 6371.00f;
+	return expf(z / r) * v;
 }
 
-double flatz(double z) {
+float flatz(float z) {
 // --- does earth-flattening correction from depth in spherical earth to
 //     depth in flat-earth.  this preserves travel-times if the velocity
 //     correction is also used.  see chapman (1973).  gaa 12/87.
-	double r = 6371.00;
-	return r * log(r / (r - z)) / log(exp(1));
+	float r = 6371.00f;
+	return r * logf(r / (r - z)) / logf(expf(1));
 }
 
-double uflatz(double z) {
+float uflatz(float z) {
 // --- undoes earth-flattening correction from depth in spherical earth to
 //     depth in flat-earth.
 
-	double r = 6371.00;
-	return r * (1. - exp(-z / r));
+	float r = 6371.00f;
+	return r * (1. - expf(-z / r));
 }
