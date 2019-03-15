@@ -104,7 +104,7 @@ char *files[MUSTF] = { "oldvfil\0", "onedfil\0" };
 
 char oldvfil[MAXSTRLEN + 1], onedfil[MAXSTRLEN + 1];
 
-char VERSION[10] = "2004.0909\0";
+char VERSION[10] = "2017.1122\0";
 char terp[MAX1D + 1];
 
 //----header stuff
@@ -122,8 +122,8 @@ int nxh, nyh, nzh;
 //--------------------------------------
 char hdr[nhbyte + 1];
 
+int lenhead = nhbyte * 4;
 float rearth = 6371.0f;
-int lenhead = nhbyte;
 
 FILE *fp_log;
 FILE *fp_spc;
@@ -138,9 +138,8 @@ char * dtoa(char *, double, int);
 int main() {
 	char pval[MAXSTRLEN + 1];
 	int len, ierr;
-	// printf("Enter parameter specification file: ");
-	// scanf("%s",spec_file);
-	strcpy(spec_file, "../data/small/FDtomo.spec");
+	printf("Enter parameter specification file: ");
+	scanf("%s",spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
 	fp_spc = fopen(spec_file, "r");
@@ -318,7 +317,7 @@ int main() {
 			df = fabs(h / (rearth * sin(y00)));
 		dy = dq / degrad;
 		dx = df / degrad;
-		printf("dx=%.17E dy=%.17E df=%.17E dq=%.17E\n", dx, dy, df, dq);
+		printf("dx=%lf dy=%lf df=%lf dq=%lf\n", dx, dy, df, dq);
 	} else {
 		dx = h;
 		dy = h;
@@ -365,7 +364,7 @@ int main() {
 	int lengrd = 4 * (nxc + nyc + nzc - 3);
 	int lenrec = lenhead + lengrd + 4 * nxyzc2;
 
-	fp_log = fopen("make1d.log", "w");
+	fp_log = fopen("../../make1d.log", "w");
 	if(!fp_log) {
 		printf("(Error in make1d.c)create fp_log file error.\n");
 		assert(fp_log);
@@ -404,8 +403,8 @@ int main() {
 		fprintf(fp_log, "  Fine grid spacing: %lf\n", h);
 	} else {
 		fprintf(fp_log, "  Coordinate system is SPHERICAL \n");
-		fprintf(fp_log, "  Fine Longitude spacing (df):   %.17E\n", dx);
-		fprintf(fp_log, "  Fine Latidtude spacing (dq):   %.17E\n", dy);
+		fprintf(fp_log, "  Fine Longitude spacing (df):    %.16E\n", dx);
+		fprintf(fp_log, "  Fine Latidtude spacing (dq):    %.16E\n", dy);
 		dtoa(out_str, h, 18);
 		fprintf(fp_log, "  Fine Radial spacing    (dz):   %s     \n", out_str);
 	}
@@ -418,6 +417,7 @@ int main() {
 			fprintf(fp_log, "\n");
 		}
 	}
+	fprintf(fp_log, "\n");
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
 	fprintf(fp_log, "  Y coarse grid node spacing: \n");
@@ -427,6 +427,7 @@ int main() {
 			fprintf(fp_log, "\n");
 		}
 	}
+	fprintf(fp_log, "\n");
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
 	fprintf(fp_log, "  Z coarse grid node spacing: \n");
@@ -494,7 +495,7 @@ int main() {
 		strcpy(flatten, "NOFL");
 	}
 	flatten[4] = '\0';
-	sprintf(hcomm, "Output from make1d.f using %s", onedfil);
+	sprintf(hcomm, "Output from make1d.c using %s", onedfil);
 	hcomm[100] = '\0';
 	axo = x0;
 	ayo = y[0];
@@ -616,31 +617,8 @@ int main() {
 		}
 	}
 
-	/*
-	double fxs = 0.0, fys = 0.0, fzs = 0.0;
-	double clat, clon, cz;
-	double axo, ayo, azo, dx, dy, dz;
-	float az;
-	int nxh, nyh, nzh;
-	*/
-
 	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
 	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
-	
-	fwrite(&clat, sizeof(clat), 1, fp_cor);
-	fwrite(&clon, sizeof(clon), 1, fp_cor);
-	fwrite(&cz, sizeof(cz), 1, fp_cor);
-	fwrite(&axo, sizeof(axo), 1, fp_cor);
-	fwrite(&ayo, sizeof(ayo), 1, fp_cor);
-	fwrite(&azo, sizeof(azo), 1, fp_cor);
-	fwrite(&dx, sizeof(dx), 1, fp_cor);
-	fwrite(&dy, sizeof(dy), 1, fp_cor);
-	fwrite(&dz, sizeof(dz), 1, fp_cor);
-	fwrite(&az, sizeof(az), 1, fp_cor);
-	fwrite(&nxh, sizeof(nxh), 1, fp_cor);
-	fwrite(&nyh, sizeof(nyh), 1, fp_cor);
-	fwrite(&nzh, sizeof(nzh), 1, fp_cor);
-
 	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_cor);
 	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_cor);
 	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
