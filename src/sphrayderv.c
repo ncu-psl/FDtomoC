@@ -104,7 +104,7 @@ double xlat, xlon;
 double a, b, c, quad;
 double tolmin, tolmax;
 double ex, ey, ez;
-double xx,yy,zz,xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
+double xx, yy, zz, xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
 double sx, sy, sz, sf, sq, sr;
 double xo, yo, zo;
 double xold, yold, zold;
@@ -187,11 +187,9 @@ int main(void) {
 	// some variable name is used in <math.h>, moved it into main()
 	double xn, yn, zn;
 	double sinf, cosf, tanf, ctanf;
-	
-	
-	// printf("Enter parameter specification file: ");
-	// scanf("%s", specfile);
-	strcpy(specfile, "../data/small/FDtomo.spec");
+
+	printf("Enter parameter specification file: ");
+	scanf("%s", specfile);
 	specfile[MAXSTRLEN - 1] = '\0';
 	FILE* fp_spc = fopen(specfile, "r");
 	if (!fp_spc) {

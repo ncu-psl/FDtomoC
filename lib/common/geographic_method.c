@@ -5,7 +5,7 @@
 // c        glat (output)= geocentric latitude in radians (north positive)
 // c---------------------------------------------------------------------
 double glat(double hlat) {
-	double halfpi = 1.570796, polfac = 0.010632, elfac = 0.993277;
+	double halfpi = 1.570796f, polfac = 0.010632f, elfac = 0.993277f;
 	if (halfpi - fabs(hlat) >= (double) 0.05) {
 		return atan(elfac * sin(hlat) / cos(hlat));
 	}
