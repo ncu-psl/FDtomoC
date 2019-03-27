@@ -78,7 +78,7 @@ int main(int argc, char** args) {
 		} else {
 			sscanf(str_inp, "%f %f %f %s", &fys, &fxs, &fzs, sta);
 		}
-		fzs = zs / 1000.;
+		fzs = zs / -1000.;
 
 		for(int j=0;j<2;j++) {
 			char filename[100];
@@ -92,9 +92,9 @@ int main(int argc, char** args) {
 			}
 
 			FILE* fp_time = fopen(filename, "w");
-			fprintf(fp_time, "fxs=%f\nfys=%f\nfzs=%f\n", fxs, fys, fzs);
-			fprintf(fp_time, "nx=%f\nny=%f\nnz=%f\n", (float)nx, (float)ny, (float)nz);
-			fprintf(fp_time, "x0=%f\ny0=%f\nz0=%f\nh=%f\n", x0, y0, z0, h);
+			fprintf(fp_time, "fxs=%.5f\nfys=%.5f\nfzs=%.3f\n", fxs, fys, fzs);
+			fprintf(fp_time, "nx=%f \nny=%f \nnz=%f \n", (float)nx, (float)ny, (float)nz);
+			fprintf(fp_time, "x0=%.1f \ny0=%.1f \nz0=%.1f \nh=%.1f \n", x0, y0, z0, h);
 			if(j == 0) {
 				fprintf(fp_time, "timefile=%s.ptimes\n", sta);
 				fprintf(fp_time, "velfile=VP.mod\n");
