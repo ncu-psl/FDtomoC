@@ -1,27 +1,29 @@
-# FDtomo-C
+# FDtomoC
 * This is the revised and optimized version of FDtomo in C language.
-* Documents and experiment data are collected in [FDtomo]
+* Documents and experiment data are collected in [data]
 * Any programming issue or logic issue should be tracked in [issues]
 
-[FDtomo]: https://github.com/ncu-psl/FDtomo
-[issues]: https://github.com/ncu-psl/FDtomo-C/issues
+[data]: https://github.com/ncu-psl/FDtomo/tree/master/data
+[issues]: https://github.com/ncu-psl/FDtomoC/issues
+
+## The origin
+* [FDtomo]
 
 ## Variants
-* [FDtomo] (the original one)
-* [FDtomo-Python] (in Python, under development)
+* [FDtomoPy] (in Python, under development)
 
 [FDtomo]: https://github.com/ncu-psl/FDtomo
-[FDtomo-Python]: https://github.com/ncu-psl/FDtomo-Python
+[FDtomoPy]: https://github.com/ncu-psl/FDtomoPy
 
 ## How to download
 ```bash
 # clone source code
-cd <where you want FDtomo-C to live>
-git clone https://github.com/ncu-psl/FDtomo-C.git
+cd <where you want FDtomoC to live>
+git clone https://github.com/ncu-psl/FDtomoC.git
 
 # clone test data
 git clone https://github.com/ncu-psl/FDtomo.git
-cd FDtomo-C
+cd FDtomoC
 cp -r ../FDtomo/data .
 unzip data/cwb_12-15_S/runs_files/arrivals/cwb_12-15_S.zip -d data/cwb_12-15_S/runs_files/arrivals/
 ```
