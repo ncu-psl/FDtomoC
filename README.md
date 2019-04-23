@@ -1,11 +1,17 @@
 # FDtomo-C
-* 這是C語言版本的 repository
-* 測試資料與文件在 [FDtomo](https://github.com/ncu-psl/FDtomo)
-* 任何問題請使用 issue
+* This is the revised and optimized version of FDtomo in C language.
+* Documents and experiment data are collected in [FDtomo]
+* Any programming issue or logic issue should be tracked in [issues]
 
-## 其他版本
-* [FDtomo-Fortran(Original)](https://github.com/ncu-psl/FDtomo)
-* [FDtomo-Python](https://github.com/ncu-psl/FDtomo-Python)
+[FDtomo]: https://github.com/ncu-psl/FDtomo
+[issues]: https://github.com/ncu-psl/FDtomo-C/issues
+
+## Variants
+* [FDtomo] (the original one)
+* [FDtomo-Python] (in Python, under development)
+
+[FDtomo]: https://github.com/ncu-psl/FDtomo
+[FDtomo-Python]: https://github.com/ncu-psl/FDtomo-Python
 
 ## How to download
 ```bash
