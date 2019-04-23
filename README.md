@@ -1,18 +1,15 @@
 # FDtomoC
-* This is the revised and optimized version of FDtomo in C language.
+* This is the revised and optimized version of [FDtomo] in C language
 * Documents and experiment data are collected in [data]
 * Any programming issue or logic issue should be tracked in [issues]
 
+[FDtomo]: https://github.com/ncu-psl/FDtomo
 [data]: https://github.com/ncu-psl/FDtomo/tree/master/data
 [issues]: https://github.com/ncu-psl/FDtomoC/issues
-
-## The origin
-* [FDtomo]
 
 ## Variants
 * [FDtomoPy] (in Python, under development)
 
-[FDtomo]: https://github.com/ncu-psl/FDtomo
 [FDtomoPy]: https://github.com/ncu-psl/FDtomoPy
 
 ## How to download
