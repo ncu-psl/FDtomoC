@@ -100,6 +100,7 @@ char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
 		fresfil[MAXSTRLEN + 1];
 char logfile[80 + 1];
 char VERSION[9] = "2018.0114";
+float one = 1.0f;
 
 int main() {
 	printf("Enter parameter specification file: ");
@@ -618,6 +619,7 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 	fprintf(fp_out, "%25sbtol   =%10.2E          itnlim =%10d\n\n\n", "", btol, itnlim);
 
 	double ctol = 0;
+	double one = 1.0;
 	if (conlim > 0) {
 		ctol = 1 / conlim;
 	}
@@ -767,8 +769,8 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 
 	test1 = *rnorm / bnorm;
 	test2 = *arnorm / (anorm * *rnorm);
-	double test3 = 1 / acond;
-	t1 = test1 / (1 + anorm * *xnorm / bnorm);
+	double test3 = one / acond;
+	t1 = test1 / (one + anorm * *xnorm / bnorm);
 	double rtol = btol + atoL * anorm * *xnorm / bnorm;
 
 //      the following tests guard against extremely small values of
@@ -777,17 +779,17 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 //      the effect is equivalent to the normal tests using
 //      atoL = relpr,  btol = relpr,  conlim = 1/relpr.
 
-	t3 = 1 + test3;
-	t2 = 1 + test2;
-	t1 = 1 + t1;
+	t3 = one + test3;
+	t2 = one + test2;
+	t1 = one + t1;
 
 	if (itn >= itnlim)
 		istop = 7;
-	if (t3 <= 1)
+	if (t3 <= one)
 		istop = 6;
-	if (t2 <= 1)
+	if (t2 <= one)
 		istop = 5;
-	if (t1 <= 1)
+	if (t1 <= one)
 		istop = 4;
 
 //     allow for tolerances set by the user.
@@ -834,7 +836,7 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 
 // c     finish off the standard error estimates.
 
-	int t = 1;
+	double t = one;
 	if (m > n)
 		t = m - n;
 	if (dampsq > 0)

@@ -118,7 +118,7 @@ float tdelts[maxobs], az1s[maxobs], az2s[maxobs];
 float azs[maxobs], ais[maxobs];
 float tcor[maxlst][2], dtc[maxlst2];
 float stlat[maxlst], stlon[maxlst];
-float t[200][41 * 41 * 31];
+float t[maxsta][nxyzm];
 float vm[maxnbk][maxobs], vmp[maxkbl][maxobs];
 float vsum[maxkbl];
 float am[maxobs][4];
@@ -1808,9 +1808,9 @@ a3:
 		zo = ro * cosq;
 
 		// if ray in seismometer cube, use straight ray from source
-		if (ie >= (is - 1) && ie < (is + 1) &&
-			je >= (js - 1) && je < (js + 1) &&
-			ke >= (ks - 1) && ke < (ks + 1)) {
+		if (ie >= (is - 2) && ie < (is + 2) &&
+			je >= (js - 2) && je < (js + 2) &&
+			ke >= (ks - 2) && ke < (ks + 2)) {
 			r2 = rearth - zs;
 			double x2 = r2 * sin(ys) * cos(xs);
 			double y2 = r2 * sin(ys) * sin(xs);
@@ -2639,7 +2639,10 @@ a60:
 			int ja = -1;
 			fwrite(&ja, sizeof(ja), 1, fp_dts);
 			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
-			fwrite(jndx, sizeof(jndx[0]), mbl, fp_dts);
+			for (int i=0;i < mbl ;i++){
+				fwrite(&i, sizeof(i), 1, fp_dts);
+				fwrite(&jndx[i], sizeof(jndx[i]), 1, fp_dts);
+			}
 
 			fprintf(fp_msc, "%d\n", mbl);
 			for (i = 0; i < mbl; i++) {

@@ -1068,31 +1068,31 @@ int main(void) {
 
 	sprintf(hcomm, "Output from makenewmod.c Version %s using %s", VERSION, oldvfil);
 	hdr_appender(hdr, nhbyte,head,type,syst,quant,flatten,hcomm);
-	FILE *fp_nmp=fopen(fmodfil, "wb");
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_nmp);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_nmp);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_nmp);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_nmp);
-	fwrite(vn, sizeof(vn[0]), nxyzc2, fp_nmp);
-	fclose(fp_nmp);
+	FILE *fp_nmd=fopen(fmodfil, "wb");
+	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_nmd);
+	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_nmd);
+	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_nmd);
+	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_nmd);
+	fwrite(vn, sizeof(vn[0]), nxyzc2, fp_nmd);
+	fclose(fp_nmd);
 
 	hdr_appender(hdr, nhbyte,head,type,syst,"VPMD",flatten,hcomm);
 	FILE *fp_vp=fopen(vpfile, "wb");
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_nmp);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_nmp);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_nmp);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_nmp);
-	fwrite(vn, sizeof(vn[0]), nxyzc, fp_nmp);
+	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_vp);
+	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_vp);
+	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_vp);
+	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_vp);
+	fwrite(vn, sizeof(vn[0]), nxyzc, fp_vp);
 	fclose(fp_vp);
 
 	hdr_appender(hdr, nhbyte,head,type,syst,"VSMD",flatten,hcomm);
 	FILE *fp_vs=fopen(vsfile, "wb");
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_nmp);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_nmp);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_nmp);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_nmp);
+	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_vs);
+	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_vs);
+	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_vs);
+	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_vs);
 	for(int i=nxyzc;i<nxyzc2;i++) {
-		fwrite(vn, sizeof(vn[0]), 1, fp_nmp);
+		fwrite(vn, sizeof(vn[0]), 1, fp_vs);
 	}
 	fclose(fp_vs);
 
