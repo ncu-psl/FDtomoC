@@ -3,33 +3,20 @@ SET(PROGS
 	c2f
 	sphfd
 	sphfdloc
-	sphrayderv
+	sprayderv
 	runlsqr
 	makenewmod
 )
 
+ADD_EXECUTABLE(FDtomo FDtomo.c)
 FOREACH(prog ${PROGS})
-	ADD_EXECUTABLE(${prog}
-		${prog}.c
-	)
-	TARGET_LINK_LIBRARIES(${prog}
-		_common
-	)
-	IF(UNIX)
-		TARGET_LINK_LIBRARIES(${prog}
-			m
-		)
-	ENDIF(UNIX)
-	TARGET_INCLUDE_DIRECTORIES(${prog} PUBLIC
-		${MAIN_INCLUDE_DIR}
-		${MAIN_INCLUDE_DIR}/common
+	TARGET_LINK_LIBRARIES(FDtomo
+		${prog}
 	)
 ENDFOREACH()
 
-TARGET_LINK_LIBRARIES(sphrayderv
-	_sphrayderv
+TARGET_INCLUDE_DIRECTORIES(FDtomo PUBLIC
+	${MAIN_INCLUDE_DIR}
+	${MAIN_INCLUDE_DIR}/FDtomo
 )
 
-TARGET_LINK_LIBRARIES(runlsqr
-	_runlsqr
-)
