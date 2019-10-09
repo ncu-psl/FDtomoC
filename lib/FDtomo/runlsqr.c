@@ -93,16 +93,15 @@ float acond, rnorm, arnorm, dampsq, xnorm;
 float a[SIZEOFA];
 float damper = 0.001;
 
-char spec_file[MAXSTRLEN + 1];
-char pval[MAXSTRLEN + 1];
-char *files[MUSTF] = { "dtdsfil\0", "resfile\0", "nmodfil\0", "fresfil\0" };
 char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
 		fresfil[MAXSTRLEN + 1];
 char logfile[80 + 1];
-char VERSION[9] = "2018.0114";
 float one = 1.0f;
 
 int runlsqr(char *file_parameter) {
+	char spec_file[MAXSTRLEN + 1];
+	char pval[MAXSTRLEN + 1];
+	char *files[MUSTF] = { "dtdsfil\0", "resfile\0", "nmodfil\0", "fresfil\0" };
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 

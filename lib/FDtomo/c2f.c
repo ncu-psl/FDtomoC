@@ -73,15 +73,9 @@ float azmod;
 float vsave[nxyzm2];
 
 char cfile[MAXSTRLEN + 1], ffile[MAXSTRLEN + 1], vpfile[MAXSTRLEN + 1], vsfile[MAXSTRLEN + 1];
-char spec_file[MAXSTRLEN + 1];
-char pval[MAXSTRLEN + 1];
-char aline[MAXSTRLEN + 1];
-char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-char *mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
-char *files[MUSTF] = { "oldvfil", "tgrdfil", "finevel" };
+
 char oldvfil[MAXSTRLEN + 1], tgrdfil[MAXSTRLEN + 1], finevel[MAXSTRLEN + 1];
 
-char VERSION[9] = "2017.1122";
 
 //c----header stuff
 char head[5], type[5], syst[5];
@@ -97,7 +91,6 @@ int nxh, nyh, nzh;
 
 char hdr[nhbyte + 1];
 
-double rearth = 6371.0, degrad = 0.017453292f, hpi = 1.570796f;
 int len_head = nhbyte;
 
 int nxyc, nxyzc, nxyzc2;
@@ -105,6 +98,12 @@ int nxyc, nxyzc, nxyzc2;
 void find_vel(double, double, double, double *, int);
 
 int c2f(char *file_parameter) {
+	char spec_file[MAXSTRLEN + 1];
+	char pval[MAXSTRLEN + 1];
+	char aline[MAXSTRLEN + 1];
+	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+	char *mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
+	char *files[MUSTF] = { "oldvfil", "tgrdfil", "finevel" };
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 

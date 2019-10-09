@@ -90,21 +90,15 @@ float vp[MAX1D][2], z[MAX1D];
 
 int iflat = 0, isph = 0;
 double z0r;
-double hpi = 1.570796f;
-double degrad = 0.017453292f;
 double y00;
 
 float vsave[nxyzcm2];
 int vs1d = 1;
 
-char spec_file[MAXSTRLEN + 1];
-char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
-char *files[MUSTF] = { "oldvfil\0", "onedfil\0" };
-
+char VERSION[10] = "2017.1122\0";
+double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
 char oldvfil[MAXSTRLEN + 1], onedfil[MAXSTRLEN + 1];
 
-char VERSION[10] = "2017.1122\0";
 char terp[MAX1D + 1];
 
 //----header stuff
@@ -123,7 +117,6 @@ int nxh, nyh, nzh;
 char hdr[nhbyte + 1];
 
 int lenhead = nhbyte * 4;
-float rearth = 6371.0f;
 
 FILE *fp_log;
 FILE *fp_spc;
@@ -136,6 +129,10 @@ float flatz(float);
 char * dtoa(char *, double, int);
 
 int make1d(char *file_parameter) {
+	char spec_file[MAXSTRLEN + 1];
+	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+	char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
+	char *files[MUSTF] = { "oldvfil\0", "onedfil\0" };
 	char pval[MAXSTRLEN + 1];
 	int len, ierr;
 	sscanf(file_parameter, "%s", spec_file);
