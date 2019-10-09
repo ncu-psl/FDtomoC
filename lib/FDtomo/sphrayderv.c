@@ -157,7 +157,7 @@ int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
 int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
 
-int main(void) {
+int sphrayderv(char *file_parameter) {
 	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],
 		stafile[MAXSTRLEN], locdfil[MAXSTRLEN], shotfil[MAXSTRLEN],
 		telefil[MAXSTRLEN], oldvfil[MAXSTRLEN], pbasfil[MAXSTRLEN],
@@ -175,8 +175,7 @@ int main(void) {
 	int total_earthquakes = 0;
 	float clat, clon;
 	double xn, yn, zn;
-	printf("Enter parameter specification file: ");
-	scanf("%s", specfile);
+	sscanf(file_parameter, "%s", specfile);
 	specfile[MAXSTRLEN - 1] = '\0';
 	FILE* fp_spc = fopen(specfile, "r");
 	if (!fp_spc) {

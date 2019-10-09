@@ -94,7 +94,7 @@ void read_station_set(int *, int *, int *, int *, int *, double *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1]);
 
-int main() {
+int sphfdloc(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
 
 //-----------------------------------------------------------------------------

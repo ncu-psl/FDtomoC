@@ -102,9 +102,8 @@ char logfile[80 + 1];
 char VERSION[9] = "2018.0114";
 float one = 1.0f;
 
-int main() {
-	printf("Enter parameter specification file: ");
-	scanf("%s",spec_file);
+int runlsqr(char *file_parameter) {
+	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
 	FILE *fp_spc = fopen(spec_file, "r");

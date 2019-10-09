@@ -197,7 +197,7 @@ int litend;
 
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-int main(int ac, char **av)
+int sphfd(char *file_parameter)
 {
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
@@ -205,7 +205,7 @@ int main(int ac, char **av)
 	int num_parfiles=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
 	printf("Input the name spec file\n");
-	scanf("%s",spec_file);
+	sscanf(file_parameter, "%s", spec_file);
 	fp_spc=fopen(spec_file,"r");
 	if(fp_spc == NULL) {
 	    printf("Error on opening spec file(%s)\n", spec_file);
@@ -251,13 +251,13 @@ int main(int ac, char **av)
 		char *fake_av[2];
 		fake_av[0] = av[0];
 		fake_av[1] = parfiles[i];
-		sphfd(2, fake_av, output_path);
+		sphfd_exec(2, fake_av, output_path);
 	}
 	return 0;
 }
 
 
-int sphfd(int ac, char **av, char *output_path)
+int sphfd_exec(int ac, char **av, char *output_path)
 {
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE

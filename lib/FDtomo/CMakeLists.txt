@@ -1,7 +1,7 @@
 SET(PROGS
 	make1d
 	c2f
-	sphfd
+	#sphfd
 	sphfdloc
 	sphrayderv
 	runlsqr

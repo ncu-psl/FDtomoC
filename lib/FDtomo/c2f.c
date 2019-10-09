@@ -97,16 +97,15 @@ int nxh, nyh, nzh;
 
 char hdr[nhbyte + 1];
 
-double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
+double rearth = 6371.0, degrad = 0.017453292f, hpi = 1.570796f;
 int len_head = nhbyte;
 
 int nxyc, nxyzc, nxyzc2;
 
 void find_vel(double, double, double, double *, int);
 
-int main() {
-	printf("Enter parameter specification file: ");
-	scanf("%s", spec_file);
+int c2f(char *file_parameter) {
+	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
 	FILE *fp_spc = fopen(spec_file, "r");

@@ -120,7 +120,7 @@ float du[nxyzcm2], ds[nxyzcm2], vo[nxyzcm2], vn[nxyzcm2];
 float vd[maxmbl];
 int jndx[maxmbl];
 
-int main(void) {
+int makenewmod(char *file_parameter) {
 	char spec_file[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
@@ -133,8 +133,7 @@ int main(void) {
 	double axo, ayo, azo, dx, dy, dz;
 
 	int nxh, nyh, nzh;
-	printf("Enter parameter specification file: ");
-	scanf("%s", spec_file);
+	sscanf(file_parameter, "%s", spec_file);
 
 	spec_file[MAXSTRLEN] = '\0';
 	FILE *fp_spc = fopen(spec_file, "r");

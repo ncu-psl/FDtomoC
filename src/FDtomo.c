@@ -1,4 +1,4 @@
-//#include "FDtomo/make1d.h"
+#include "FDtomo/make1d.h"
 #include <stdio.h>
 int main(int argc, char *argv[]){
 	char *s;

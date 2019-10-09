@@ -135,11 +135,10 @@ float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
 
-int main() {
+int make1d(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
 	int len, ierr;
-	printf("Enter parameter specification file: ");
-	scanf("%s",spec_file);
+	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
 	fp_spc = fopen(spec_file, "r");
