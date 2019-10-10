@@ -189,22 +189,22 @@ struct ext_par /* global variables for getpar */
 int
 compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
-double glat(), glath(), rcent, z0r;
-
-int sphfd(int , char ** , char *);
+double glat(), glath(), rcent;
+static double z0r;
+int sphfd_exec(int , char ** , char *);
 int endian();
 int litend;
 
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-int sphfd(char *file_parameter)
+int sphfd(int argc, char *argv[], char *file_parameter)
 {
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
 	char spec_file[MAXSTRLEN + 1];
 	int num_parfiles=0,len,ierr;
 	FILE* fp_spc, *fp_parlist;
-	printf("Input the name spec file\n");
+
 	sscanf(file_parameter, "%s", spec_file);
 	fp_spc=fopen(spec_file,"r");
 	if(fp_spc == NULL) {
@@ -249,7 +249,7 @@ int sphfd(char *file_parameter)
 	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
-		fake_av[0] = av[0];
+		fake_av[0] = argv[0];
 		fake_av[1] = parfiles[i];
 		sphfd_exec(2, fake_av, output_path);
 	}
