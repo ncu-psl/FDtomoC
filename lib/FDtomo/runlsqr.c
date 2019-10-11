@@ -62,6 +62,8 @@
 #include "common/parameter.h"
 #include "common/gridspec.h"
 #include "common/parseprogs.h"
+#include "common/shared_variables.h"
+
 #include "runlsqr/aprod.h"
 #include "runlsqr/makea.h"
 #include "runlsqr/normlz.h"
@@ -81,7 +83,8 @@ void lsqr(int , int , float , int , int ,int *, float *, float *, float *, float
 #define MUSTF 4
 #define MAXSTRLEN 132
 
-int m, n, istop, intlim, intlims = 0, ittnum = 1, j;
+int m, n, istop, intlim, intlims = 0, j;
+
 FILE *fp_nout = NULL;
 
 // c  functions and local variables
@@ -99,6 +102,7 @@ char logfile[80 + 1];
 float one = 1.0f;
 
 int runlsqr(char *file_parameter) {
+	ittnum = 1;
 	char spec_file[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
 	char *files[MUSTF] = { "dtdsfil\0", "resfile\0", "nmodfil\0", "fresfil\0" };

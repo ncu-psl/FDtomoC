@@ -67,6 +67,7 @@
 #include "common/time_process.h"
 #include "common/geographic_method.h"
 #include "common/environment_setting.h"
+#include "common/shared_variables.h"
 // #include "common/dirent.h"
 #include "sphrayderv/bjdaz2.h"
 #include "sphrayderv/dfind.h"
@@ -140,11 +141,7 @@ int nx, ny, nz, i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, ks
 
 char logfile[80];
 
-char VERSION[10] = "2004.0923";
-
 char filen[80], rayfile[80];
-char timedir[60] = "./ttimes";
-char eqkdir[60 + 1] = "./eqkdir/";
 char evid[10];
 char sta[maxobs][6], stn[maxsta][6], stt[maxlst][6];
 char phs[maxobs], pha[maxsta];
@@ -158,6 +155,7 @@ int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
 
 int sphrayderv(char *file_parameter) {
+	VERSION[10] = "2004.0923";
 	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],
 		stafile[MAXSTRLEN], locdfil[MAXSTRLEN], shotfil[MAXSTRLEN],
 		telefil[MAXSTRLEN], oldvfil[MAXSTRLEN], pbasfil[MAXSTRLEN],

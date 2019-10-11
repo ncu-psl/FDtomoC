@@ -138,6 +138,8 @@
 #include    <fcntl.h>
 /* file header structure */
 #include "common/parseprogs.h"
+#include "common/shared_variables.h"
+
 #include "sphfd/vhead.h"
 #define MAXSTRLEN 132
 #define MAXNUMPAR 2000
@@ -189,7 +191,7 @@ struct ext_par /* global variables for getpar */
 int
 compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
-double glat(), glath(), rcent;
+double rcent;
 static double z0r;
 int sphfd_exec(int , char ** , char *);
 int endian();
@@ -249,7 +251,7 @@ int sphfd(int argc, char *argv[], char *file_parameter)
 	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
-		fake_av[0] = argv[0];
+		sscanf("./sphfd", "%s", fake_av[0]);
 		fake_av[1] = parfiles[i];
 		sphfd_exec(2, fake_av, output_path);
 	}
@@ -5803,95 +5805,7 @@ fprintf(stderr, "wavefront done \n");
 close(tfint);
 return 0;
 }
-
 /* -------------------------------------------------------------------------- */
-
-double glat(hlat)
-
-double hlat;
-/*
- Convert geographic latitude to geocentric latitude
- hlat (input) = geographic latitude in radians (north positive)
- glat (output)= geocentric latitude in radians (north positive)
- */
-{
-double halfpi = 1.570796327;
-double x;
-
-if ((halfpi - fabs(hlat)) >= 0.05) {
-x = atan(0.993277 * sin(hlat) / cos(hlat));
-} else {
-/* Special formula near pole */
-if (hlat > 0)
-x = hlat / 0.993277 - 0.010632;
-else
-x = hlat / 0.993277 + 0.010632;
-}
-
-return (x);
-}
-
-/* -------------------------------------------------------------------------- */
-
-double glath(hlat, h, r)
-
-double hlat, h, *r;
-/*
- Convert geographic latitude to geocentric latitude
- This is a version of glat that takes into account
- changes in elevation.
-
- This version uses the WGS84 ellipsoid
-
- Input
- hlat    Geodetic/Geogrphic latitude in radians (north positive)
- h       Ellipsoidal depth in kilometers.  Note this is the usual GPS height
- rather than the often used Geoidal elevation (MSL).
-
- Output
- x       Geocentric latitude in radians (north positive) (on return)
- r       Distance from center of the Earth in kilometers
-
- All operations are double precision
-
- Author:  S. Roecker, RPI.   July, 2008
-
- */
-{
-
-double x;
-
-/*	ap is semi major axis, bp is semiminor axis, f is inverse flattening, esq is the square of
- the ellipticity, which we compute from fi*(2.d0-fi) where fi is 1/f.
- */
-double ap = 6378137.0;
-double f = 298.257223563;
-//        double esq    =  6.69437978616733379e-03;
-double esq = 0.00669437978616733379;
-//        double degrad = 1.74532930056254081e-02;
-//        double degrad = 0.0174532930056254081;
-
-double anu;
-double sinxl;
-double hm, xp, zp;
-
-// convert from depth in km to elevation in meters
-hm = -h * 1000.0;
-
-sinxl = sin(hlat);
-
-//       anu is the ellipsoidal radius of curvature at the current geographic latitude
-anu = ap / sqrt(1.0 - esq * sinxl * sinxl);
-
-xp = (anu + hm) * cos(hlat);
-zp = ((1.0 - esq) * anu + hm) * sinxl;
-
-x = atan2(zp, xp);
-*r = sqrt(xp * xp + zp * zp) / 1000.0;
-
-return (x);
-}
-
 compar(a, b)
 struct sorted *a, *b; {
 if (a->time > b->time)

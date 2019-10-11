@@ -92,6 +92,8 @@
 #include "common/gridspec.h"
 #include "common/parseprogs.h"
 #include "common/string_process.h"
+#include "common/shared_variables.h"
+
 
 #define MAX1D 1000
 #define MAXSTRLEN 132
