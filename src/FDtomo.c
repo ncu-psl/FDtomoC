@@ -1,7 +1,6 @@
 #include "FDtomo/make1d.h"
 #include <stdio.h>
 int main(int argc, char *argv[]){
-	char *s;
 	make1d(argv[1]);
 	c2f(argv[1]);
 	sphfd(argc, argv, argv[1]);

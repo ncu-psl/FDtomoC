@@ -138,6 +138,7 @@
 #include    <fcntl.h>
 /* file header structure */
 #include "common/parseprogs.h"
+#include "common/geographic_method.h"
 #include "common/shared_variables.h"
 
 #include "sphfd/vhead.h"
