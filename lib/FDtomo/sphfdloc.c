@@ -56,6 +56,7 @@
 #include "common/string_process.h"
 #include "common/earthquake_file_delimiter.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 
 
 #define MAX1D 1000
@@ -75,8 +76,6 @@
 #define rearth 6371.0
 #define VERSION "2018.0429"
 
-char timedir[60 + 1] = "./ttimes\0";
-char eqkdir[60 + 1] = "./eqkdir/\0";
 
 char spec_file[MAXSTRLEN + 1];
 char aline[MAXSTRLEN + 1];
@@ -99,50 +98,8 @@ int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1]);
 int sphfdloc(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
 
-//-----------------------------------------------------------------------------
-//
-//    Default setting for some variables
-//
-//----iread = 1 to test reading of data with no inversion. 0 is normal execution
-	int iread = 0;
-//----ivs = 1 to treat Vp and Vs separately (individual time files).
-//        = 0 to compute Ts as Tp*vpvs
-	int ivs = 1;
-	double vpvs = 1.78;
-
-//---thresholds to define an acceptable location
-//---number of phases threshold
-	int nthres = 8;
-//---residual threshold (absolute time)
-	double resthres = .5;
-//---residual threshold (percentage of travel time)
-	double resthrep = 5.0;
-//---std threshold
-	double stdmax = 15.0;
-
-	int kmin = 2;
-
-//---origin times and grid spacings (for plotting purposes only)
-	x0 = 0;
-	y[0] = 0;
-	z0 = 0;
-//---dq and df are the grid spacings for latitude and longitude.  If
-//   set to 0 { the program calculates them from h.
-	dq = 0;
-	df = 0;
-
-//---step division for grid search (first and second order)
-	int ndiv = 20;
-	int ndiv2 = 20;
-
-	int ittnum = 1;
-
-	int total_earthquakes = 0;
-//---End of default values
-
 	int len, ierr;
-	printf("Enter parameter specification file: ");
-	scanf("%s",spec_file);
+	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 	FILE *fp_spc = fopen(spec_file, "r");
 	if (!fp_spc) {
@@ -150,41 +107,6 @@ int sphfdloc(char *file_parameter) {
 		assert(0);
 	}
 
-// c---recover the variables needed to run this program
-// c
-// c       nxc, nyc, nzc      coarse dimensions of the fine mesh used in the trt tables
-// c       h                  fine grid spacing
-// c
-
-	for (int i = 0; i < MUSTV; i++) {
-		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf("Error trying to read variable %s", mvals[i]);
-			assert(0);
-		}
-		if (i == 0) {
-			sscanf(pval, "%d", &nxc);
-		} else if (i == 1) {
-			sscanf(pval, "%d", &nyc);
-		} else if (i == 2) {
-			sscanf(pval, "%d", &nzc);
-		} else if (i == 3) {
-			sscanf(pval, "%lf", &h);
-		}
-	}
-//----dimension check
-	if (nxc > nxcm) {
-		printf("nxc is too large.\n");
-		assert(0);
-	}
-	if (nyc > nycm) {
-		printf("nyc is too large.\n");
-		assert(0);
-	}
-	if (nzc > nzcm) {
-		printf("nzc is too large.\n");
-		assert(0);
-	}
 
 	for (int i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
@@ -209,82 +131,7 @@ int sphfdloc(char *file_parameter) {
 			//lenf5 = len;
 		}
 	}
-//--Optionally read in some variables
-//---Reading option
-	get_vars(fp_spc, "iread ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &iread);
-	}
-	if (iread != 0 && iread != 1) {
-		iread = 0;
-	}
-	get_vars(fp_spc, "ivs ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &ivs);
-	}
-	if (ivs != 0 && ivs != 1) {
-		ivs = 0;
-	}
-	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &vpvs);
-	get_vars(fp_spc, "timedir ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", timedir);
-	get_vars(fp_spc, "eqkdir ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", eqkdir);
-	if(eqkdir[strlen(eqkdir) - 1] != '/'){
-		eqkdir[strlen(eqkdir)] = '/';
-		eqkdir[strlen(eqkdir) + 1] = '\0';
-	}
-	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &x0);
-	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &y[0]);
-	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &z0);
-
-	get_vars(fp_spc, "nthres ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &nthres);
-	get_vars(fp_spc, "resthres ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &resthres);
-	get_vars(fp_spc, "resthrep ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &resthrep);
-	get_vars(fp_spc, "stdmax ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &stdmax);
-	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &kmin);
-		kmin--;
-	}
-	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ittnum);
-
-//-----grid search control
-	get_vars(fp_spc, "ndiv ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ndiv);
-	if (ndiv <= 0)
-		ndiv = 1;
-	get_vars(fp_spc, "ndiv2 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ndiv2);
-	if (ndiv2 <= 0)
-		ndiv2 = 1;
-
-	get_vars(fp_spc, "total_earthquakes ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &total_earthquakes);
-
+	
 //-----Grid specs
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	rewind(fp_spc);

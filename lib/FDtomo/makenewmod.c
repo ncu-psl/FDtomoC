@@ -93,6 +93,7 @@
 #include "common/parseprogs.h"
 #include "common/string_process.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 
 
 #define MAX1D 1000
@@ -127,7 +128,6 @@ int makenewmod(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
 	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-	char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0" };
 	char *files[MUSTF] = { "nmodfil\0", "oldvfil\0", "fmodfil\0" };
 	char nmodfil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], fmodfil[MAXSTRLEN + 1];
 	float azh;
@@ -144,38 +144,7 @@ int makenewmod(char *file_parameter) {
 		assert(0);
 	}
 
-// c---recover the variables needed to run this program
-// c
-// c       nxc, nyc, nzc      coarse dimensions of the fine mesh used in the trt tables
-// c
 	int len, ierr;
-	for (int i = 0; i < MUSTV; i++) {
-		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf("Error trying to read variable %s\n", mvals[i]);
-			assert(0);
-		}
-		if (i == 0) {
-			sscanf(pval, "%d", &nxc);
-		} else if (i == 1) {
-			sscanf(pval, "%d", &nyc);
-		} else if (i == 2) {
-			sscanf(pval, "%d", &nzc);
-		}
-	}
-//----dimension check
-	if (nxc > nxcm) {
-		printf("nxc is too large.\n");
-		assert(0);
-	}
-	if (nyc > nycm) {
-		printf("nyc is too large.\n");
-		assert(0);
-	}
-	if (nzc > nzcm) {
-		printf("nzc is too large.\n");
-		assert(0);
-	}
 
 	for (int i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
@@ -194,67 +163,7 @@ int makenewmod(char *file_parameter) {
 			//lenf3 = len;
 		}
 	}
-// c-----------------------------------------------------------------------------
-// c
-// c    Default setting for some variables
-// c
-// c---limitu = 0 means don't apply maximum limits on perturbation. = 1 means to apply
-
-	int istacor = 0, limitu = 0, ivpvs = 1, mavx = 3, mavy = 3, mavz = 3;
-	int nsmooth = 2, ipscflg = 0, ido1d = 0, ittnum = 1;
-
-	float dvperc = 0.05, pertscl = 1.0;
-// c---End of default values
-
 	char stafile[MAXSTRLEN + 1], nstafil[MAXSTRLEN + 1];
-
-// c--Optionally read in some variables
-	get_vars(fp_spc, "istacor ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &istacor);
-	if (istacor != 0 && istacor != 1) {
-		istacor = 0;
-	}
-	get_vars(fp_spc, "limitu ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &limitu);
-	if (limitu != 0 && limitu != 1) {
-		limitu = 0;
-	}
-	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ivpvs);
-	if (ivpvs != 0 && ivpvs != 1) {
-		ivpvs = 0;
-	}
-	get_vars(fp_spc, "mavx ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &mavx);
-	get_vars(fp_spc, "mavy ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &mavy);
-	get_vars(fp_spc, "mavz ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &mavz);
-	get_vars(fp_spc, "nsmooth ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &nsmooth);
-	get_vars(fp_spc, "dvperc ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &dvperc);
-	get_vars(fp_spc, "ipscflg ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ipscflg);
-	get_vars(fp_spc, "pertscl ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &pertscl);
-	get_vars(fp_spc, "do1d ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ido1d);
-	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ittnum);
-
 	// Optional files
 	get_vars(fp_spc, "stafile ", pval, &len, &ierr);
 	if (ierr == 0)

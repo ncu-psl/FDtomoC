@@ -63,6 +63,7 @@
 #include "common/gridspec.h"
 #include "common/parseprogs.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 
 #include "runlsqr/aprod.h"
 #include "runlsqr/makea.h"
@@ -83,7 +84,7 @@ void lsqr(int , int , float , int , int ,int *, float *, float *, float *, float
 #define MUSTF 4
 #define MAXSTRLEN 132
 
-int m, n, istop, intlim, intlims = 0, j;
+int m, n, istop, intlim, j;
 
 FILE *fp_nout = NULL;
 
@@ -94,7 +95,6 @@ float damp, v[NMAX], w[NMAX], x[NMAX], se[NMAX];
 float atoL, btol, conlim, anorm;
 float acond, rnorm, arnorm, dampsq, xnorm;
 float a[SIZEOFA];
-float damper = 0.001;
 
 char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
 		fresfil[MAXSTRLEN + 1];
@@ -102,7 +102,6 @@ char logfile[80 + 1];
 float one = 1.0f;
 
 int runlsqr(char *file_parameter) {
-	ittnum = 1;
 	char spec_file[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
 	char *files[MUSTF] = { "dtdsfil\0", "resfile\0", "nmodfil\0", "fresfil\0" };
@@ -112,8 +111,6 @@ int runlsqr(char *file_parameter) {
 	FILE *fp_spc = fopen(spec_file, "r");
 
 // c---recover the variables needed to run this program
-// c
-// c
 	int i, len, ierr;
 	for (i = 0; i < MUSTV; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
@@ -130,22 +127,6 @@ int runlsqr(char *file_parameter) {
 			sscanf(pval, "%s", fresfil);
 		}
 	}
-
-// c---Optionally read in some variables
-// c---Reading option
-	get_vars(fp_spc, "damper", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%f", &damper);
-	}
-	get_vars(fp_spc, "intlim", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &intlims);
-	}
-	get_vars(fp_spc, "ittnum", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &ittnum);
-	}
-// c-----end of optional parameters
 
 	sprintf(logfile, "runlsqr.log%d\n", ittnum);
 	FILE *fp_log = fopen(logfile, "w");

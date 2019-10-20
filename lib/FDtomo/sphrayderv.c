@@ -68,6 +68,7 @@
 #include "common/geographic_method.h"
 #include "common/environment_setting.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 // #include "common/dirent.h"
 #include "sphrayderv/bjdaz2.h"
 #include "sphrayderv/dfind.h"
@@ -164,14 +165,8 @@ int sphrayderv(char *file_parameter) {
 		hitfile[MAXSTRLEN], dtdhfil[MAXSTRLEN], bookfil[MAXSTRLEN],
 		dotfile[MAXSTRLEN], headfil[MAXSTRLEN], entfile[MAXSTRLEN],
 		stcfile[MAXSTRLEN], sclefil[MAXSTRLEN], specfile[MAXSTRLEN];
-	int iread = 0, ivs = 1;
-	double vpvs = 1.78;
-	int idmean = 0, iray = 0, iraystat = 0, idatout = 1, nomat = 0;
-	float resflag = 1.0;
-	int ido1d = 0, ittnum = 0, ivpvs = 0, istacor = 0, idoshot = 0, idotel = 0;
-	int kmin, kmax;
-	int total_earthquakes = 0;
-	float clat, clon;
+	int ido1d = 0;
+
 	double xn, yn, zn;
 	sscanf(file_parameter, "%s", specfile);
 	specfile[MAXSTRLEN - 1] = '\0';
@@ -181,40 +176,7 @@ int sphrayderv(char *file_parameter) {
 		assert(0);
 	}
 	int len = 0, ierr = 0;
-	char mvals[MUSTV][10] = { "nxc", "nyc", "nzc", "h" };
-	for (i = 0; i < MUSTV; i++) {
-		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf("Error trying to read variable %s", mvals[i]);
-			assert(0);
-		}
-		if (i == 0) {
-			sscanf(pval, "%d", &nxc);
-		}
-		else if (i == 1) {
-			sscanf(pval, "%d", &nyc);
-		}
-		else if (i == 2) {
-			sscanf(pval, "%d", &nzc);
-		}
-		else if (i == 3) {
-			sscanf(pval, "%lf", &h);
-		}
-	}
-
-	//----dimension check
-	if (nxc > nxcm) {
-		printf("nxc is too large.\n");
-		assert(0);
-	}
-	if (nyc > nycm) {
-		printf("nyc is too large.\n");
-		assert(0);
-	}
-	if (nzc > nzcm) {
-		printf("nzc is too large.\n");
-		assert(0);
-	}
+	
 	char files[MUSTF][10] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
 	char *file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
 	for (i = 0; i < MUSTF; i++) {
@@ -226,130 +188,7 @@ int sphrayderv(char *file_parameter) {
 		sscanf(pval, "%s", file_list[i]);
 	}
 
-	//--Optionally read in some variables
-	//---Reading option
-	get_vars(fp_spc, "iread ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &iread);
-	}
-	if (iread != 0 && iread != 1) {
-		iread = 0;
-	}
-	get_vars(fp_spc, "ivs ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &ivs);
-	}
-	if (ivs != 0 && ivs != 1) {
-		ivs = 0;
-	}
-	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%lf", &vpvs);
-	}
-	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &ivpvs);
-	}
-	if (ivpvs != 0 && ivpvs != 1) {
-		ivpvs = 0;
-	}
-
-	//lzw
-	float vpvsscale = 0;
-	get_vars(fp_spc, "vpvsscale ", pval, &len, &ierr);
-	if (ierr == 0 && ivpvs == 1) {
-		sscanf(pval, "%f", &vpvsscale);
-	}
-
-	get_vars(fp_spc, "dmean ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &idmean);
-	if (idmean != 0 && idmean != 1) {
-		idmean = 0;
-	}
-	get_vars(fp_spc, "iray ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &iray);
-	if (iray != 0 && iray != 1) {
-		iray = 0;
-	}
-	get_vars(fp_spc, "iraystat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &iraystat);
-	if (iraystat != 0 && iraystat != 1) {
-		iraystat = 0;
-	}
-	get_vars(fp_spc, "idatout ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &idatout);
-	if (idatout != 0 && idatout != 1) {
-		idatout = 0;
-	}
-	get_vars(fp_spc, "nomat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &nomat);
-	if (nomat != 0 && nomat != 1) {
-		nomat = 0;
-	}
-	get_vars(fp_spc, "istacor ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &istacor);
-	if (istacor != 0 && istacor != 1) {
-		istacor = 0;
-	}
-	get_vars(fp_spc, "doshot ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &idoshot);
-	if (idoshot != 0 && idoshot != 1) {
-		idoshot = 0;
-	}
-	get_vars(fp_spc, "dotel ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &idotel);
-	if (idotel != 0 && idotel != 1) {
-		idotel = 0;
-	}
-	get_vars(fp_spc, "resflag ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &resflag);
-
-	//c---Time table directory
-	get_vars(fp_spc, "timedir ", pval, &len, &ierr);
-	sscanf(pval, "%s", timedir);
-
-	//c---Coordinate origin
-	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &x0);
-	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &y[0]);
-	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &z0);
-	get_vars(fp_spc, "df ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &df);
-	get_vars(fp_spc, "dq ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &dq);
-	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &kmin);
-	get_vars(fp_spc, "kmax ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &kmax);
-	get_vars(fp_spc, "clat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &clat);
-	get_vars(fp_spc, "clon ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &clon);
-	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ittnum);
-
-	int ib = 0, ie = 0, lenv = 0, nvl = 0;
+int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	rewind(fp_spc);
 a11:
 	aline[MAXSTRLEN - 1] = '\0';

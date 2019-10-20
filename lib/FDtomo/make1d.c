@@ -72,6 +72,7 @@ c		    change so that dx = df and dy = df.
 #include "common/geographic_method.h"
 #include "common/string_process.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132
@@ -89,12 +90,10 @@ c		    change so that dx = df and dy = df.
 double gx[nxcm], gy[nxcm], gz[nxcm];
 float vp[MAX1D][2], z[MAX1D];
 
-int iflat = 0, isph = 0;
 double z0r;
 double y00;
 
 float vsave[nxyzcm2];
-int vs1d = 1;
 
 char VERSION[10] = "2017.1122\0";
 double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
@@ -110,9 +109,7 @@ char hcomm[101];
 
 //----fxs, fys, and fzs are not used in wavespeed models, so just set to zero
 double fxs = 0.0, fys = 0.0, fzs = 0.0;
-double clat, clon, cz;
 double axo, ayo, azo, dx, dy, dz;
-float az;
 int nxh, nyh, nzh;
 //--------------------------------------
 char hdr[nhbyte + 1];
@@ -132,53 +129,19 @@ char * dtoa(char *, double, int);
 int make1d(char *file_parameter) {
 	char spec_file[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-	char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
+    int len, ierr;
 	char *files[MUSTF] = { "oldvfil\0", "onedfil\0" };
 	char pval[MAXSTRLEN + 1];
-	int len, ierr;
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
+	read_variables(spec_file);
 	fp_spc = fopen(spec_file, "r");
 	if (!fp_spc) {
-		printf("(Error in make1d.c)read fp_spc file error.\n");
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
 		assert(0);
 	}
-	int i;
-
-//---recover the variables needed to run this program
-//
-//       nxc, nyc, nzc      coarse dimensions of the fine mesh used in the trt tables
-//       h                  fine grid spacing
-	for (i = 0; i < MUSTV; i++) {
-		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			goto a50;
-		}
-		if (i == 0) {
-			sscanf(pval, "%d", &nxc);
-		} else if (i == 1) {
-			sscanf(pval, "%d", &nyc);
-		} else if (i == 2) {
-			sscanf(pval, "%d", &nzc);
-		} else if (i == 3) {
-			sscanf(pval, "%lf", &h);
-		}
-	}
-
-//----dimension check
-	if (nxc > nxcm) {
-		printf("nxc is too large, maximum is: %d\n", nxcm);
-		assert(nxc <= nxcm);
-	} else if (nyc > nycm) {
-		printf("nyc is too large, maximum is: %d\n", nycm);
-		assert(nyc <= nycm);
-	} else if (nzc > nzcm) {
-		printf("nzc is too large, maximum is: %d\n", nzcm);
-		assert(nzc <= nzcm);
-	}
-
-	int lenf1, lenf2;
+	int lenf1, lenf2, i;
 	for (i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
 		if (ierr == 1) {
@@ -193,48 +156,6 @@ int make1d(char *file_parameter) {
 		}
 	}
 
-//--Optionally read in some variables
-//---Coordinate origin (used in header)
-	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &x0);
-	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &y[0]);
-	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &z0);
-	get_vars(fp_spc, "clat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &clat);
-	get_vars(fp_spc, "clon ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &clon);
-	get_vars(fp_spc, "cz ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &cz);
-	get_vars(fp_spc, "azmod ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &az);
-	get_vars(fp_spc, "df ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &df);
-	get_vars(fp_spc, "dq ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &dq);
-
-//----flatness, Vs, and sph  flags
-	get_vars(fp_spc, "flat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &iflat);
-
-	get_vars(fp_spc, "vs1d ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &vs1d);
-
-	get_vars(fp_spc, "sph ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &isph);
 
 //-----Grid specs
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
@@ -622,7 +543,7 @@ int make1d(char *file_parameter) {
 	fwrite(vsave, sizeof(vsave[0]), nxyzc2, fp_cor);
 
 	goto a65;
-	a50: printf("Error trying to read variable %s\n", mvals[i]);
+	a50: //printf("Error trying to read variable %s\n", mvals[i]);
 	goto a65;
 	a51: printf("Error trying to read filename %s\n", files[i]);
 

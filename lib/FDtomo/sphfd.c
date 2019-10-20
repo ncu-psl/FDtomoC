@@ -140,6 +140,7 @@
 #include "common/parseprogs.h"
 #include "common/geographic_method.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 
 #include "sphfd/vhead.h"
 #define MAXSTRLEN 132
@@ -206,6 +207,7 @@ int sphfd(int argc, char *argv[], char *file_parameter)
 	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
 	char spec_file[MAXSTRLEN + 1];
 	int num_parfiles=0,len,ierr;
+	char sphfd_argv[]="./sphfd\0";
 	FILE* fp_spc, *fp_parlist;
 
 	sscanf(file_parameter, "%s", spec_file);
@@ -246,13 +248,13 @@ int sphfd(int argc, char *argv[], char *file_parameter)
 	}
 	fclose(fp_parlist);
 
-
+	
 	#pragma omp parallel for 
 
 	for (int i = 0; i < num_parfiles; i++)
 	{
 		char *fake_av[2];
-		sscanf("./sphfd", "%s", fake_av[0]);
+		fake_av[0] = sphfd_argv;
 		fake_av[1] = parfiles[i];
 		sphfd_exec(2, fake_av, output_path);
 	}

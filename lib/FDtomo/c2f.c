@@ -43,6 +43,7 @@
 #include "common/parseprogs.h"
 #include "common/string_process.h"
 #include "common/shared_variables.h"
+#include "common/read_spec.h"
 
 
 #define MAX1D 1000
@@ -59,18 +60,6 @@
 
 double gx[nxcm], gy[nxcm], gz[nxcm];
 float vp[nxyzcm2];
-
-// c-----------------------------------------------------------------------------
-// c
-// c    Default setting for some variables
-// c
-double x0 = 0.0, y00 = 0.0, z0 = 0.0;
-int ittnum = 1;
-// c---End of default values
-
-double h, dq, df;
-double clat, clon, cz;
-float azmod;
 
 float vsave[nxyzm2];
 
@@ -115,39 +104,9 @@ int c2f(char *file_parameter) {
 		assert(0);
 	}
 	int len, ierr;
-// c---recover the variables needed to run this program
-// c
-// c       nxc, nyc, nzc      coarse dimensions of the fine mesh used in the trt tables
-// c       h                  fine grid spacing
-// c
 	int i = 0;
-	for (i = 0; i < MUSTV; i++) {
-		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			goto a50;
-		}
-		if (i == 0) {
-			sscanf(pval, "%d", &nxc);
-		} else if (i == 1) {
-			sscanf(pval, "%d", &nyc);
-		} else if (i == 2) {
-			sscanf(pval, "%d", &nzc);
-		} else if (i == 3) {
-			sscanf(pval, "%lf", &h);
-		}
-	}
 
 //c----dimension check
-	if (nxc > nxcm) {
-		printf("nxc is too large, maximum is: %d\n", nxcm);
-		return 0;
-	} else if (nyc > nycm) {
-		printf("nyc is too large, maximum is: %d\n", nycm);
-		return 0;
-	} else if (nzc > nzcm) {
-		printf("nzc is too large, maximum is: %d\n", nzcm);
-		return 0;
-	}
 
 	int lenf1, lenf2, lenf3;
 	for (i = 0; i < MUSTF; i++) {
@@ -165,36 +124,7 @@ int c2f(char *file_parameter) {
 			sscanf(pval, "%s", finevel);
 			lenf3 = len;
 		}
-	}
-
-//c--Optionally read in some variables
-
-//c---Coordinate origin (used in header)
-	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &x0);
-	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &y[0]);
-	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &z0);
-	get_vars(fp_spc, "clat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &clat);
-	get_vars(fp_spc, "clon ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &clon);
-	get_vars(fp_spc, "cz ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &cz);
-	get_vars(fp_spc, "azmod ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%f", &azmod);
-	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ittnum);
-
+	}	
 //c-----Grid specs
 
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
