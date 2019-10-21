@@ -96,37 +96,19 @@ float atoL, btol, conlim, anorm;
 float acond, rnorm, arnorm, dampsq, xnorm;
 float a[SIZEOFA];
 
-char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
-		fresfil[MAXSTRLEN + 1];
+
 char logfile[80 + 1];
 float one = 1.0f;
 
 int runlsqr(char *file_parameter) {
 	char spec_file[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
-	char *files[MUSTF] = { "dtdsfil\0", "resfile\0", "nmodfil\0", "fresfil\0" };
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
 	FILE *fp_spc = fopen(spec_file, "r");
 
-// c---recover the variables needed to run this program
 	int i, len, ierr;
-	for (i = 0; i < MUSTV; i++) {
-		get_vars(fp_spc, files[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf(" Error trying to read filename %s.", files[i]);
-		}
-		if (i == 0) {
-			sscanf(pval, "%s", dtdsfil);
-		} else if (i == 1) {
-			sscanf(pval, "%s", resfile);
-		} else if (i == 2) {
-			sscanf(pval, "%s", nmodfil);
-		} else if (i == 3) {
-			sscanf(pval, "%s", fresfil);
-		}
-	}
 
 	sprintf(logfile, "runlsqr.log%d\n", ittnum);
 	FILE *fp_log = fopen(logfile, "w");

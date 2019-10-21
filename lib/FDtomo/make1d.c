@@ -97,7 +97,6 @@ float vsave[nxyzcm2];
 
 char VERSION[10] = "2017.1122\0";
 double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
-char oldvfil[MAXSTRLEN + 1], onedfil[MAXSTRLEN + 1];
 
 char terp[MAX1D + 1];
 
@@ -130,33 +129,20 @@ int make1d(char *file_parameter) {
 	char spec_file[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
     int len, ierr;
-	char *files[MUSTF] = { "oldvfil\0", "onedfil\0" };
 	char pval[MAXSTRLEN + 1];
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
 	read_variables(spec_file);
+	read_files(spec_file);
 	fp_spc = fopen(spec_file, "r");
 	if (!fp_spc) {
 		printf("(Error in read_spec.c)read fp_spc file error.\n");
 		assert(0);
 	}
-	int lenf1, lenf2, i;
-	for (i = 0; i < MUSTF; i++) {
-		get_vars(fp_spc, files[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			goto a51;
-		}
-		if (i == 0) {
-			sscanf(pval, "%s", oldvfil);
-			lenf1 = len;
-		} else if (i == 1) {
-			sscanf(pval, "%s", onedfil);
-			lenf2 = len;
-		}
-	}
 
 
+	int i;
 //-----Grid specs
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	rewind(fp_spc);
@@ -541,11 +527,6 @@ int make1d(char *file_parameter) {
 	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_cor);
 	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
 	fwrite(vsave, sizeof(vsave[0]), nxyzc2, fp_cor);
-
-	goto a65;
-	a50: //printf("Error trying to read variable %s\n", mvals[i]);
-	goto a65;
-	a51: printf("Error trying to read filename %s\n", files[i]);
 
 	a65: fclose(fp_spc);
 	fclose(fp_log);

@@ -157,14 +157,10 @@ int wsum = 0, ncwrt = 0;
 
 int sphrayderv(char *file_parameter) {
 	VERSION[10] = "2004.0923";
-	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],
-		stafile[MAXSTRLEN], locdfil[MAXSTRLEN], shotfil[MAXSTRLEN],
-		telefil[MAXSTRLEN], oldvfil[MAXSTRLEN], pbasfil[MAXSTRLEN],
-		sbasfil[MAXSTRLEN], elipfil[MAXSTRLEN], raystat[MAXSTRLEN],
-		telrerr[MAXSTRLEN], dtdsfil[MAXSTRLEN], resfile[MAXSTRLEN],
-		hitfile[MAXSTRLEN], dtdhfil[MAXSTRLEN], bookfil[MAXSTRLEN],
-		dotfile[MAXSTRLEN], headfil[MAXSTRLEN], entfile[MAXSTRLEN],
-		stcfile[MAXSTRLEN], sclefil[MAXSTRLEN], specfile[MAXSTRLEN];
+	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],	
+		telefil[MAXSTRLEN],  pbasfil[MAXSTRLEN], sbasfil[MAXSTRLEN], shotfil[MAXSTRLEN],
+		elipfil[MAXSTRLEN], raystat[MAXSTRLEN],  dotfile[MAXSTRLEN], 
+		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN], specfile[MAXSTRLEN];
 	int ido1d = 0;
 
 	double xn, yn, zn;

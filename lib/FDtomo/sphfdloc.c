@@ -80,12 +80,6 @@
 char spec_file[MAXSTRLEN + 1];
 char aline[MAXSTRLEN + 1];
 char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
-char *files[MUSTF] = { "leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0",
-		"fdatfil\0" };
-char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
-fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
-
 float t[maxsta][nxyzm];
 char str_fhd[160000][100], str_data[160000][10000];
 char str_sum[160000][20000], str_out[160000][10000];
@@ -105,31 +99,6 @@ int sphfdloc(char *file_parameter) {
 	if (!fp_spc) {
 		printf("error on opening spec-file (%s)\n", spec_file);
 		assert(0);
-	}
-
-
-	for (int i = 0; i < MUSTF; i++) {
-		get_vars(fp_spc, files[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf("Error trying to read filename %s", files[i]);
-			assert(0);
-		}
-		if (i == 0) {
-			sscanf(pval, "%s", leqsfil);
-			//lenf1 = len;
-		} else if (i == 1) {
-			sscanf(pval, "%s", fsumfil);
-			//lenf2 = len;
-		} else if (i == 2) {
-			sscanf(pval, "%s", outlfil);
-			//lenf3 = len;
-		} else if (i == 3) {
-			sscanf(pval, "%s", fhedfil);
-			//lenf4 = len;
-		} else if (i == 4) {
-			sscanf(pval, "%s", fdatfil);
-			//lenf5 = len;
-		}
 	}
 	
 //-----Grid specs

@@ -65,9 +65,6 @@ float vsave[nxyzm2];
 
 char cfile[MAXSTRLEN + 1], ffile[MAXSTRLEN + 1], vpfile[MAXSTRLEN + 1], vsfile[MAXSTRLEN + 1];
 
-char oldvfil[MAXSTRLEN + 1], tgrdfil[MAXSTRLEN + 1], finevel[MAXSTRLEN + 1];
-
-
 //c----header stuff
 char head[5], type[5], syst[5];
 char quant[5];
@@ -93,8 +90,6 @@ int c2f(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1];
 	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-	char *mvals[MUSTV] = { "nxc", "nyc", "nzc", "h" };
-	char *files[MUSTF] = { "oldvfil", "tgrdfil", "finevel" };
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
@@ -105,26 +100,6 @@ int c2f(char *file_parameter) {
 	}
 	int len, ierr;
 	int i = 0;
-
-//c----dimension check
-
-	int lenf1, lenf2, lenf3;
-	for (i = 0; i < MUSTF; i++) {
-		get_vars(fp_spc, files[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			goto a51;
-		}
-		if (i == 0) {
-			sscanf(pval, "%s", oldvfil);
-			lenf1 = len;
-		} else if (i == 1) {
-			sscanf(pval, "%s", tgrdfil);
-			lenf2 = len;
-		} else if (i == 2) {
-			sscanf(pval, "%s", finevel);
-			lenf3 = len;
-		}
-	}	
 //c-----Grid specs
 
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
@@ -545,11 +520,6 @@ int c2f(char *file_parameter) {
 
 	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fns);
 	fwrite(vsave + nxyz, sizeof(vsave[0]), nxyz2 - nxyz, fp_fns);
-
-	goto a65;
-	a50: printf("Error trying to read variable %s", mvals[i]);
-	goto a65;
-	a51: printf("Error trying to read filename %s", files[i]);
 
 	a65: 
 	fclose(fp_spc);

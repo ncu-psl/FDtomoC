@@ -3,6 +3,7 @@
 #include "common/shared_variables.h"
 
 #define MUSTV  4
+#define MUSTF  21
 #define MAXSTRLEN 132
 
 int nxc, nyc, nzc, nx, ny, nz;
@@ -44,6 +45,16 @@ int limitu = 0, mavx = 3, mavy = 3, mavz = 3;
 int nsmooth = 2, ipscflg = 0, ido1d = 0;
 float dvperc = 0.05, pertscl = 1.0;
 
+//files
+char oldvfil[MAXSTRLEN + 1], onedfil[MAXSTRLEN + 1]; // make1d
+char tgrdfil[MAXSTRLEN + 1], finevel[MAXSTRLEN + 1]; // c2f
+char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
+             fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1]; //sphfdloc
+char stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
+            dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
+			dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];  //sphrayderv
+char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1]; //runlsqr			
+char fmodfil[MAXSTRLEN + 1]; //makenewmod
 void read_variables(char *spec_file){
     char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
 	char pval[MAXSTRLEN + 1];
@@ -320,7 +331,37 @@ void read_variables(char *spec_file){
 		sscanf(pval, "%d", &ido1d);
 
 }
-void read_files(char *spec_file);
+void read_files(char *spec_file){
+	char *files[MUSTF] = { "oldvfil\0", "onedfil\0", //make1d 
+						   "tgrdfil\0", "finevel\0", //c2f
+						   "leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0", "fdatfil\0", // sphfdloc
+						   "stafile\0", "locdfil\0", "telrerr\0", "dtdsfil\0", "resfile\0", "hitfile\0", "dtdhfil\0", "bookfil\0", "sclefil\0", //sphrayderv
+						   "nmodfil\0", "fresfil\0", //runlsqr 
+						   "fmodfil\0" //makenewmod
+	};
+	char *file_list[MUSTF] = { oldvfil, onedfil, tgrdfil, finevel, leqsfil, fsumfil, outlfil,
+             				   fhedfil, fdatfil, stafile, locdfil, telrerr, dtdsfil, resfile, 
+							   hitfile, dtdhfil, bookfil, sclefil, nmodfil, fresfil,  fmodfil };
+	char pval[MAXSTRLEN + 1];
+    int len, ierr;
+	FILE *fp_spc;
+
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+
+	int lenf1, lenf2, i;
+	for (i = 0; i < MUSTF; i++) {
+		get_vars(fp_spc, files[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			printf("Error trying to read filename %s", files[i]);
+			assert(0);
+		}
+		sscanf(pval, "%s", file_list[i]);
+	}
+}
 
 void read_error(char *name, char *type, FILE *fp_spc){
 	printf("Error trying to read %s %s\n", type, name);

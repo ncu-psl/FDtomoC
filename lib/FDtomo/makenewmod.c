@@ -128,8 +128,6 @@ int makenewmod(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
 	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
-	char *files[MUSTF] = { "nmodfil\0", "oldvfil\0", "fmodfil\0" };
-	char nmodfil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], fmodfil[MAXSTRLEN + 1];
 	float azh;
 	double clath, clonh, czh;
 	double axo, ayo, azo, dx, dy, dz;
@@ -145,24 +143,6 @@ int makenewmod(char *file_parameter) {
 	}
 
 	int len, ierr;
-
-	for (int i = 0; i < MUSTF; i++) {
-		get_vars(fp_spc, files[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf("Error trying to read filename %s\n", files[i]);
-			assert(0);
-		}
-		if (i == 0) {
-			sscanf(pval, "%s", nmodfil);
-			//lenf1 = len;
-		} else if (i == 1) {
-			sscanf(pval, "%s", oldvfil);
-			//lenf2 = len;
-		} else if (i == 2) {
-			sscanf(pval, "%s", fmodfil);
-			//lenf3 = len;
-		}
-	}
 	char stafile[MAXSTRLEN + 1], nstafil[MAXSTRLEN + 1];
 	// Optional files
 	get_vars(fp_spc, "stafile ", pval, &len, &ierr);
