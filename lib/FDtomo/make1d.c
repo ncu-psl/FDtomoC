@@ -133,8 +133,6 @@ int make1d(char *file_parameter) {
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
-	read_variables(spec_file);
-	read_files(spec_file);
 	fp_spc = fopen(spec_file, "r");
 	if (!fp_spc) {
 		printf("(Error in read_spec.c)read fp_spc file error.\n");
@@ -142,68 +140,9 @@ int make1d(char *file_parameter) {
 	}
 
 
-	int i;
-//-----Grid specs
+	int i,k;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
-	rewind(fp_spc);
-	a11: get_line(fp_spc, aline, &ierr);
-	aline[MAXSTRLEN] = '\0';
-	if (ierr == 1)
-		goto a12;
-	if (ierr != 0)
-		goto a11;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridx", lenv) != 0)
-		goto a11;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridx[0]);
-	int k;
-	for (k = 1; k < nxc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridx[k]);
-	}
-	a12: rewind(fp_spc);
-	a13: get_line(fp_spc, aline, &ierr);
-	if (ierr == 1)
-		goto a14;
-	if (ierr != 0)
-		goto a13;
-	ib = 0;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridy", lenv) != 0)
-		goto a13;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridy[0]);
-	for (k = 1; k < nyc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridy[k]);
-	}
-	a14: rewind(fp_spc);
-
-	a15: get_line(fp_spc, aline, &ierr);
-	if (ierr != 1) {
-		if (ierr != 0)
-			goto a15;
-		ib = 0;
-		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-		if (strncmp(varname, "igridz", lenv) != 0)
-			goto a15;
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridz[0]);
-		for (k = 1; k < nzc; k++) {
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridz[k]);
-		}
-	}
-
-//-----end of optional parameters
-
+	
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
@@ -468,7 +407,7 @@ int make1d(char *file_parameter) {
 //   read(*,*) pause
 	nl = nl + 1;
 	goto a21;
-
+	
 //----generate the model
 	a2: fp_cor = fopen(oldvfil, "wb");
 	for (int n = 0; n <= 1; n++) {
@@ -528,7 +467,7 @@ int make1d(char *file_parameter) {
 	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
 	fwrite(vsave, sizeof(vsave[0]), nxyzc2, fp_cor);
 
-	a65: fclose(fp_spc);
+	fclose(fp_spc);
 	fclose(fp_log);
 	fclose(fp_cor);
 	fclose(fp_one);

@@ -91,75 +91,8 @@ int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1]);
 
 int sphfdloc(char *file_parameter) {
 	char pval[MAXSTRLEN + 1];
-
 	int len, ierr;
-	sscanf(file_parameter, "%s", spec_file);
-	spec_file[MAXSTRLEN] = '\0';
-	FILE *fp_spc = fopen(spec_file, "r");
-	if (!fp_spc) {
-		printf("error on opening spec-file (%s)\n", spec_file);
-		assert(0);
-	}
-	
-//-----Grid specs
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
-	rewind(fp_spc);
-	a11: get_line(fp_spc, aline, &ierr);
-	aline[MAXSTRLEN] = '\0';
-	if (ierr == 1)
-		goto a12;
-	if (ierr != 0)
-		goto a11;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridx", lenv) != 0)
-		goto a11;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridx[0]);
-	for (int k = 1; k < nxc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridx[k]);
-	}
-	a12: rewind(fp_spc);
-	a13: get_line(fp_spc, aline, &ierr);
-	if (ierr == 1)
-		goto a14;
-	if (ierr != 0)
-		goto a13;
-	ib = 0;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridy", lenv) != 0)
-		goto a13;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridy[0]);
-	for (int k = 1; k < nyc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridy[k]);
-	}
-	a14: rewind(fp_spc);
-
-	a15: get_line(fp_spc, aline, &ierr);
-	if (ierr != 1) {
-		if (ierr != 0)
-			goto a15;
-		ib = 0;
-		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-		if (strncmp(varname, "igridz", lenv) != 0)
-			goto a15;
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridz[0]);
-		for (int k = 1; k < nzc; k++) {
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridz[k]);
-		}
-	}
-	fclose(fp_spc);
-//-----end of optional parameters
 
 	nx = 1;
 	ny = 1;

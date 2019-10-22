@@ -87,9 +87,6 @@ void find_vel(double, double, double, double *, int);
 
 int c2f(char *file_parameter) {
 	char spec_file[MAXSTRLEN + 1];
-	char pval[MAXSTRLEN + 1];
-	char aline[MAXSTRLEN + 1];
-	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
 	sscanf(file_parameter, "%s", spec_file);
 	spec_file[MAXSTRLEN] = '\0';
 
@@ -99,67 +96,7 @@ int c2f(char *file_parameter) {
 		assert(0);
 	}
 	int len, ierr;
-	int i = 0;
-//c-----Grid specs
-
-	int ib = 0, ie = 0, lenv = 0, nvl = 0;
-	rewind(fp_spc);
-	a11: get_line(fp_spc, aline, &ierr);
-	if (ierr == 1)
-		goto a12;
-	if (ierr != 0)
-		goto a11;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridx", lenv) != 0)
-		goto a11;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridx[0]);
-	int k;
-	for (k = 1; k < nxc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridx[k]);
-	}
-	a12: rewind(fp_spc);
-	a13: get_line(fp_spc, aline, &ierr);
-	if (ierr == 1)
-		goto a14;
-	if (ierr != 0)
-		goto a13;
-	ib = 0;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridy", lenv) != 0)
-		goto a13;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridy[0]);
-	for (k = 1; k < nyc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridy[k]);
-	}
-	a14: rewind(fp_spc);
-
-	a15: get_line(fp_spc, aline, &ierr);
-	if (ierr != 1) {
-		if (ierr != 0)
-			goto a15;
-		ib = 0;
-		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-		if (strncmp(varname, "igridz", lenv) != 0)
-			goto a15;
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridz[0]);
-		for (k = 1; k < nzc; k++) {
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridz[k]);
-		}
-	}
-
-//c-----end of optional parameters
+	int i = 0, k;
 
 	nxyc = nxc * nyc;
 	nxyzc = nxyc * nzc;

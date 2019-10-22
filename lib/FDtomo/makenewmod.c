@@ -152,7 +152,6 @@ int makenewmod(char *file_parameter) {
 	if (ierr == 0)
 		sscanf(pval, "%s", nstafil);
 	// end of optional parameters
-	printf("  nxc, nyc, nzc: %12d%12d%12d\n", nxc, nyc, nzc);
 
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;

@@ -55,6 +55,7 @@ char stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1],
 			dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];  //sphrayderv
 char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1]; //runlsqr			
 char fmodfil[MAXSTRLEN + 1]; //makenewmod
+
 void read_variables(char *spec_file){
     char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
 	char pval[MAXSTRLEN + 1];
@@ -361,6 +362,77 @@ void read_files(char *spec_file){
 		}
 		sscanf(pval, "%s", file_list[i]);
 	}
+}
+
+void read_grid(char *spec_file){	
+	FILE *fp_spc;
+
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+
+	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+	int len, ierr;
+	int ib = 0, ie = 0, lenv = 0, nvl = 0;
+	a11: get_line(fp_spc, aline, &ierr);
+	aline[MAXSTRLEN] = '\0';
+	if (ierr == 1)
+		goto a12;
+	if (ierr != 0)
+		goto a11;
+	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
+	if (strncmp(varname, "igridx", lenv) != 0)
+		goto a11;
+	ib = ie;
+	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+	sscanf(parval, "%d", &igridx[0]);
+	int k;
+	for (k = 1; k < nxc; k++) {
+		ib = ie;
+		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+		sscanf(parval, "%d", &igridx[k]);
+	}
+	a12: rewind(fp_spc);
+	a13: get_line(fp_spc, aline, &ierr);
+	if (ierr == 1)
+		goto a14;
+	if (ierr != 0)
+		goto a13;
+	ib = 0;
+	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
+	if (strncmp(varname, "igridy", lenv) != 0)
+		goto a13;
+	ib = ie;
+	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+	sscanf(parval, "%d", &igridy[0]);
+	for (k = 1; k < nyc; k++) {
+		ib = ie;
+		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+		sscanf(parval, "%d", &igridy[k]);
+	}
+	a14: rewind(fp_spc);
+
+	a15: get_line(fp_spc, aline, &ierr);
+	if (ierr != 1) {
+		if (ierr != 0)
+			goto a15;
+		ib = 0;
+		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
+		if (strncmp(varname, "igridz", lenv) != 0)
+			goto a15;
+		ib = ie;
+		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+		sscanf(parval, "%d", &igridz[0]);
+		for (k = 1; k < nzc; k++) {
+			ib = ie;
+			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+			sscanf(parval, "%d", &igridz[k]);
+		}
+	}
+	fclose(fp_spc);
+
 }
 
 void read_error(char *name, char *type, FILE *fp_spc){

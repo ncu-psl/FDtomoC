@@ -172,81 +172,8 @@ int sphrayderv(char *file_parameter) {
 		assert(0);
 	}
 	int len = 0, ierr = 0;
-	
-	char files[MUSTF][10] = { "stafile", "locdfil", "oldvfil", "telrerr", "dtdsfil", "resfile", "hitfile", "dtdhfil", "bookfil", "sclefil" };
-	char *file_list[10] = { stafile, locdfil, oldvfil, telrerr, dtdsfil, resfile, hitfile, dtdhfil, bookfil, sclefil };
-	for (i = 0; i < MUSTF; i++) {
-		get_vars(fp_spc, files[i], pval, &len, &ierr);
-		if (ierr == 1) {
-			printf("Error trying to read filename %s", files[i]);
-			assert(0);
-		}
-		sscanf(pval, "%s", file_list[i]);
-	}
 
 int ib = 0, ie = 0, lenv = 0, nvl = 0;
-	rewind(fp_spc);
-a11:
-	aline[MAXSTRLEN - 1] = '\0';
-	get_line(fp_spc, aline, &ierr);
-	aline[MAXSTRLEN - 1] = '\0';
-	if (ierr == 1)
-		goto a12;
-	if (ierr != 0)
-		goto a11;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridx", lenv) != 0)
-		goto a11;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridx[0]);
-	for (k = 1; k < nxc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridx[k]);
-	}
-a12:
-	rewind(fp_spc);
-a13:
-	get_line(fp_spc, aline, &ierr);
-	if (ierr == 1)
-		goto a14;
-	if (ierr != 0)
-		goto a13;
-	ib = 0;
-	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-	if (strncmp(varname, "igridy", lenv) != 0)
-		goto a13;
-	ib = ie;
-	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridy[0]);
-	for (k = 1; k < nyc; k++) {
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridy[k]);
-	}
-a14:
-	rewind(fp_spc);
-
-a15:
-	get_line(fp_spc, aline, &ierr);
-	if (ierr != 1) {
-		if (ierr != 0)
-			goto a15;
-		ib = 0;
-		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-		if (strncmp(varname, "igridz", lenv) != 0)
-			goto a15;
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridz[0]);
-		for (k = 1; k < nzc; k++) {
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridz[k]);
-		}
-	}
-
 	get_vars(fp_spc, "shotfil ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%s", shotfil);
