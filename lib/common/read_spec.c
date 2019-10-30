@@ -1,11 +1,9 @@
 #include "common/read_spec.h"
-#include "common/gridspec.h"
-#include "common/shared_variables.h"
+
 
 #define MUSTV  4
 #define MUSTF  21
 #define MAXSTRLEN 132
-
 int nxc, nyc, nzc, nx, ny, nz;
 double h, x0, y[1], z0, dq, df, x00, y00;
 int igridx[nxcm1], igridy[nycm1], igridz[nzcm1];
@@ -44,19 +42,7 @@ int intlims = 0;
 int limitu = 0, mavx = 3, mavy = 3, mavz = 3;
 int nsmooth = 2, ipscflg = 0, ido1d = 0;
 float dvperc = 0.05, pertscl = 1.0;
-
-//files
-char oldvfil[MAXSTRLEN + 1], onedfil[MAXSTRLEN + 1]; // make1d
-char tgrdfil[MAXSTRLEN + 1], finevel[MAXSTRLEN + 1]; // c2f
-char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
-             fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1]; //sphfdloc
-char stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
-            dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
-			dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];  //sphrayderv
-char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1]; //runlsqr			
-char fmodfil[MAXSTRLEN + 1]; //makenewmod
-
-void read_variables(char *spec_file){
+void read_variables(char *spec_file, SPEC *spec){
     char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
 	char pval[MAXSTRLEN + 1];
     int len, ierr;
@@ -80,259 +66,256 @@ void read_variables(char *spec_file){
 			read_error(mvals[i], "variable", fp_spc);
 		}
 		if (i == 0) {
-			sscanf(pval, "%d", &nxc);
+			sscanf(pval, "%d", &spec->nxc);
 		} else if (i == 1) {
-			sscanf(pval, "%d", &nyc);
+			sscanf(pval, "%d", &spec->nyc);
 		} else if (i == 2) {
-			sscanf(pval, "%d", &nzc);
+			sscanf(pval, "%d", &spec->nzc);
 		} else if (i == 3) {
-			sscanf(pval, "%lf", &h);
+			sscanf(pval, "%lf", &spec->h);
 		}
 	}
 
 //----dimension check
-	if (nxc > nxcm) {
+	if (spec->nxc > nxcm) {
 		printf("nxc is too large, maximum is: %d\n", nxcm);
-		assert(nxc <= nxcm);
-	} else if (nyc > nycm) {
+		assert(spec->nxc <= nxcm);
+	} else if (spec->nyc > nycm) {
 		printf("nyc is too large, maximum is: %d\n", nycm);
-		assert(nyc <= nycm);
-	} else if (nzc > nzcm) {
+		assert(spec->nyc <= nycm);
+	} else if (spec->nzc > nzcm) {
 		printf("nzc is too large, maximum is: %d\n", nzcm);
-		assert(nzc <= nzcm);
+		assert(spec->nzc <= nzcm);
 	}
 
 	//--Optionally read in some variables
 //---Coordinate origin (used in header)
 	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &x0);
+		sscanf(pval, "%lf", &spec->x0);
 	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &y[0]);
+		sscanf(pval, "%lf", &spec->y[0]);
 	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &z0);
+		sscanf(pval, "%lf", &spec->z0);
 	get_vars(fp_spc, "clat ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &clat);
+		sscanf(pval, "%lf", &spec->clat);
 	get_vars(fp_spc, "clon ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &clon);
+		sscanf(pval, "%lf", &spec->clon);
 	get_vars(fp_spc, "cz ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &cz);
+		sscanf(pval, "%lf", &spec->cz);
 	get_vars(fp_spc, "azmod ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%f", &az);
+		sscanf(pval, "%f", &spec->az);
 	get_vars(fp_spc, "azmod ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%f", &azmod);
+		sscanf(pval, "%f", &spec->azmod);
 	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &ittnum);
+		sscanf(pval, "%d", &spec->ittnum);
 	get_vars(fp_spc, "df ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &df);
+		sscanf(pval, "%lf", &spec->df);
 	get_vars(fp_spc, "dq ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &dq);
+		sscanf(pval, "%lf", &spec->dq);
 
 //----flatness, Vs, and sph  flags
 	get_vars(fp_spc, "flat ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &iflat);
+		sscanf(pval, "%d", &spec->iflat);
 
 	get_vars(fp_spc, "vs1d ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &vs1d);
+		sscanf(pval, "%d", &spec->vs1d);
 
 	get_vars(fp_spc, "sph ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &isph);
+		sscanf(pval, "%d", &spec->isph);
 
 	//sphfdloc
 	get_vars(fp_spc, "iread ", pval, &len, &ierr);
 	if (ierr == 0) {
-		sscanf(pval, "%d", &iread);
+		sscanf(pval, "%d", &spec->iread);
 	}
 	if (iread != 0 && iread != 1) {
 		iread = 0;
 	}
 	get_vars(fp_spc, "ivs ", pval, &len, &ierr);
 	if (ierr == 0) {
-		sscanf(pval, "%d", &ivs);
+		sscanf(pval, "%d", &spec->ivs);
 	}
-	if (ivs != 0 && ivs != 1) {
-		ivs = 0;
+	if (spec->ivs != 0 && spec->ivs != 1) {
+		spec->ivs = 0;
 	}
 	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &vpvs);
+		sscanf(pval, "%lf", &spec->vpvs);
 	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
 	if (ierr == 0) {
-		sscanf(pval, "%d", &ivpvs);
+		sscanf(pval, "%d", &spec->ivpvs);
 	}
 	if (ivpvs != 0 && ivpvs != 1) {
-		ivpvs = 0;
+		spec->ivpvs = 0;
 	}
 
 	get_vars(fp_spc, "timedir ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%s", timedir);
+		sscanf(pval, "%s", spec->timedir);
 	get_vars(fp_spc, "eqkdir ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%s", eqkdir);
-	if(eqkdir[strlen(eqkdir) - 1] != '/'){
-		eqkdir[strlen(eqkdir)] = '/';
-		eqkdir[strlen(eqkdir) + 1] = '\0';
+		sscanf(pval, "%s", spec->eqkdir);
+	if(spec->eqkdir[strlen(eqkdir) - 1] != '/'){
+		spec->eqkdir[strlen(eqkdir)] = '/';
+		spec->eqkdir[strlen(eqkdir) + 1] = '\0';
 	}
 
 	get_vars(fp_spc, "nthres ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &nthres);
+		sscanf(pval, "%d", &spec->nthres);
 	get_vars(fp_spc, "resthres ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &resthres);
+		sscanf(pval, "%lf", &spec->resthres);
 	get_vars(fp_spc, "resthrep ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &resthrep);
+		sscanf(pval, "%lf", &spec->resthrep);
 	get_vars(fp_spc, "stdmax ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &stdmax);
+		sscanf(pval, "%lf", &spec->stdmax);
 	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
 	if (ierr == 0) {
-		sscanf(pval, "%d", &kmin);
+		sscanf(pval, "%d", &spec->kmin);
 		kmin--;
 	}
-	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &ittnum);
 
 //-----grid search control
 	get_vars(fp_spc, "ndiv ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &ndiv);
+		sscanf(pval, "%d", &spec->ndiv);
 	if (ndiv <= 0)
 		ndiv = 1;
 	get_vars(fp_spc, "ndiv2 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &ndiv2);
-	if (ndiv2 <= 0)
+		sscanf(pval, "%d", &spec->ndiv2);
+	if (spec->ndiv2 <= 0)
 		ndiv2 = 1;
 
 	get_vars(fp_spc, "total_earthquakes ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &total_earthquakes);
+		sscanf(pval, "%d", &spec->total_earthquakes);
 
 	//sphrayderv
 	//lzw
 	
 	get_vars(fp_spc, "vpvsscale ", pval, &len, &ierr);
 	if (ierr == 0 && ivpvs == 1) {
-		sscanf(pval, "%f", &vpvsscale);
+		sscanf(pval, "%f", &spec->vpvsscale);
 	}
 
 	get_vars(fp_spc, "dmean ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &idmean);
-	if (idmean != 0 && idmean != 1) {
-		idmean = 0;
+		sscanf(pval, "%d", &spec->idmean);
+	if (spec->idmean != 0 && spec->idmean != 1) {
+		spec->idmean = 0;
 	}
 	get_vars(fp_spc, "iray ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &iray);
-	if (iray != 0 && iray != 1) {
-		iray = 0;
+		sscanf(pval, "%d", &spec->iray);
+	if (spec->iray != 0 && spec->iray != 1) {
+		spec->iray = 0;
 	}
 	get_vars(fp_spc, "iraystat ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &iraystat);
-	if (iraystat != 0 && iraystat != 1) {
-		iraystat = 0;
+		sscanf(pval, "%d", &spec->iraystat);
+	if (spec->iraystat != 0 && spec->iraystat != 1) {
+		spec->iraystat = 0;
 	}
 	get_vars(fp_spc, "idatout ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &idatout);
-	if (idatout != 0 && idatout != 1) {
-		idatout = 0;
+		sscanf(pval, "%d", &spec->idatout);
+	if (spec->idatout != 0 && spec->idatout != 1) {
+		spec->idatout = 0;
 	}
 	get_vars(fp_spc, "nomat ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &nomat);
-	if (nomat != 0 && nomat != 1) {
-		nomat = 0;
+		sscanf(pval, "%d", &spec->nomat);
+	if (spec->nomat != 0 && spec->nomat != 1) {
+		spec->nomat = 0;
 	}
 	get_vars(fp_spc, "istacor ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &istacor);
-	if (istacor != 0 && istacor != 1) {
-		istacor = 0;
+		sscanf(pval, "%d", &spec->istacor);
+	if (spec->istacor != 0 && spec->istacor != 1) {
+		spec->istacor = 0;
 	}
 	get_vars(fp_spc, "doshot ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &idoshot);
-	if (idoshot != 0 && idoshot != 1) {
-		idoshot = 0;
+		sscanf(pval, "%d", &spec->idoshot);
+	if (spec->idoshot != 0 && spec->idoshot != 1) {
+		spec->idoshot = 0;
 	}
 	get_vars(fp_spc, "dotel ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &idotel);
-	if (idotel != 0 && idotel != 1) {
-		idotel = 0;
+		sscanf(pval, "%d", &spec->idotel);
+	if (spec->idotel != 0 && spec->idotel != 1) {
+		spec->idotel = 0;
 	}
 	get_vars(fp_spc, "resflag ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%f", &resflag);
+		sscanf(pval, "%f", &spec->resflag);
 	get_vars(fp_spc, "kmax ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &kmax);
+		sscanf(pval, "%d", &spec->kmax);
 
 	//runlsqr
 	get_vars(fp_spc, "damper", pval, &len, &ierr);
 	if (ierr == 0) {
-		sscanf(pval, "%f", &damper);
+		sscanf(pval, "%f", &spec->damper);
 	}
 	get_vars(fp_spc, "intlim", pval, &len, &ierr);
 	if (ierr == 0) {
-		sscanf(pval, "%d", &intlims);
+		sscanf(pval, "%d", &spec->intlims);
 	}
 
 	//runlsqr
 	// c--Optionally read in some variables
 	get_vars(fp_spc, "limitu ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &limitu);
-	if (limitu != 0 && limitu != 1) {
-		limitu = 0;
+		sscanf(pval, "%d", &spec->limitu);
+	if (spec->limitu != 0 && spec->limitu != 1) {
+		spec->limitu = 0;
 	}
 	get_vars(fp_spc, "mavx ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &mavx);
+		sscanf(pval, "%d", &spec->mavx);
 	get_vars(fp_spc, "mavy ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &mavy);
+		sscanf(pval, "%d", &spec->mavy);
 	get_vars(fp_spc, "mavz ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &mavz);
+		sscanf(pval, "%d", &spec->mavz);
 	get_vars(fp_spc, "nsmooth ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &nsmooth);
+		sscanf(pval, "%d", &spec->nsmooth);
 	get_vars(fp_spc, "dvperc ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%f", &dvperc);
+		sscanf(pval, "%f", &spec->dvperc);
 	get_vars(fp_spc, "ipscflg ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &ipscflg);
+		sscanf(pval, "%d", &spec->ipscflg);
 	get_vars(fp_spc, "pertscl ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%f", &pertscl);
+		sscanf(pval, "%f", &spec->pertscl);
 	get_vars(fp_spc, "do1d ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%d", &ido1d);
+		sscanf(pval, "%d", &spec->ido1d);
 
 }
-void read_files(char *spec_file){
+void read_files(char *spec_file, SPEC *file_identifier){
 	char *files[MUSTF] = { "oldvfil\0", "onedfil\0", //make1d 
 						   "tgrdfil\0", "finevel\0", //c2f
 						   "leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0", "fdatfil\0", // sphfdloc
@@ -340,9 +323,9 @@ void read_files(char *spec_file){
 						   "nmodfil\0", "fresfil\0", //runlsqr 
 						   "fmodfil\0" //makenewmod
 	};
-	char *file_list[MUSTF] = { oldvfil, onedfil, tgrdfil, finevel, leqsfil, fsumfil, outlfil,
-             				   fhedfil, fdatfil, stafile, locdfil, telrerr, dtdsfil, resfile, 
-							   hitfile, dtdhfil, bookfil, sclefil, nmodfil, fresfil,  fmodfil };
+	char *file_list[MUSTF] = { file_identifier->oldvfil, file_identifier->onedfil, file_identifier->tgrdfil, file_identifier->finevel, file_identifier->leqsfil, file_identifier->fsumfil, file_identifier->outlfil,
+             				   file_identifier->fhedfil, file_identifier->fdatfil, file_identifier->stafile, file_identifier->locdfil, file_identifier->telrerr, file_identifier->dtdsfil, file_identifier->resfile, 
+							   file_identifier->hitfile, file_identifier->dtdhfil, file_identifier->bookfil, file_identifier->sclefil, file_identifier->nmodfil, file_identifier->fresfil,  file_identifier->fmodfil };
 	char pval[MAXSTRLEN + 1];
     int len, ierr;
 	FILE *fp_spc;
@@ -353,8 +336,7 @@ void read_files(char *spec_file){
 		assert(0);
 	}
 
-	int lenf1, lenf2, i;
-	for (i = 0; i < MUSTF; i++) {
+	for (int i = 0; i < MUSTF; i++) {
 		get_vars(fp_spc, files[i], pval, &len, &ierr);
 		if (ierr == 1) {
 			printf("Error trying to read filename %s", files[i]);

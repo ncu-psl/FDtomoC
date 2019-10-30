@@ -125,7 +125,7 @@ float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
 
-int make1d(char *file_parameter) {
+int make1d(char *file_parameter, SPEC spec) {
 	char spec_file[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
     int len, ierr;
@@ -308,11 +308,11 @@ int make1d(char *file_parameter) {
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, " Input file attachments:\n");
 	fprintf(fp_log, " \n");
-	fprintf(fp_log, " One-D ASCII model file: %-40s\n", onedfil);
+	fprintf(fp_log, " One-D ASCII model file: %-40s\n", spec.onedfil);
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, " Output file attachments:\n");
 	fprintf(fp_log, " \n");
-	fprintf(fp_log, " New Wavespeed model file: %-40s\n", oldvfil);
+	fprintf(fp_log, " New Wavespeed model file: %-40s\n", spec.oldvfil);
 	fprintf(fp_log, " \n");
 
 //---generate the header
@@ -338,7 +338,7 @@ int make1d(char *file_parameter) {
 		strcpy(flatten, "NOFL");
 	}
 	flatten[4] = '\0';
-	sprintf(hcomm, "Output from make1d.c using %s", onedfil);
+	sprintf(hcomm, "Output from make1d.c using %s", spec.onedfil);
 	hcomm[100] = '\0';
 	axo = x0;
 	ayo = y[0];
@@ -355,9 +355,9 @@ int make1d(char *file_parameter) {
 		}
 	}
 
-	fp_one = fopen(onedfil, "r");
+	fp_one = fopen(spec.onedfil, "r");
 	if(!fp_one) {
-        printf("Error on opening fp_one(%s)\n", onedfil);
+        printf("Error on opening fp_one(%s)\n", spec.onedfil);
         assert(0);
 	}
 //---skip over header
@@ -409,7 +409,7 @@ int make1d(char *file_parameter) {
 	goto a21;
 	
 //----generate the model
-	a2: fp_cor = fopen(oldvfil, "wb");
+	a2: fp_cor = fopen(spec.oldvfil, "wb");
 	for (int n = 0; n <= 1; n++) {
 		int noff = nxyzc * n;
 		fprintf(fp_log, " \n");
