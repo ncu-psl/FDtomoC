@@ -126,8 +126,21 @@ float flatz(float);
 char * dtoa(char *, double, int);
 
 int make1d(char *file_parameter, SPEC spec) {
+	
+	//initialize variable
+	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
+	    ny = spec.ny, nz = spec.nz;
+	double h = spec.h, x0 = spec.x0, *y = spec.y, 
+	z0 = spec.z0, dq = spec.dq, df = spec.df, x00 = spec.x00, y00 = spec.y00;
+	int *igridx = spec.igridx, *igridy = spec.igridy, *igridz = spec.igridz;
+
+	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
+	float az = spec.az, azmod = spec.azmod;
+	int iflat = spec.iflat, isph = spec.isph, vs1d = spec.vs1d;
+	vs1d = 1;
+	
 	char spec_file[MAXSTRLEN + 1];
-	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+	char aline[MAXSTRLEN + 1];
     int len, ierr;
 	char pval[MAXSTRLEN + 1];
 	sscanf(file_parameter, "%s", spec_file);
@@ -207,7 +220,7 @@ int make1d(char *file_parameter, SPEC spec) {
 	int lengrd = 4 * (nxc + nyc + nzc - 3);
 	int lenrec = lenhead + lengrd + 4 * nxyzc2;
 
-	fp_log = fopen("../../make1d.log", "w");
+	fp_log = fopen("make1d.log", "w");
 	if(!fp_log) {
 		printf("(Error in make1d.c)create fp_log file error.\n");
 		assert(fp_log);

@@ -6,7 +6,7 @@
 
 #include "parameter.h"
 int nxc, nyc, nzc, nx, ny, nz;
-double h, x0, y[1], z0, dq, df, x00, y00;
-int igridx[nxcm1], igridy[nycm1], igridz[nzcm1];
+double h, x0, *y, z0, dq, df, x00, y00;
+int *igridx, *igridy, *igridz;
 
 #endif // GRIDSPEC

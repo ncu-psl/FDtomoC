@@ -6,7 +6,7 @@ int main(int argc, char *argv[]){
 	SPEC spec;
 	read_variables(argv[1], &spec);
 	read_files(argv[1], &spec);
-	read_grid(argv[1]);
+	read_grid(argv[1], &spec);
 	make1d(argv[1], spec);
 	//c2f(argv[1]);
 	//sphfd(argc, argv, argv[1]);

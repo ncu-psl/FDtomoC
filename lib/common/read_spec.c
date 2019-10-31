@@ -4,10 +4,6 @@
 #define MUSTV  4
 #define MUSTF  21
 #define MAXSTRLEN 132
-int nxc, nyc, nzc, nx, ny, nz;
-double h, x0, y[1], z0, dq, df, x00, y00;
-int igridx[nxcm1], igridy[nycm1], igridz[nzcm1];
-
 double clat, clon, cz;
 float az, azmod;
 int iflat = 0, isph = 0, vs1d = 1;
@@ -346,7 +342,7 @@ void read_files(char *spec_file, SPEC *file_identifier){
 	}
 }
 
-void read_grid(char *spec_file){	
+void read_grid(char *spec_file, SPEC *spec){	
 	FILE *fp_spc;
 
     fp_spc = fopen(spec_file, "r");
@@ -369,12 +365,12 @@ void read_grid(char *spec_file){
 		goto a11;
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridx[0]);
+	sscanf(parval, "%d", &spec->igridx[0]);
 	int k;
-	for (k = 1; k < nxc; k++) {
+	for (k = 1; k < spec->nxc; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridx[k]);
+		sscanf(parval, "%d", &spec->igridx[k]);
 	}
 	a12: rewind(fp_spc);
 	a13: get_line(fp_spc, aline, &ierr);
@@ -388,11 +384,11 @@ void read_grid(char *spec_file){
 		goto a13;
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &igridy[0]);
-	for (k = 1; k < nyc; k++) {
+	sscanf(parval, "%d", &spec->igridy[0]);
+	for (k = 1; k < spec->nyc; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridy[k]);
+		sscanf(parval, "%d", &spec->igridy[k]);
 	}
 	a14: rewind(fp_spc);
 
@@ -406,11 +402,11 @@ void read_grid(char *spec_file){
 			goto a15;
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridz[0]);
-		for (k = 1; k < nzc; k++) {
+		sscanf(parval, "%d", &spec->igridz[0]);
+		for (k = 1; k < spec->nzc; k++) {
 			ib = ie;
 			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridz[k]);
+			sscanf(parval, "%d", &spec->igridz[k]);
 		}
 	}
 	fclose(fp_spc);
