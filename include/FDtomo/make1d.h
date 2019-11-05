@@ -2,6 +2,6 @@
 #define MAKE1D_H_
 #include "common/read_spec.h"
 
-int make1d(char*, SPEC);
+int make1d(SPEC);
 
 #endif

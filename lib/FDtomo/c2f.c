@@ -85,16 +85,24 @@ int nxyc, nxyzc, nxyzc2;
 
 void find_vel(double, double, double, double *, int);
 
-int c2f(char *file_parameter) {
-	char spec_file[MAXSTRLEN + 1];
-	sscanf(file_parameter, "%s", spec_file);
-	spec_file[MAXSTRLEN] = '\0';
+int c2f(SPEC spec) {
+	//initialize variable
+	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
+	    ny = spec.ny, nz = spec.nz;
+	double h = spec.h, x0 = spec.x0, *y = spec.y, 
+	z0 = spec.z0, dq = spec.dq, df = spec.df, x00 = spec.x00, y00 = spec.y00;
+	int *igridx = spec.igridx, *igridy = spec.igridy, *igridz = spec.igridz;
 
-	FILE *fp_spc = fopen(spec_file, "r");
-	if(!fp_spc) {
-		printf("(Error in c2f.c)read fp_spc file error.\n");
-		assert(0);
-	}
+	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
+	float az = spec.az, azmod = spec.azmod;
+	int iflat = spec.iflat, isph = spec.isph, vs1d = spec.vs1d;
+	int ittnum = spec.ittnum;
+	double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
+
+	char spec_file[MAXSTRLEN];
+	sscanf(spec.spec_file, "%s", spec_file);
+	char VERSION[9] = "2017.1122";
+
 	int len, ierr;
 	int i = 0, k;
 
@@ -163,7 +171,7 @@ int c2f(char *file_parameter) {
 	fprintf(fp_log, " c2f VERSION: %s\n", VERSION);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec_file);
+			spec.spec_file);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, "  Iteration counter:%19d\n", ittnum);
 	fprintf(fp_log, "  \n");
@@ -223,18 +231,18 @@ int c2f(char *file_parameter) {
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, " Input file attachments:\n");
 	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Current Wavespeed model file: %-40s\n", oldvfil);
+	fprintf(fp_log, " Current Wavespeed model file: %-40s\n", spec.oldvfil);
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, " Output file attachments:\n");
 	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Grid output file:             %-40s\n", tgrdfil);
-	fprintf(fp_log, " P&S fine model:               %-40s\n", finevel);
-	fprintf(fp_log, " P only fine model (*.pvel):   %-40s\n", finevel);
-	fprintf(fp_log, " S only fine model (*.svel):   %-40s\n", finevel);
+	fprintf(fp_log, " Grid output file:             %-40s\n", spec.tgrdfil);
+	fprintf(fp_log, " P&S fine model:               %-40s\n", spec.finevel);
+	fprintf(fp_log, " P only fine model (*.pvel):   %-40s\n", spec.finevel);
+	fprintf(fp_log, " S only fine model (*.svel):   %-40s\n", spec.finevel);
 	fprintf(fp_log, " \n");
 //c---temporary output of grid for testing.  This will not be coorect
 //c   for spherical coordinates.
-	FILE *fp_tgd = fopen(tgrdfil, "w");
+	FILE *fp_tgd = fopen(spec.tgrdfil, "w");
 	if (!fp_tgd) {
 		printf("(Error in c2f.c)create file error.\n");
 		assert(0);
@@ -269,7 +277,7 @@ int c2f(char *file_parameter) {
 // c	  enddo
 // c	enddo
 
-	char *cfile = oldvfil;
+	char *cfile = spec.oldvfil;
 	FILE *fp_cor = fopen(cfile, "rb");
 	if (!fp_cor) {
 		printf("(Error in c2f.c)read file error.\n");
@@ -405,14 +413,14 @@ int c2f(char *file_parameter) {
 	for (i = 0; i < 100; i++)
 		hcomm[i] = ' ';
 
-	sprintf(hcomm, "Output from c2f.c Version %s using %s", VERSION, oldvfil);
+	sprintf(hcomm, "Output from c2f.c Version %s using %s", VERSION, spec.oldvfil);
 	nxh = nx;
 	nyh = ny;
 	nzh = nz;
 //c---write out
 
 	char ffile[MAXSTRLEN + 1];
-	strcpy(ffile, finevel);
+	strcpy(ffile, spec.finevel);
 	int leng_thp = strlen(ffile);
 	for (int i = 0; i < strlen(ffile); i++) {
 		if (ffile[i] == ' ') {
@@ -459,7 +467,6 @@ int c2f(char *file_parameter) {
 	fwrite(vsave + nxyz, sizeof(vsave[0]), nxyz2 - nxyz, fp_fns);
 
 	a65: 
-	fclose(fp_spc);
 	fclose(fp_log);
 	fclose(fp_cor);
 	fclose(fp_tgd);

@@ -4,47 +4,15 @@
 #define MUSTV  4
 #define MUSTF  21
 #define MAXSTRLEN 132
-double clat, clon, cz;
-float az, azmod;
-int iflat = 0, isph = 0, vs1d = 1;
 
-//sphfdloc
-int iread = 0;
-int ivs = 1;
-double vpvs = 1.78;
-int nthres = 8;
-double resthres = .5;
-double resthrep = 5.0;
-double stdmax = 15.0;
-int kmin = 2;
-int ndiv = 20;
-int ndiv2 = 20;
-int ittnum = 1;
-int total_earthquakes = 0;
-char timedir[60 + 1] = "./ttimes\0";
-char eqkdir[60 + 1] = "./eqkdir/\0";
-
-//sphrayderv
-float vpvsscale = 0;
-int idmean = 0, iray = 0, iraystat = 0, idatout = 1, nomat = 0;
-int ivpvs = 0, istacor = 0, idoshot = 0, idotel = 0, kmax;
-float resflag = 1.0;
-
-//runlsqr
-float damper = 0.001;
-int intlims = 0;
-
-//makenewmod
-int limitu = 0, mavx = 3, mavy = 3, mavz = 3;
-int nsmooth = 2, ipscflg = 0, ido1d = 0;
-float dvperc = 0.05, pertscl = 1.0;
 void read_variables(char *spec_file, SPEC *spec){
     char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0", "h\0" };
 	char pval[MAXSTRLEN + 1];
     int len, ierr;
+	sscanf(spec_file, "%s", spec->spec_file);
     FILE *fp_spc;
 
-    fp_spc = fopen(spec_file, "r");
+    fp_spc = fopen(spec->spec_file, "r");
 	if (!fp_spc) {
 		printf("(Error in read_spec.c)read fp_spc file error.\n");
 		assert(0);
@@ -138,8 +106,8 @@ void read_variables(char *spec_file, SPEC *spec){
 	if (ierr == 0) {
 		sscanf(pval, "%d", &spec->iread);
 	}
-	if (iread != 0 && iread != 1) {
-		iread = 0;
+	if (spec->iread != 0 && spec->iread != 1) {
+		spec->iread = 0;
 	}
 	get_vars(fp_spc, "ivs ", pval, &len, &ierr);
 	if (ierr == 0) {
@@ -155,7 +123,7 @@ void read_variables(char *spec_file, SPEC *spec){
 	if (ierr == 0) {
 		sscanf(pval, "%d", &spec->ivpvs);
 	}
-	if (ivpvs != 0 && ivpvs != 1) {
+	if (spec->ivpvs != 0 && spec->ivpvs != 1) {
 		spec->ivpvs = 0;
 	}
 
@@ -165,9 +133,9 @@ void read_variables(char *spec_file, SPEC *spec){
 	get_vars(fp_spc, "eqkdir ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%s", spec->eqkdir);
-	if(spec->eqkdir[strlen(eqkdir) - 1] != '/'){
-		spec->eqkdir[strlen(eqkdir)] = '/';
-		spec->eqkdir[strlen(eqkdir) + 1] = '\0';
+	if(spec->eqkdir[strlen(spec->eqkdir) - 1] != '/'){
+		spec->eqkdir[strlen(spec->eqkdir)] = '/';
+		spec->eqkdir[strlen(spec->eqkdir) + 1] = '\0';
 	}
 
 	get_vars(fp_spc, "nthres ", pval, &len, &ierr);
@@ -185,20 +153,20 @@ void read_variables(char *spec_file, SPEC *spec){
 	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
 	if (ierr == 0) {
 		sscanf(pval, "%d", &spec->kmin);
-		kmin--;
+		spec->kmin--;
 	}
 
 //-----grid search control
 	get_vars(fp_spc, "ndiv ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%d", &spec->ndiv);
-	if (ndiv <= 0)
-		ndiv = 1;
+	if (spec->ndiv <= 0)
+		spec->ndiv = 1;
 	get_vars(fp_spc, "ndiv2 ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%d", &spec->ndiv2);
 	if (spec->ndiv2 <= 0)
-		ndiv2 = 1;
+		spec->ndiv2 = 1;
 
 	get_vars(fp_spc, "total_earthquakes ", pval, &len, &ierr);
 	if (ierr == 0)
@@ -208,7 +176,7 @@ void read_variables(char *spec_file, SPEC *spec){
 	//lzw
 	
 	get_vars(fp_spc, "vpvsscale ", pval, &len, &ierr);
-	if (ierr == 0 && ivpvs == 1) {
+	if (ierr == 0 && spec->ivpvs == 1) {
 		sscanf(pval, "%f", &spec->vpvsscale);
 	}
 

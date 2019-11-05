@@ -116,7 +116,6 @@ char hdr[nhbyte + 1];
 int lenhead = nhbyte * 4;
 
 FILE *fp_log;
-FILE *fp_spc;
 FILE *fp_cor;
 FILE *fp_one;
 
@@ -125,7 +124,7 @@ float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
 
-int make1d(char *file_parameter, SPEC spec) {
+int make1d(SPEC spec) {
 	
 	//initialize variable
 	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
@@ -137,21 +136,12 @@ int make1d(char *file_parameter, SPEC spec) {
 	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
 	float az = spec.az, azmod = spec.azmod;
 	int iflat = spec.iflat, isph = spec.isph, vs1d = spec.vs1d;
-	vs1d = 1;
+	char spec_file[MAXSTRLEN];
+	sscanf(spec.spec_file, "%s", spec_file);
 	
-	char spec_file[MAXSTRLEN + 1];
 	char aline[MAXSTRLEN + 1];
     int len, ierr;
 	char pval[MAXSTRLEN + 1];
-	sscanf(file_parameter, "%s", spec_file);
-	spec_file[MAXSTRLEN] = '\0';
-
-	fp_spc = fopen(spec_file, "r");
-	if (!fp_spc) {
-		printf("(Error in read_spec.c)read fp_spc file error.\n");
-		assert(0);
-	}
-
 
 	int i,k;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
@@ -480,7 +470,6 @@ int make1d(char *file_parameter, SPEC spec) {
 	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
 	fwrite(vsave, sizeof(vsave[0]), nxyzc2, fp_cor);
 
-	fclose(fp_spc);
 	fclose(fp_log);
 	fclose(fp_cor);
 	fclose(fp_one);
