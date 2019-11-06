@@ -39,10 +39,8 @@
 
 #include "common/environment_setting.h"
 #include "common/parameter.h"
-#include "common/gridspec.h"
 #include "common/parseprogs.h"
 #include "common/string_process.h"
-#include "common/shared_variables.h"
 #include "common/read_spec.h"
 
 
@@ -83,7 +81,7 @@ int len_head = nhbyte;
 
 int nxyc, nxyzc, nxyzc2;
 
-void find_vel(double, double, double, double *, int);
+void find_vel(double, double, double, double *, int, int, int, int);
 
 int c2f(SPEC spec) {
 	//initialize variable
@@ -101,7 +99,7 @@ int c2f(SPEC spec) {
 
 	char spec_file[MAXSTRLEN];
 	sscanf(spec.spec_file, "%s", spec_file);
-	char VERSION[9] = "2017.1122";
+	char VERSION[10] = "2005.0809\0";
 
 	int len, ierr;
 	int i = 0, k;
@@ -398,7 +396,7 @@ int c2f(SPEC spec) {
 				yy = y[0] + j * h;
 				for (i = 0; i < nx; i++) {
 					x = x0 + i * h;
-					find_vel(x, yy, z, &v, iph);
+					find_vel(x, yy, z, &v, iph, nxc, nyc, nzc);
 //c-----convert back to velocity
 					vsave[ij] = 1. / v;
 					ij++;
@@ -440,7 +438,7 @@ int c2f(SPEC spec) {
 	}
 	printf("Writing out file 1... \n");
 	hdr_appender(hdr, nhbyte, head, type, syst, "BMOD", flatten, hcomm);
-
+	
 	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fnw);
 	fwrite(vsave, sizeof(vsave[0]), nxyz2, fp_fnw);
 
@@ -476,7 +474,7 @@ int c2f(SPEC spec) {
 	return 0;
 }
 
-void find_vel(double x, double y, double z, double *v, int iph) {
+void find_vel(double x, double y, double z, double *v, int iph, int nxc, int nyc, int nzc) {
 // c-----find a velocity at x, y, z
 	int i;
 	for (i = 1; i < nxc; i++) {
