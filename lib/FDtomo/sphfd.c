@@ -201,41 +201,20 @@ int litend;
 
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-int sphfd(int argc, char *argv[], char *file_parameter)
+int sphfd(int argc, char *argv[], SPEC spec)
 {
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
-	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
-	char spec_file[MAXSTRLEN + 1];
-	int num_parfiles = 0, len, ierr;
+	char tmp[MAXSTRLEN + 1];
+	int num_parfiles = 0;
 	char sphfd_argv[] = "./sphfd\0";
-	FILE *fp_spc, *fp_parlist;
+	FILE *fp_parlist;
+	fp_parlist = fopen(spec.parlist, "r");
 
-	sscanf(file_parameter, "%s", spec_file);
-	fp_spc = fopen(spec_file, "r");
-	if (fp_spc == NULL)
-	{
-		printf("Error on opening spec file(%s)\n", spec_file);
-		assert(0);
-	}
-	get_vars(fp_spc, "parlist", pval, &len, &ierr);
-	if (ierr == 0)
-	{
-		sscanf(pval, "%s", parlist);
-	}
-	printf("%s\n", parlist);
-	fp_parlist = fopen(parlist, "r");
 	if (fp_parlist == NULL)
 	{
-		printf("Error on opening parlist(%s)\n", parlist);
+		printf("Error on opening parlist(%s)\n", spec.parlist);
 		assert(0);
 	}
-	get_vars(fp_spc, "timedir", pval, &len, &ierr);
-	if (ierr == 0)
-	{
-		sscanf(pval, "%s", output_path);
-	}
-
-	fclose(fp_spc);
 
 	for (int i = 0; fgets(tmp, MAXSTRLEN + 1, fp_parlist) != NULL; i++)
 	{
@@ -259,7 +238,7 @@ int sphfd(int argc, char *argv[], char *file_parameter)
 		char *fake_av[2];
 		fake_av[0] = sphfd_argv;
 		fake_av[1] = parfiles[i];
-		sphfd_exec(2, fake_av, output_path);
+		sphfd_exec(2, fake_av, spec.timedir);
 	}
 	return 0;
 }

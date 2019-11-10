@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
 	read_grid(argv[1], &spec);
 	make1d(spec);
 	c2f(spec);
-	//sphfd(argc, argv, argv[1]);
+	sphfd(argc, argv, spec);
 
 	//sphfdloc(argv[1]);
 	//sphrayderv(argv[1]);

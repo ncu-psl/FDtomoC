@@ -2,7 +2,7 @@
 
 
 #define MUSTV  4
-#define MUSTF  21
+#define MUSTF  22
 #define MAXSTRLEN 132
 
 void read_variables(char *spec_file, SPEC *spec){
@@ -285,11 +285,13 @@ void read_files(char *spec_file, SPEC *file_identifier){
 						   "leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0", "fdatfil\0", // sphfdloc
 						   "stafile\0", "locdfil\0", "telrerr\0", "dtdsfil\0", "resfile\0", "hitfile\0", "dtdhfil\0", "bookfil\0", "sclefil\0", //sphrayderv
 						   "nmodfil\0", "fresfil\0", //runlsqr 
-						   "fmodfil\0" //makenewmod
+						   "fmodfil\0", //makenewmod
+						   "parlist\0" //sphfd
 	};
 	char *file_list[MUSTF] = { file_identifier->oldvfil, file_identifier->onedfil, file_identifier->tgrdfil, file_identifier->finevel, file_identifier->leqsfil, file_identifier->fsumfil, file_identifier->outlfil,
              				   file_identifier->fhedfil, file_identifier->fdatfil, file_identifier->stafile, file_identifier->locdfil, file_identifier->telrerr, file_identifier->dtdsfil, file_identifier->resfile, 
-							   file_identifier->hitfile, file_identifier->dtdhfil, file_identifier->bookfil, file_identifier->sclefil, file_identifier->nmodfil, file_identifier->fresfil,  file_identifier->fmodfil };
+							   file_identifier->hitfile, file_identifier->dtdhfil, file_identifier->bookfil, file_identifier->sclefil, file_identifier->nmodfil, file_identifier->fresfil,  file_identifier->fmodfil,
+							   file_identifier->parlist };
 	char pval[MAXSTRLEN + 1];
     int len, ierr;
 	FILE *fp_spc;

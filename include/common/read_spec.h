@@ -56,6 +56,7 @@ char stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1],
 			dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];  //sphrayderv
 char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1]; //runlsqr			
 char fmodfil[MAXSTRLEN + 1]; //makenewmod
+char parlist[MAXSTRLEN + 1];
 }SPEC;
 
 void read_variables(char *spec_file, SPEC *spec);
