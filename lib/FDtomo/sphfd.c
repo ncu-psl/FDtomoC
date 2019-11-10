@@ -130,12 +130,12 @@
 
  */
 
-#include    <stdio.h>
-#include    <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 // following needed for Linux?
-#include    <string.h>
-#include    <math.h>
-#include    <fcntl.h>
+#include <string.h>
+#include <math.h>
+#include <fcntl.h>
 /* file header structure */
 #include "common/parseprogs.h"
 #include "common/geographic_method.h"
@@ -145,32 +145,33 @@
 #include "sphfd/vhead.h"
 #define MAXSTRLEN 132
 #define MAXNUMPAR 2000
-#define PI  3.141592654
+#define PI 3.141592654
 #define HPI 1.570796327
 #define SQR2 1.414213562
 #define SQR3 1.732050808
 #define SQR6 2.449489743
 #define rearth 6371.0
-#define degrad PI/180.0
-#define tc(x,y,z)   time0[nxy*(z) + nx*(y) + (x)]
-#define sc(x,y,z)   slow0[nxy*(z) + nx*(y) + (x)]
+#define degrad PI / 180.0
+#define tc(x, y, z) time0[nxy * (z) + nx * (y) + (x)]
+#define sc(x, y, z) slow0[nxy * (z) + nx * (y) + (x)]
 // olddefine rc(z)   (rearth - (z0 + h*(z)))
-#define rc(z)   (z0r - h*(z))
-#define qc(y)   (y0 + dq*(y))
-#define fc(x)   (x0 + df*(x))
-#define	SQR(x)	((x) * (x))
-#define	DIST(x,y,z,x1,y1,z1)	sqrt(SQR(x-(x1))+SQR(y-(y1)) + SQR(z-(z1)))
+#define rc(z) (z0r - h * (z))
+#define qc(y) (y0 + dq * (y))
+#define fc(x) (x0 + df * (x))
+#define SQR(x) ((x) * (x))
+#define DIST(x, y, z, x1, y1, z1) sqrt(SQR(x - (x1)) + SQR(y - (y1)) + SQR(z - (z1)))
 
-#define SWAP_2(x) ( (((x) & 0xff) << 8) | ((unsigned short)(x) >> 8) )
-#define SWAP_4(x) ( ((x) << 24) | \
-         (((x) << 8) & 0x00ff0000) | \
-         (((x) >> 8) & 0x0000ff00) | \
-         ((x) >> 24) )
+#define SWAP_2(x) ((((x)&0xff) << 8) | ((unsigned short)(x) >> 8))
+#define SWAP_4(x) (((x) << 24) |               \
+				   (((x) << 8) & 0x00ff0000) | \
+				   (((x) >> 8) & 0x0000ff00) | \
+				   ((x) >> 24))
 #define FIX_SHORT(x) (*(unsigned short *)&(x) = SWAP_2(*(unsigned short *)&(x)))
-#define FIX_INT(x)   (*(unsigned int *)&(x)   = SWAP_4(*(unsigned int *)&(x)))
+#define FIX_INT(x) (*(unsigned int *)&(x) = SWAP_4(*(unsigned int *)&(x)))
 #define FIX_FLOAT(x) FIX_INT(x)
 
-struct sorted {
+struct sorted
+{
 	float time;
 	int i1, i2;
 };
@@ -190,12 +191,11 @@ struct ext_par /* global variables for getpar */
 } ext_par;
 
 /* FUNCTION DECLARATIONS	*/
-int
-compar();
+int compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
 double rcent;
 static double z0r;
-int sphfd_exec(int , char ** , char *);
+int sphfd_exec(int, char **, char *);
 int endian();
 int litend;
 
@@ -206,50 +206,53 @@ int sphfd(int argc, char *argv[], char *file_parameter)
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[MAXSTRLEN + 1], output_path[MAXSTRLEN + 1];
 	char spec_file[MAXSTRLEN + 1];
-	int num_parfiles=0,len,ierr;
-	char sphfd_argv[]="./sphfd\0";
-	FILE* fp_spc, *fp_parlist;
+	int num_parfiles = 0, len, ierr;
+	char sphfd_argv[] = "./sphfd\0";
+	FILE *fp_spc, *fp_parlist;
 
 	sscanf(file_parameter, "%s", spec_file);
-	fp_spc=fopen(spec_file,"r");
-	if(fp_spc == NULL) {
-	    printf("Error on opening spec file(%s)\n", spec_file);
-	    assert(0);
+	fp_spc = fopen(spec_file, "r");
+	if (fp_spc == NULL)
+	{
+		printf("Error on opening spec file(%s)\n", spec_file);
+		assert(0);
 	}
 	get_vars(fp_spc, "parlist", pval, &len, &ierr);
-	if (ierr == 0) {
-    		sscanf(pval, "%s", parlist);
+	if (ierr == 0)
+	{
+		sscanf(pval, "%s", parlist);
 	}
-	printf("%s\n",parlist );
-	fp_parlist=fopen(parlist, "r");
-	if(fp_parlist == NULL) {
-	    printf("Error on opening parlist(%s)\n", parlist);
-	    assert(0);
+	printf("%s\n", parlist);
+	fp_parlist = fopen(parlist, "r");
+	if (fp_parlist == NULL)
+	{
+		printf("Error on opening parlist(%s)\n", parlist);
+		assert(0);
 	}
 	get_vars(fp_spc, "timedir", pval, &len, &ierr);
-	if (ierr == 0) {
-    		sscanf(pval, "%s", output_path);
+	if (ierr == 0)
+	{
+		sscanf(pval, "%s", output_path);
 	}
-	
+
 	fclose(fp_spc);
 
-	for(int i=0;fgets(tmp,MAXSTRLEN + 1,fp_parlist)!=NULL;i++){
-		if (tmp[0]=='\n')
+	for (int i = 0; fgets(tmp, MAXSTRLEN + 1, fp_parlist) != NULL; i++)
+	{
+		if (tmp[0] == '\n')
 			break;
-		strcpy(parfiles[i],tmp);
-		parfiles[i][strlen(parfiles[i])-1]='\0';
+		strcpy(parfiles[i], tmp);
+		parfiles[i][strlen(parfiles[i]) - 1] = '\0';
 		num_parfiles++;
-		if (num_parfiles>MAXNUMPAR){
+		if (num_parfiles > MAXNUMPAR)
+		{
 			printf("number of parfiles exceed index\n");
 			assert(0);
 		}
-		
-
 	}
 	fclose(fp_parlist);
 
-	
-	#pragma omp parallel for 
+#pragma omp parallel for
 
 	for (int i = 0; i < num_parfiles; i++)
 	{
@@ -261,69 +264,68 @@ int sphfd(int argc, char *argv[], char *file_parameter)
 	return 0;
 }
 
-
 int sphfd_exec(int ac, char **av, char *output_path)
 {
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
 	 VARIABLE BELOW, THEN THE VARIABLE IS REQUIRED;  IF A getpar
 	 STATEMENT IS USED BELOW, THEN THE VARIABLE IS OPTIONAL */
-	int nx, /* x-dimension of mesh (LEFT-TO-RIGHT = West to East) */
-	ny, /* y-dimension of mesh (FRONT-TO-BACK = North to South) */
-	nz, /* z-dimension of mesh  (TOP-TO-BOTTOM) */
-	iplus = 1, /* rate of expansion of "cell" in the */
-	iminus = 1, /*    plus/minus x/y/z direction */
-	jplus = 1, jminus = 1, kplus = 1, kminus = 1, igrow, /* counter for "cell" growth */
-	srctype = 1, /* if 1, source is a point;
+	int nx,													 /* x-dimension of mesh (LEFT-TO-RIGHT = West to East) */
+		ny,													 /* y-dimension of mesh (FRONT-TO-BACK = North to South) */
+		nz,													 /* z-dimension of mesh  (TOP-TO-BOTTOM) */
+		iplus = 1,											 /* rate of expansion of "cell" in the */
+		iminus = 1,											 /*    plus/minus x/y/z direction */
+		jplus = 1, jminus = 1, kplus = 1, kminus = 1, igrow, /* counter for "cell" growth */
+		srctype = 1,										 /* if 1, source is a point;
 	 2, source is on the walls of the data volume;
 	 3, source on wall, time field known; */
-	floatsrc = 1, /* if 0, source must be on a grid node
+		floatsrc = 1,										 /* if 0, source must be on a grid node
 	 1, source can lie between grid nodes */
-	srcwall, /* if 1, source on x=0 wall,  if 2, on x=nx-1 wall
+		srcwall,											 /* if 1, source on x=0 wall,  if 2, on x=nx-1 wall
 	 if 3, source on y=0 wall,  if 4, on y=ny-1 wall
 	 if 5, source on z=0 wall,  if 6, on z=nz-1 wall */
-	xs, /* shot x position (in grid points) */
-	ys, /* shot y position */
-	zs, /* shot depth */
-	xx, yy, zz, /* Used to loop around xs, ys, zs coordinates	*/
-	X1, X2, index, ii, i, j, k, radius, tfint, vfint, wfint, ofint, bfint, nxy,
-			nyz, nxz, nxyz, nwall, nbox, nxp, nyp, nzp,
-			/* counters for the position of the sides of current cell */
-			x1, x2, y1, y2, z1, z2,
-			/* flags set to 1 until a side has been reached */
-			dx1 = 1, dx2 = 1, dy1 = 1, dy2 = 1, dz1 = 1, dz2 = 1, rad0 = 1,
-			maxrad, /* maximum radius to compute */
-			xxx, yyy, zzz, /* used in linear velocity gradient cell source */
-			NCUBE = 2, /* size of source cell     1 for 3x3x3, 2 for 5x5x5...	*/
-			parse = 1, /* parse the output by this amount */
-			fill = 0, /* =0 to fill in starting box with constant wavespeed times  */
-			/* =1 to fill in starting box with precomputed times from a file */
-			invh = 0, invq = 0, invf = 0, /* If invh, invq or invf are =1, then the values of h, dq, and df are inverted */
-			invx0 = 0, invy0 = 0, invz0 = 0, /* If invx0, invy0 or invz0 are =1, then the values of h, dq, and df are inverted */
-			swab = 0, /* If swab = 0, the program will read and write these files in their
+		xs,													 /* shot x position (in grid points) */
+		ys,													 /* shot y position */
+		zs,													 /* shot depth */
+		xx, yy, zz,											 /* Used to loop around xs, ys, zs coordinates	*/
+		X1, X2, index, ii, i, j, k, radius, tfint, vfint, wfint, ofint, bfint, nxy,
+		nyz, nxz, nxyz, nwall, nbox, nxp, nyp, nzp,
+		/* counters for the position of the sides of current cell */
+		x1, x2, y1, y2, z1, z2,
+		/* flags set to 1 until a side has been reached */
+		dx1 = 1, dx2 = 1, dy1 = 1, dy2 = 1, dz1 = 1, dz2 = 1, rad0 = 1,
+		maxrad,		   /* maximum radius to compute */
+		xxx, yyy, zzz, /* used in linear velocity gradient cell source */
+		NCUBE = 2,	 /* size of source cell     1 for 3x3x3, 2 for 5x5x5...	*/
+		parse = 1,	 /* parse the output by this amount */
+		fill = 0,	  /* =0 to fill in starting box with constant wavespeed times  */
+		/* =1 to fill in starting box with precomputed times from a file */
+		invh = 0, invq = 0, invf = 0,	/* If invh, invq or invf are =1, then the values of h, dq, and df are inverted */
+		invx0 = 0, invy0 = 0, invz0 = 0, /* If invx0, invy0 or invz0 are =1, then the values of h, dq, and df are inverted */
+		swab = 0,						 /* If swab = 0, the program will read and write these files in their
 			 native format without regard to machine type. */
-			savsrc = 0, /* When we cascade, at some stages we may reference an integer source
+		savsrc = 0,						 /* When we cascade, at some stages we may reference an integer source
 			 but we want to preserve the true source location for future refernce.
 			 Set savsrc to 1 to preserve the true source in the header, and to  0
 			 to redefine it as a grid point */
 
-			reverse = 1, /* will automatically do up to this number of
+		reverse = 1,	/* will automatically do up to this number of
 			 reverse propagation steps to fix waves that travel
 			 back into expanding cell */
-			headpref = 6, /* if headpref starts > 0, will determine
+		headpref = 6,   /* if headpref starts > 0, will determine
 			 model wall closest to source and will prefer to start
 			 reverse calculations on opposite wall */
-			head, headw[7]; /* counters for detecting head waves on sides of current cell */
+		head, headw[7]; /* counters for detecting head waves on sides of current cell */
 
 	int g[8], /* Stores radial signs for stencils */
-	n[8], /* Stores latitude signs for 3D stencils */
-	m[8]; /* Stores longitude signs for 3D stencils */
+		n[8], /* Stores latitude signs for 3D stencils */
+		m[8]; /* Stores longitude signs for 3D stencils */
 
 	double r[8], /* Stores radial values for 3D stencils */
-	q[8], /* Stores latitude values for 3D stencils */
-	f[8], /* Stores longitude values for 3D stencils */
-	t[8], /* Stores times for stencils */
-	s[8]; /* Stores wavespeeds for stencils */
+		q[8],	/* Stores latitude values for 3D stencils */
+		f[8],	/* Stores longitude values for 3D stencils */
+		t[8],	/* Stores times for stencils */
+		s[8];	/* Stores wavespeeds for stencils */
 
 	double d01, d02, d12, d13, d23, d14, d25, d45; /* Distances between stencil points */
 
@@ -347,35 +349,37 @@ int sphfd_exec(int ac, char **av, char *output_path)
 	double T0, T1, T2, T3, T4, T5, T6, T7;
 	double dtdr, dtdq, dtdf, snew;
 
-	double h, /* radial mesh interval (radial length units; e.g, km) */
-	dq = 0, /* latitudinal mesh interval (degrees) */
-	df = 0, /* longitudinal mesh interval (degrees) */
-	y0 = 90, /* latitude  of model origin (degrees) */
-	x0 = 0, /* longitude of model origin (degrees) */
-	z0 = 0, /* depth of model origin (same units as h) */
-	x0_save, y0_save, ym, /* latitude of model midpoint */
-	fxs, /* latitude of shot position (degrees) */
-	fys, /* longitude of shot position (degrees) */
-	fzs, /* depth of shot position (same units as h) */
-	fxss, fyss, fzss,
-	/* used to detect head waves:  if headwave operator decreases
+	double h,				  /* radial mesh interval (radial length units; e.g, km) */
+		dq = 0,				  /* latitudinal mesh interval (degrees) */
+		df = 0,				  /* longitudinal mesh interval (degrees) */
+		y0 = 90,			  /* latitude  of model origin (degrees) */
+		x0 = 0,				  /* longitude of model origin (degrees) */
+		z0 = 0,				  /* depth of model origin (same units as h) */
+		x0_save, y0_save, ym, /* latitude of model midpoint */
+		fxs,				  /* latitude of shot position (degrees) */
+		fys,				  /* longitude of shot position (degrees) */
+		fzs,				  /* depth of shot position (same units as h) */
+		fxss, fyss, fzss,
+		/* used to detect head waves:  if headwave operator decreases
 	 the previously-computed traveltime by at least
 	 headtest*<~time_across_cell> then the headwave counter is
 	 triggered */
-	fhead, headtest = 1.e-3;
+		fhead, headtest = 1.e-3;
 
-	double try, guess;
+	double try
+		, guess;
 	double
-	/* used in linear velocity gradient cell source */
-	rx, ry, rz, dvx, dvy, dvz, dv, v0, rzc, rxyc, rxy1, rho, theta1, theta2;
+		/* used in linear velocity gradient cell source */
+		rx,
+		ry, rz, dvx, dvy, dvz, dv, v0, rzc, rxyc, rxy1, rho, theta1, theta2;
 
 	float *slow0, *time0, *wall, *box0, s000, slo, maxoff = -1.; /* maximum offset (real units) to compute */
 
-	char velfile[80], /* file though which velocity structure is input */
-	oldtfile[80], /* file through which old travel times are input */
-	timefile[160], /* file in which travel times appear at the end */
-	wallfile[80], /* file containing input wall values of traveltimes */
-	boxfile[80]; /* file containing precomputed traveltimes to fill in the start box */
+	char velfile[80],  /* file though which velocity structure is input */
+		oldtfile[80],  /* file through which old travel times are input */
+		timefile[160], /* file in which travel times appear at the end */
+		wallfile[80],  /* file containing input wall values of traveltimes */
+		boxfile[80];   /* file containing precomputed traveltimes to fill in the start box */
 
 	/* ARRAY TO ORDER SIDE FOR SOLUTION IN THE RIGHT ORDER */
 	struct sorted *sort;
@@ -441,7 +445,7 @@ int sphfd_exec(int ac, char **av, char *output_path)
 	 interval at the surface is equal to h */
 	y0 *= degrad;
 	/* Convert geographic latitude to geocentric colatitude */
-//	y0 = HPI - glat(y0);
+	//	y0 = HPI - glat(y0);
 	y0 = HPI - glath(y0, z0, &z0r);
 	fprintf(stderr, " y0, z0, z0r = %g %g %g \n", (HPI - y0) / degrad, z0, z0r);
 	/* ignore conversion to compare with Hiajiang tests
@@ -462,9 +466,12 @@ int sphfd_exec(int ac, char **av, char *output_path)
 	fprintf(stderr, " h, dq, df = %g %g %g \n", h, dq, df);
 
 	/* NB: In this version, only srctype=1 has been tested */
-	if (srctype == 1) {
-		if (floatsrc == 0) {
-			if (savsrc == 1) {
+	if (srctype == 1)
+	{
+		if (floatsrc == 0)
+		{
+			if (savsrc == 1)
+			{
 				mstpar("fxs", "f", &fxs);
 				mstpar("fys", "f", &fys);
 				mstpar("fzs", "f", &fzs);
@@ -477,17 +484,20 @@ int sphfd_exec(int ac, char **av, char *output_path)
 			mstpar("xs", "d", &xs);
 			mstpar("ys", "d", &ys);
 			mstpar("zs", "d", &zs);
-			fxs = (double) xs;
-			fys = (double) ys;
-			fzs = (double) zs;
+			fxs = (double)xs;
+			fys = (double)ys;
+			fzs = (double)zs;
 			fprintf(stderr, " Integer Source xs, ys, zs = %g %g %g \n", fc(xs),
 					qc(ys), rc(zs));
-			if (savsrc == 0) {
+			if (savsrc == 0)
+			{
 				fxss = fc(xs);
 				fyss = qc(ys);
 				fzss = rc(zs);
 			}
-		} else {
+		}
+		else
+		{
 			mstpar("fxs", "F", &fxs);
 			mstpar("fys", "F", &fys);
 			mstpar("fzs", "F", &fzs);
@@ -496,64 +506,73 @@ int sphfd_exec(int ac, char **av, char *output_path)
 			/*  Use this to ignore the geocentic converstion to test with Haijiang
 			 fys = HPI - fys;
 			 */
-//		fys = HPI - glat(fys);
+			//		fys = HPI - glat(fys);
 			fys = HPI - glath(fys, fzs, &rcent);
 			fxss = fxs;
 			fyss = fys;
-//		fzss = rearth - fzs;
+			//		fzss = rearth - fzs;
 			fzss = rcent;
 			fxs = (fxs - x0) / df;
 			fys = (fys - y0) / dq;
-//		fzs = (fzs-z0)/h;
+			//		fzs = (fzs-z0)/h;
 			fzs = (z0r - rcent) / h;
-			xs = (int) (fxs + 0.5);
-			ys = (int) (fys + 0.5);
-			zs = (int) (fzs + 0.5);
+			xs = (int)(fxs + 0.5);
+			ys = (int)(fys + 0.5);
+			zs = (int)(fzs + 0.5);
 			fprintf(stderr, " Float Source xs, ys, zs = %g %g %g \n", fc(xs),
 					qc(ys), rc(zs));
 		}
-	} else if (srctype == 2) {
+	}
+	else if (srctype == 2)
+	{
 		mstpar("srcwall", "d", &srcwall);
 		mstpar("wallfile", "s", wallfile);
-	} else if (srctype == 3) {
+	}
+	else if (srctype == 3)
+	{
 		mstpar("srcwall", "d", &srcwall);
 		mstpar("oldtfile", "s", oldtfile);
-	} else {
+	}
+	else
+	{
 		fprintf(stderr, "ERROR: incorrect value of srctype\n");
 		assert(0);
 	}
 
-	if (fill == 1) {
+	if (fill == 1)
+	{
 		mstpar("boxfile", "s", boxfile);
 	}
 
 	char ttmp[160];
 	mstpar("timefile", "s", ttmp);
-	strcpy(timefile,output_path);
-	strcat(timefile,"/");
-	strcat(timefile,ttmp);
+	strcpy(timefile, output_path);
+	strcat(timefile, "/");
+	strcat(timefile, ttmp);
 	mstpar("velfile", "s", velfile);
 	endpar();
 
-	if (xs < 0 || ys < 0 || zs < 0 || xs > nx - 1 || ys > ny - 1
-			|| zs > nz - 1) {
+	if (xs < 0 || ys < 0 || zs < 0 || xs > nx - 1 || ys > ny - 1 || zs > nz - 1)
+	{
 		fprintf(stderr, "Error: Source does not appear to be in the model;\n");
 		fprintf(stderr, "Please check the values in the parameter file.\n");
 		assert(0);
 	}
 
-	if (xs < 2 || ys < 2 || zs < 2 || xs > nx - 3 || ys > ny - 3
-			|| zs > nz - 3) {
+	if (xs < 2 || ys < 2 || zs < 2 || xs > nx - 3 || ys > ny - 3 || zs > nz - 3)
+	{
 		fprintf(stderr, "Source near an edge, beware of traveltime errors\n");
 		fprintf(stderr, "for raypaths that travel parallel to edge \n");
 		fprintf(stderr, "while wavefronts are strongly curved\n");
 	}
 
 	/* SET MAXIMUM RADIUS TO COMPUTE */
-	if (maxoff > 0.) {
+	if (maxoff > 0.)
+	{
 		maxrad = maxoff / h + 1;
 		fprintf(stderr, "WARNING: Computing only to max radius = %d\n", maxrad);
-	} else
+	}
+	else
 		maxrad = 99999999;
 
 	/* Check for endiness */
@@ -565,58 +584,75 @@ int sphfd_exec(int ac, char **av, char *output_path)
 	nxyz = nx * ny * nz;
 
 	/* FORM AND FILL TT AND SLOWNESS ARRAYS */
-	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1) {
+	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1)
+	{
 		fprintf(stderr, "cannot open %s\n", timefile);
 		assert(0);
 	}
-	if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1) {
+	if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1)
+	{
 		fprintf(stderr, "cannot open %s\n", velfile);
 		assert(0);
 	}
-	if (fill == 1) {
-		if ((bfint = open(boxfile, O_RDONLY, 0664)) <= 1) {
+	if (fill == 1)
+	{
+		if ((bfint = open(boxfile, O_RDONLY, 0664)) <= 1)
+		{
 			fprintf(stderr, "cannot open %s\n", boxfile);
 			assert(0);
 		}
 	}
-	if (srctype == 2) {
-		if ((wfint = open(wallfile, O_RDONLY, 0664)) <= 1) {
+	if (srctype == 2)
+	{
+		if ((wfint = open(wallfile, O_RDONLY, 0664)) <= 1)
+		{
 			fprintf(stderr, "cannot open %s\n", wallfile);
 			assert(0);
 		}
 	}
-	if (srctype == 3) {
-		if ((ofint = open(oldtfile, O_RDONLY, 0664)) <= 1) {
+	if (srctype == 3)
+	{
+		if ((ofint = open(oldtfile, O_RDONLY, 0664)) <= 1)
+		{
 			fprintf(stderr, "cannot open %s\n", oldtfile);
 			assert(0);
 		}
 	}
 
 	/* ALLOCATE MAIN AND ALTERNATE GRID FOR SLOWNESSES AND TIMES */
-	slow0 = (float *) malloc(4 * nxyz);
-	time0 = (float *) malloc(4 * nxyz);
+	slow0 = (float *)malloc(4 * nxyz);
+	time0 = (float *)malloc(4 * nxyz);
 
 	/* MAKE ARRAY SORT LARGE ENOUGH FOR ANY SIDE */
-	if (nx <= ny && nx <= nz) {
-		sort = (struct sorted *) malloc(sizeof(struct sorted) * ny * nz);
+	if (nx <= ny && nx <= nz)
+	{
+		sort = (struct sorted *)malloc(sizeof(struct sorted) * ny * nz);
 		nwall = nyz;
-	} else if (ny <= nx && ny <= nz) {
-		sort = (struct sorted *) malloc(sizeof(struct sorted) * nx * nz);
+	}
+	else if (ny <= nx && ny <= nz)
+	{
+		sort = (struct sorted *)malloc(sizeof(struct sorted) * nx * nz);
 		nwall = nxz;
-	} else {
-		sort = (struct sorted *) malloc(sizeof(struct sorted) * nx * ny);
+	}
+	else
+	{
+		sort = (struct sorted *)malloc(sizeof(struct sorted) * nx * ny);
 		nwall = nxy;
 	}
-	wall = (float *) malloc(4 * nwall);
-	if (slow0 == NULL || time0 == NULL || sort == NULL || wall == NULL) {
+	wall = (float *)malloc(4 * nwall);
+	if (slow0 == NULL || time0 == NULL || sort == NULL || wall == NULL)
+	{
 		fprintf(stderr, "cannot allocate memory\n");
 		assert(0);
 	}
 	/* READ IN VELOCITY FILE */
 	read(vfint, &headin, 232);
-	if (!strncmp(headin.header, "HEAD", 4)) {
+	if (!strncmp(headin.header, "HEAD", 4))
+	{
 		fprintf(stdout, "File Header Identified\n");
-	} else {
+	}
+	else
+	{
 		fprintf(stdout, "****WARNING: Cannot identify File Header****\n");
 		headin.x0 = x0_save;
 		headin.y0 = y0_save;
@@ -660,7 +696,8 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		strcpy(&headin.header[23], "f");
 		strcpy(&headin.header[24], "d");
 		close(vfint);
-		if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1) {
+		if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1)
+		{
 			fprintf(stderr, "cannot open %s\n", velfile);
 			assert(0);
 		}
@@ -670,7 +707,8 @@ int sphfd_exec(int ac, char **av, char *output_path)
 	close(vfint);
 	/* swap bytes on input if necessary */
 	/*        if ((litend && swab==1) || swab==2) { */
-	if (swab == 1 || swab == 3) {
+	if (swab == 1 || swab == 3)
+	{
 		fprintf(stdout, "Swapping bytes on header and wavespeeds ..\n");
 		FIX_FLOAT(headin.az);
 		FIX_INT(headin.nx);
@@ -699,7 +737,8 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		time0[i] = 1.0e10;
 
 	/* Read in precomputed box times */
-	if (fill == 1) {
+	if (fill == 1)
+	{
 		x1 = xs - NCUBE;
 		if (x1 < 0)
 			x1 = 0;
@@ -719,14 +758,15 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		if (z2 > nz - 1)
 			z2 = nz - 1;
 		nbox = (x2 - x1 + 1) * (y2 - y1 + 1) * (z2 - z1 + 1);
-		box0 = (float *) malloc(4 * nbox);
+		box0 = (float *)malloc(4 * nbox);
 		read(bfint, &headbox, 232);
 		read(bfint, box0, nbox * 4);
 		fprintf(stderr, " Number of points read from boxfile = %d\n", nbox);
 		close(bfint);
 	}
 
-	if (srctype == 1) { /* POINT SOURCE */
+	if (srctype == 1)
+	{ /* POINT SOURCE */
 
 		/* FILL IN CELL AROUND SOURCE POINT */
 		x1p = fzss * cos(fyss);
@@ -734,24 +774,28 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		z1p = fzss * sin(fyss) * sin(fxss);
 		s000 = sc(xs, ys, zs);
 		ii = 0;
-		for (zz = zs - NCUBE; zz <= zs + NCUBE; zz++) {
+		for (zz = zs - NCUBE; zz <= zs + NCUBE; zz++)
+		{
 			if (zz < 0 || zz >= nz)
 				continue;
-			for (yy = ys - NCUBE; yy <= ys + NCUBE; yy++) {
+			for (yy = ys - NCUBE; yy <= ys + NCUBE; yy++)
+			{
 				if (yy < 0 || yy >= ny)
 					continue;
-				for (xx = xs - NCUBE; xx <= xs + NCUBE; xx++) {
+				for (xx = xs - NCUBE; xx <= xs + NCUBE; xx++)
+				{
 					if (xx < 0 || xx >= nx)
 						continue;
 					/* Constant Wavespeed */
-					if (fill == 0) {
+					if (fill == 0)
+					{
 						fx1 = fc(xx);
 						qy1 = qc(yy);
 						rz1 = rc(zz);
 						x2p = rz1 * cos(qy1);
 						y2p = rz1 * sin(qy1) * cos(fx1);
 						z2p = rz1 * sin(qy1) * sin(fx1);
-						tc(xx, yy, zz)= s000 * DIST(x1p, y1p, z1p, x2p, y2p, z2p);
+						tc(xx, yy, zz) = s000 * DIST(x1p, y1p, z1p, x2p, y2p, z2p);
 						/*
 						 fprintf(stderr, " xx, yy, zz, = %d %d %d \n",  xx, yy, zz );
 						 fprintf(stderr, " fxss, fyss, fzss = %g %g %g \n", fxss, fyss, fzss);
@@ -763,7 +807,8 @@ int sphfd_exec(int ac, char **av, char *output_path)
 						 fprintf(stderr, " Time = %g \n", tc(xx, yy, zz));
 						 */
 					}
-					else {
+					else
+					{
 						/* Assign precomputed times */
 						tc(xx, yy, zz) = box0[ii];
 						ii++;
@@ -781,7 +826,6 @@ int sphfd_exec(int ac, char **av, char *output_path)
 						 exit(-1);
 						 */
 						/* End test lines */
-
 					}
 				}
 			}
@@ -794,99 +838,125 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		radius = NCUBE;
 		if (xs > NCUBE)
 			x1 = xs - (NCUBE + 1);
-		else {
+		else
+		{
 			x1 = -1;
 			dx1 = 0;
 		}
 		if (xs < nx - (NCUBE + 1))
 			x2 = xs + (NCUBE + 1);
-		else {
+		else
+		{
 			x2 = nx;
 			dx2 = 0;
 		}
 		if (ys > NCUBE)
 			y1 = ys - (NCUBE + 1);
-		else {
+		else
+		{
 			y1 = -1;
 			dy1 = 0;
 		}
 		if (ys < ny - (NCUBE + 1))
 			y2 = ys + (NCUBE + 1);
-		else {
+		else
+		{
 			y2 = ny;
 			dy2 = 0;
 		}
 		if (zs > NCUBE)
 			z1 = zs - (NCUBE + 1);
-		else {
+		else
+		{
 			z1 = -1;
 			dz1 = 0;
 		}
 		if (zs < nz - (NCUBE + 1))
 			z2 = zs + (NCUBE + 1);
-		else {
+		else
+		{
 			z2 = nz;
 			dz2 = 0;
 		}
-	} else if (srctype == 2) { /*  EXTERNAL SOURCE */
+	}
+	else if (srctype == 2)
+	{ /*  EXTERNAL SOURCE */
 
 		/* FILL IN WALLS' TIMES FROM EXTERNAL DATAFILE */
 		read(wfint, wall, 4 * nwall); /* READ X=0 WALL */
-		if (wall[0] > -1.e-20) {
+		if (wall[0] > -1.e-20)
+		{
 			ii = 0;
-			for (k = 0; k < nz; k++) {
-				for (j = 0; j < ny; j++) {
-					tc(0,j,k)= wall[ii];
+			for (k = 0; k < nz; k++)
+			{
+				for (j = 0; j < ny; j++)
+				{
+					tc(0, j, k) = wall[ii];
 					ii++;
 				}
 			}
 		}
 		read(wfint, wall, 4 * nwall); /* READ X=NX-1 WALL */
-		if (wall[0] > -1.e-20) {
+		if (wall[0] > -1.e-20)
+		{
 			ii = 0;
-			for (k = 0; k < nz; k++) {
-				for (j = 0; j < ny; j++) {
-					tc(nx-1,j,k)= wall[ii];
+			for (k = 0; k < nz; k++)
+			{
+				for (j = 0; j < ny; j++)
+				{
+					tc(nx - 1, j, k) = wall[ii];
 					ii++;
 				}
 			}
 		}
 		read(wfint, wall, 4 * nwall); /* READ Y=0 WALL */
-		if (wall[0] > -1.e-20) {
+		if (wall[0] > -1.e-20)
+		{
 			ii = 0;
-			for (k = 0; k < nz; k++) {
-				for (i = 0; i < nx; i++) {
-					tc(i,0,k)= wall[ii];
+			for (k = 0; k < nz; k++)
+			{
+				for (i = 0; i < nx; i++)
+				{
+					tc(i, 0, k) = wall[ii];
 					ii++;
 				}
 			}
 		}
 		read(wfint, wall, 4 * nwall); /* READ Y=NY-1 WALL */
-		if (wall[0] > -1.e-20) {
+		if (wall[0] > -1.e-20)
+		{
 			ii = 0;
-			for (k = 0; k < nz; k++) {
-				for (i = 0; i < nx; i++) {
-					tc(i,ny-1,k)= wall[ii];
+			for (k = 0; k < nz; k++)
+			{
+				for (i = 0; i < nx; i++)
+				{
+					tc(i, ny - 1, k) = wall[ii];
 					ii++;
 				}
 			}
 		}
 		read(wfint, wall, 4 * nwall); /* READ Z=0 WALL */
-		if (wall[0] > -1.e-20) {
+		if (wall[0] > -1.e-20)
+		{
 			ii = 0;
-			for (j = 0; j < ny; j++) {
-				for (i = 0; i < nx; i++) {
-					tc(i,j,0)= wall[ii];
+			for (j = 0; j < ny; j++)
+			{
+				for (i = 0; i < nx; i++)
+				{
+					tc(i, j, 0) = wall[ii];
 					ii++;
 				}
 			}
 		}
 		read(wfint, wall, 4 * nwall); /* READ Z=NZ-1 WALL */
-		if (wall[0] > -1.e-20) {
+		if (wall[0] > -1.e-20)
+		{
 			ii = 0;
-			for (j = 0; j < ny; j++) {
-				for (i = 0; i < nx; i++) {
-					tc(i,j,nz-1)= wall[ii];
+			for (j = 0; j < ny; j++)
+			{
+				for (i = 0; i < nx; i++)
+				{
+					tc(i, j, nz - 1) = wall[ii];
 					ii++;
 				}
 			}
@@ -896,112 +966,135 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		radius = 1;
 		if (srcwall == 1)
 			x2 = 1;
-		else {
+		else
+		{
 			x2 = nx;
 			dx2 = 0;
 		}
 		if (srcwall == 2)
 			x1 = nx - 2;
-		else {
+		else
+		{
 			x1 = -1;
 			dx1 = 0;
 		}
 		if (srcwall == 3)
 			y2 = 1;
-		else {
+		else
+		{
 			y2 = ny;
 			dy2 = 0;
 		}
 		if (srcwall == 4)
 			y1 = ny - 2;
-		else {
+		else
+		{
 			y1 = -1;
 			dy1 = 0;
 		}
 		if (srcwall == 5)
 			z2 = 1;
-		else {
+		else
+		{
 			z2 = nz;
 			dz2 = 0;
 		}
 		if (srcwall == 6)
 			z1 = nz - 2;
-		else {
+		else
+		{
 			z1 = -1;
 			dz1 = 0;
 		}
-	} else if (srctype == 3) { /*  REDO OLD TIMES */
+	}
+	else if (srctype == 3)
+	{ /*  REDO OLD TIMES */
 		/* READ IN OLD TIME FILE */
 		if (srctype == 3)
 			read(ofint, time0, nxyz * 4);
 		close(ofint);
-			
+
 		/* SET LOCATIONS OF SIDES OF THE CELL SO THAT CELL IS A FACE */
 		radius = 1;
 		if (srcwall == 1)
 			x2 = 1;
-		else {
+		else
+		{
 			x2 = nx;
 			dx2 = 0;
 		}
 		if (srcwall == 2)
 			x1 = nx - 2;
-		else {
+		else
+		{
 			x1 = -1;
 			dx1 = 0;
 		}
 		if (srcwall == 3)
 			y2 = 1;
-		else {
+		else
+		{
 			y2 = ny;
 			dy2 = 0;
 		}
 		if (srcwall == 4)
 			y1 = ny - 2;
-		else {
+		else
+		{
 			y1 = -1;
 			dy1 = 0;
 		}
 		if (srcwall == 5)
 			z2 = 1;
-		else {
+		else
+		{
 			z2 = nz;
 			dz2 = 0;
 		}
 		if (srcwall == 6)
 			z1 = nz - 2;
-		else {
+		else
+		{
 			z1 = -1;
 			dz1 = 0;
 		}
-	} else {
+	}
+	else
+	{
 		fprintf(stderr, "incorrect value of srctype = %d\n", srctype);
 		assert(0);
 	}
 
-	if (headpref > 0) { /* PREFERRED REVERSE DIRECTION */
+	if (headpref > 0)
+	{ /* PREFERRED REVERSE DIRECTION */
 		head = nx * ny * nz;
-		if (nx > 5 && x2 <= head) {
+		if (nx > 5 && x2 <= head)
+		{
 			headpref = 2;
 			head = x2;
 		}
-		if (nx > 5 && (nx - 1 - x1) <= head) {
+		if (nx > 5 && (nx - 1 - x1) <= head)
+		{
 			headpref = 1;
 			head = nx - 1 - x1;
 		}
-		if (ny > 5 && y2 <= head) {
+		if (ny > 5 && y2 <= head)
+		{
 			headpref = 4;
 			head = y2;
 		}
-		if (ny > 5 && (ny - 1 - y1) <= head) {
+		if (ny > 5 && (ny - 1 - y1) <= head)
+		{
 			headpref = 3;
 			head = ny - 1 - y1;
 		}
-		if (nz > 5 && z2 <= head) {
+		if (nz > 5 && z2 <= head)
+		{
 			headpref = 6;
 			head = z2;
 		}
-		if (nz > 5 && (nz - 1 - z1) <= head) {
+		if (nz > 5 && (nz - 1 - z1) <= head)
+		{
 			headpref = 5;
 			head = nz - 1 - z1;
 		}
@@ -1010,7 +1103,8 @@ int sphfd_exec(int ac, char **av, char *output_path)
 	/* BIGGER LOOP - ALLOWS AUTOMATIC REVERSE PROPAGATION IF
 	 HEAD WAVES ARE ENCOUNTERED ON FACES OF EXPANDING CELL,
 	 ALLOWING WAVES TO TRAVEL BACK INTO THE CELL */
-	while (reverse > -1) {
+	while (reverse > -1)
+	{
 
 		headw[1] = 0;
 		headw[2] = 0;
@@ -1020,23 +1114,29 @@ int sphfd_exec(int ac, char **av, char *output_path)
 		headw[6] = 0;
 
 		/* BIG LOOP */
-		while (rad0 && (dx1 || dx2 || dy1 || dy2 || dz1 || dz2)) {
+		while (rad0 && (dx1 || dx2 || dy1 || dy2 || dz1 || dz2))
+		{
 
 			/* CALCULATE ON PRIMARY (time0) GRID */
 			/* TOP SIDE */
-			for (igrow = 1; igrow <= kminus; igrow++) {
-				if (dz1) {
+			for (igrow = 1; igrow <= kminus; igrow++)
+			{
+				if (dz1)
+				{
 					ii = 0;
-					for (j = y1 + 1; j <= y2 - 1; j++) {
-						for (i = x1 + 1; i <= x2 - 1; i++) {
+					for (j = y1 + 1; j <= y2 - 1; j++)
+					{
+						for (i = x1 + 1; i <= x2 - 1; i++)
+						{
 							sort[ii].time = tc(i, j, z1 + 1);
 							sort[ii].i1 = i;
 							sort[ii].i2 = j;
 							ii++;
 						}
 					}
-					qsort((char *) sort, ii, sizeof(struct sorted), compar);
-					for (i = 0; i < ii; i++) {
+					qsort((char *)sort, ii, sizeof(struct sorted), compar);
+					for (i = 0; i < ii; i++)
+					{
 						X1 = sort[i].i1;
 						X2 = sort[i].i2;
 						index = z1 * nxy + X2 * nx + X1;
@@ -1056,10 +1156,8 @@ int sphfd_exec(int ac, char **av, char *output_path)
 
 						/*** 3D Trials ***/
 						/* NW corner (point 6) */
-						if (X2 < ny - 1 && X1 < nx - 1
-								&& time0[index + 1] < 1.e9
-								&& time0[index + nx + 1] < 1.e9
-								&& time0[index + nx] < 1.e9) {
+						if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
 							/* Point 0 */
 							t[0] = tc(X1 + 1, X2 + 1, z1 + 1);
 							s[0] = sc(X1 + 1, X2 + 1, z1 + 1);
@@ -1131,4559 +1229,5070 @@ int sphfd_exec(int ac, char **av, char *output_path)
 							g[7] = 1;
 							n[7] = -1;
 							m[7] = -1;
-						try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* NE corner (point 7) */
+						if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(X1, X2 + 1, z1 + 1);
+							s[0] = sc(X1, X2 + 1, z1 + 1);
+							r[0] = rzp1;
+							q[0] = qX2p1;
+							f[0] = fx1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2 + 1, z1 + 1);
+							s[1] = sc(X1 - 1, X2 + 1, z1 + 1);
+							r[1] = rzp1;
+							q[1] = qX2p1;
+							f[1] = fx1m1;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 2 */
+							t[2] = tc(X1 - 1, X2, z1 + 1);
+							s[2] = sc(X1 - 1, X2, z1 + 1);
+							r[2] = rzp1;
+							q[2] = qX2;
+							f[2] = fx1m1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 3 */
+							t[3] = tc(X1, X2, z1 + 1);
+							s[3] = sc(X1, X2, z1 + 1);
+							r[3] = rzp1;
+							q[3] = qX2;
+							f[3] = fx1;
+							g[3] = -1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 4 */
+							t[4] = tc(X1, X2 + 1, z1);
+							s[4] = sc(X1, X2 + 1, z1);
+							r[4] = rz1;
+							q[4] = qX2p1;
+							f[4] = fx1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 5 */
+							t[5] = tc(X1 - 1, X2 + 1, z1);
+							s[5] = sc(X1 - 1, X2 + 1, z1);
+							r[5] = rz1;
+							q[5] = qX2p1;
+							f[5] = fx1m1;
+							g[5] = 1;
+							n[5] = 1;
+							m[5] = -1;
+							/* Point 6 */
+							t[6] = tc(X1 - 1, X2, z1);
+							s[6] = sc(X1 - 1, X2, z1);
+							r[6] = rz1;
+							q[6] = qX2;
+							f[6] = fx1m1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = -1;
+							/* Point 7 */
+							s[7] = sc(X1, X2, z1);
+							r[7] = rz1;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = 1;
+							n[7] = -1;
+							m[7] = 1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* SW corner (point 5) */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(X1 + 1, X2, z1 + 1);
+							s[0] = sc(X1 + 1, X2, z1 + 1);
+							r[0] = rzp1;
+							q[0] = qX2;
+							f[0] = fx1p1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 1 */
+							t[1] = tc(X1, X2, z1 + 1);
+							s[1] = sc(X1, X2, z1 + 1);
+							r[1] = rzp1;
+							q[1] = qX2;
+							f[1] = fx1;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 2 */
+							t[2] = tc(X1, X2 - 1, z1 + 1);
+							s[2] = sc(X1, X2 - 1, z1 + 1);
+							r[2] = rzp1;
+							q[2] = qX2m1;
+							f[2] = fx1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2 - 1, z1 + 1);
+							s[3] = sc(X1 + 1, X2 - 1, z1 + 1);
+							r[3] = rzp1;
+							q[3] = qX2m1;
+							f[3] = fx1p1;
+							g[3] = -1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 4 */
+							t[4] = tc(X1 + 1, X2, z1);
+							s[4] = sc(X1 + 1, X2, z1);
+							r[4] = rz1;
+							q[4] = qX2;
+							f[4] = fx1p1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 6 */
+							t[5] = tc(X1, X2 - 1, z1);
+							s[5] = sc(X1, X2 - 1, z1);
+							r[5] = rz1;
+							q[5] = qX2m1;
+							f[5] = fx1;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 7 */
+							t[6] = tc(X1 + 1, X2 - 1, z1);
+							s[6] = sc(X1 + 1, X2 - 1, z1);
+							r[6] = rz1;
+							q[6] = qX2m1;
+							f[6] = fx1p1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 5 */
+							s[7] = sc(X1, X2, z1);
+							r[7] = rz1;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = 1;
+							n[7] = 1;
+							m[7] = -1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* SE corner (point 4) */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(X1, X2, z1 + 1);
+							s[0] = sc(X1, X2, z1 + 1);
+							r[0] = rzp1;
+							q[0] = qX2;
+							f[0] = fx1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z1 + 1);
+							s[1] = sc(X1 - 1, X2, z1 + 1);
+							r[1] = rzp1;
+							q[1] = qX2;
+							f[1] = fx1m1;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 2 */
+							t[2] = tc(X1 - 1, X2 - 1, z1 + 1);
+							s[2] = sc(X1 - 1, X2 - 1, z1 + 1);
+							r[2] = rzp1;
+							q[2] = qX2m1;
+							f[2] = fx1m1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 3 */
+							t[3] = tc(X1, X2 - 1, z1 + 1);
+							s[3] = sc(X1, X2 - 1, z1 + 1);
+							r[3] = rzp1;
+							q[3] = qX2m1;
+							f[3] = fx1;
+							g[3] = -1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 5 */
+							t[4] = tc(X1 - 1, X2, z1);
+							s[4] = sc(X1 - 1, X2, z1);
+							r[4] = rz1;
+							q[4] = qX2;
+							f[4] = fx1m1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = -1;
+							/* Point 6 */
+							t[5] = tc(X1 - 1, X2 - 1, z1);
+							s[5] = sc(X1 - 1, X2 - 1, z1);
+							r[5] = rz1;
+							q[5] = qX2m1;
+							f[5] = fx1m1;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 7 */
+							t[6] = tc(X1, X2 - 1, z1);
+							s[6] = sc(X1, X2 - 1, z1);
+							r[6] = rz1;
+							q[6] = qX2m1;
+							f[6] = fx1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 4 */
+							s[7] = sc(X1, X2, z1);
+							r[7] = rz1;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = 1;
+							n[7] = 1;
+							m[7] = 1;
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/*** New Edge Trials ***/
+						if (guess > 1.0e9)
+						{
+							/* Eastern edge */
+							if (X1 > 0 && X2 > y1 + 1 && X2 < y2 - 1 && time0[index - 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, X2 + 1, z1 + 1);
+								s[0] = sc(X1 - 1, X2 + 1, z1 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, X2, z1 + 1);
+								s[1] = sc(X1 - 1, X2, z1 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z1 + 1);
+								s[2] = sc(X1, X2, z1 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, X2 - 1, z1 + 1);
+								s[3] = sc(X1 - 1, X2 - 1, z1 + 1);
+								/* Point 4 */
+								t[4] = tc(X1 - 1, X2, z1);
+								s[4] = sc(X1 - 1, X2, z1);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z1);
+
+								d01 = rzp1 * dq;
+								d12 = rzp1 * sinqX2 * df;
+								d14 = h;
+								d25 = h;
+								d45 = rz1 * sinqX2 * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Western Edge */
+							if (X1 < nx - 1 && X2 > y1 + 1 && X2 < y2 - 1 && time0[index + 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, X2 - 1, z1 + 1);
+								s[0] = sc(X1 + 1, X2 - 1, z1 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, X2, z1 + 1);
+								s[1] = sc(X1 + 1, X2, z1 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z1 + 1);
+								s[2] = sc(X1, X2, z1 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, X2 + 1, z1 + 1);
+								s[3] = sc(X1 + 1, X2 + 1, z1 + 1);
+								/* Point 4 */
+								t[4] = tc(X1 + 1, X2, z1);
+								s[4] = sc(X1 + 1, X2, z1);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z1);
+
+								d01 = rzp1 * dq;
+								d12 = rzp1 * sinqX2 * df;
+								d14 = h;
+								d25 = h;
+								d45 = rz1 * sinqX2 * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Northern Edge */
+							if (X2 < ny - 1 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index + nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, X2 + 1, z1 + 1);
+								s[0] = sc(X1 + 1, X2 + 1, z1 + 1);
+								/* Point 1 */
+								t[1] = tc(X1, X2 + 1, z1 + 1);
+								s[1] = sc(X1, X2 + 1, z1 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z1 + 1);
+								s[2] = sc(X1, X2, z1 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, X2 + 1, z1 + 1);
+								s[3] = sc(X1 - 1, X2 + 1, z1 + 1);
+								/* Point 4 */
+								t[4] = tc(X1, X2 + 1, z1);
+								s[4] = sc(X1, X2 + 1, z1);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z1);
+
+								d01 = rzp1 * sin(qX2p1) * df;
+								d12 = rzp1 * dq;
+								d14 = h;
+								d25 = h;
+								d45 = rz1 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Southern Edge */
+							if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nx])
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, X2 - 1, z1 + 1);
+								s[0] = sc(X1 - 1, X2 - 1, z1 + 1);
+								/* Point 1 */
+								t[1] = tc(X1, X2 - 1, z1 + 1);
+								s[1] = sc(X1, X2 - 1, z1 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z1 + 1);
+								s[2] = sc(X1, X2, z1 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, X2 - 1, z1 + 1);
+								s[3] = sc(X1 + 1, X2 - 1, z1 + 1);
+								/* Point 4 */
+								t[4] = tc(X1, X2 - 1, z1);
+								s[4] = sc(X1, X2 - 1, z1);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z1);
+
+								d01 = rzp1 * sin(qX2m1) * df;
+								d12 = rzp1 * dq;
+								d14 = h;
+								d25 = h;
+								d45 = rz1 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Two-D Trials ***/
+						/* Vertical-East */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, X2, z1);
+							s[1] = sc(X1 + 1, X2, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z1 + 1);
+							s[2] = sc(X1, X2, z1 + 1);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2, z1 + 1);
+							s[3] = sc(X1 + 1, X2, z1 + 1);
+
+							d01 = rz1 * sinqX2 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rzp1 * sinqX2 * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* Vertical-North */
+						if (X2 > 0 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1, X2 - 1, z1);
+							s[1] = sc(X1, X2 - 1, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z1 + 1);
+							s[2] = sc(X1, X2, z1 + 1);
+							/* Point 3 */
+							t[3] = tc(X1, X2 - 1, z1 + 1);
+							s[3] = sc(X1, X2 - 1, z1 + 1);
+
+							d01 = rz1 * dq;
+							d02 = h;
+							d13 = h;
+							d23 = rzp1 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* Vertical-West */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z1);
+							s[1] = sc(X1 - 1, X2, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z1 + 1);
+							s[2] = sc(X1, X2, z1 + 1);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, X2, z1 + 1);
+							s[3] = sc(X1 - 1, X2, z1 + 1);
+
+							d01 = rz1 * sinqX2 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rzp1 * sinqX2 * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* Vertical-South */
+						if (X2 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1, X2 + 1, z1);
+							s[1] = sc(X1, X2 + 1, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z1 + 1);
+							s[2] = sc(X1, X2, z1 + 1);
+							/* Point 3 */
+							t[3] = tc(X1, X2 + 1, z1 + 1);
+							s[3] = sc(X1, X2 + 1, z1 + 1);
+
+							d01 = rz1 * dq;
+							d02 = h;
+							d13 = h;
+							d23 = rzp1 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* Horizontal - SE */
+						if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, X2, z1);
+							s[1] = sc(X1 + 1, X2, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2 + 1, z1);
+							s[2] = sc(X1, X2 + 1, z1);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2 + 1, z1);
+							s[3] = sc(X1 + 1, X2 + 1, z1);
+
+							d01 = rz1 * sinqX2 * df;
+							d02 = rz1 * dq;
+							d13 = rz1 * dq;
+							d23 = rz1 * sin(qX2p1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/* Horizontal - NE */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, X2, z1);
+							s[1] = sc(X1 + 1, X2, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2 - 1, z1);
+							s[2] = sc(X1, X2 - 1, z1);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2 - 1, z1);
+							s[3] = sc(X1 + 1, X2 - 1, z1);
+
+							d01 = rz1 * sinqX2 * df;
+							d02 = rz1 * dq;
+							d13 = rz1 * dq;
+							d23 = rz1 * sin(qX2m1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/* Horizontal - SW */
+						if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z1);
+							s[1] = sc(X1 - 1, X2, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2 + 1, z1);
+							s[2] = sc(X1, X2 + 1, z1);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, X2 + 1, z1);
+							s[3] = sc(X1 - 1, X2 + 1, z1);
+
+							d01 = rz1 * sinqX2 * df;
+							d02 = rz1 * dq;
+							d13 = rz1 * dq;
+							d23 = rz1 * sin(qX2p1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/* Horizontal - NW */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z1);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z1);
+							s[1] = sc(X1 - 1, X2, z1);
+							/* Point 2 */
+							t[2] = tc(X1, X2 - 1, z1);
+							s[2] = sc(X1, X2 - 1, z1);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, X2 - 1, z1);
+							s[3] = sc(X1 - 1, X2 - 1, z1);
+
+							d01 = rz1 * sinqX2 * df;
+							d02 = rz1 * dq;
+							d13 = rz1 * dq;
+							d23 = rz1 * sin(qX2m1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/*** New Face Trials ***/
+						if (guess > 1.0e9)
+						{
+							if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > y1 + 1 && X2 < y2 - 1)
+							{
+								/* Point 0 */
+								t[0] = tc(X1, X2 + 1, z1 + 1);
+								s[0] = sc(X1, X2 + 1, z1 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, X2, z1 + 1);
+								s[1] = sc(X1 - 1, X2, z1 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z1 + 1);
+								s[2] = sc(X1, X2, z1 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, X2, z1 + 1);
+								s[3] = sc(X1 + 1, X2, z1 + 1);
+								/* Point 4 */
+								t[4] = tc(X1, X2 - 1, z1 + 1);
+								s[4] = sc(X1, X2 - 1, z1 + 1);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z1);
+								d02 = rzp1 * dq;
+								d12 = rzp1 * sinqX2 * df;
+								d25 = h;
+								try
+									= fdsphnf(t, s, d02, d12, d25);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Edge Trials ***/
+						/* Change in Depth */
+						try
+							= tc(X1, X2, z1 + 1) + .5 * (sc(X1, X2, z1) + sc(X1, X2, z1 + 1)) * h;
 						if (try < guess)
-						guess = try;
+							guess = try
+								;
+						/* Change in East Longitude */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							try
+								= tc(X1 + 1, X2, z1) + .5 * (sc(X1, X2, z1) + sc(X1 + 1, X2, z1)) * rz1 * df * sinqX2;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz1 * df * sinqX2 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in West Longitude */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							try
+								= tc(X1 - 1, X2, z1) + .5 * (sc(X1, X2, z1) + sc(X1 - 1, X2, z1)) * rz1 * df * sinqX2;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz1 * df * sinqX2 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in South Latitude */
+						if (X2 < ny - 1 & time0[index + nx] < 1.e9)
+						{
+							try
+								= tc(X1, X2 + 1, z1) + .5 * (sc(X1, X2, z1) + sc(X1, X2 + 1, z1)) * rz1 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz1 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in North Latitude */
+						if (X2 > 0 && time0[index - nx] < 1.e9)
+						{
+							try
+								= tc(X1, X2 - 1, z1) + .5 * (sc(X1, X2, z1) + sc(X1, X2 - 1, z1)) * rz1 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz1 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						if (guess < time0[index])
+						{
+							time0[index] = guess;
+							if (fhead > headtest)
+								headw[5]++;
+						}
 					}
-
-					/* NE corner (point 7) */
-					if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9
-							&& time0[index + nx - 1] < 1.e9
-							&& time0[index + nx] < 1.e9) {
-						/* Point 0 */
-						t[0] = tc(X1, X2 + 1, z1 + 1);
-						s[0] = sc(X1, X2 + 1, z1 + 1);
-						r[0] = rzp1;
-						q[0] = qX2p1;
-						f[0] = fx1;
-						g[0] = -1;
-						n[0] = 1;
-						m[0] = 1;
-						/* Point 1 */
-						t[1] = tc(X1 - 1, X2 + 1, z1 + 1);
-						s[1] = sc(X1 - 1, X2 + 1, z1 + 1);
-						r[1] = rzp1;
-						q[1] = qX2p1;
-						f[1] = fx1m1;
-						g[1] = -1;
-						n[1] = 1;
-						m[1] = -1;
-						/* Point 2 */
-						t[2] = tc(X1 - 1, X2, z1 + 1);
-						s[2] = sc(X1 - 1, X2, z1 + 1);
-						r[2] = rzp1;
-						q[2] = qX2;
-						f[2] = fx1m1;
-						g[2] = -1;
-						n[2] = -1;
-						m[2] = -1;
-						/* Point 3 */
-						t[3] = tc(X1, X2, z1 + 1);
-						s[3] = sc(X1, X2, z1 + 1);
-						r[3] = rzp1;
-						q[3] = qX2;
-						f[3] = fx1;
-						g[3] = -1;
-						n[3] = -1;
-						m[3] = 1;
-						/* Point 4 */
-						t[4] = tc(X1, X2 + 1, z1);
-						s[4] = sc(X1, X2 + 1, z1);
-						r[4] = rz1;
-						q[4] = qX2p1;
-						f[4] = fx1;
-						g[4] = 1;
-						n[4] = 1;
-						m[4] = 1;
-						/* Point 5 */
-						t[5] = tc(X1 - 1, X2 + 1, z1);
-						s[5] = sc(X1 - 1, X2 + 1, z1);
-						r[5] = rz1;
-						q[5] = qX2p1;
-						f[5] = fx1m1;
-						g[5] = 1;
-						n[5] = 1;
-						m[5] = -1;
-						/* Point 6 */
-						t[6] = tc(X1 - 1, X2, z1);
-						s[6] = sc(X1 - 1, X2, z1);
-						r[6] = rz1;
-						q[6] = qX2;
-						f[6] = fx1m1;
-						g[6] = 1;
-						n[6] = -1;
-						m[6] = -1;
-						/* Point 7 */
-						s[7] = sc(X1, X2, z1);
-						r[7] = rz1;
-						q[7] = qX2;
-						f[7] = fx1;
-						g[7] = 1;
-						n[7] = -1;
-						m[7] = 1;
-
-					try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-					if (try < guess)
-					guess = try;
+					if (z1 == 0)
+						dz1 = 0;
+					z1--;
 				}
-
-				/* SW corner (point 5) */
-				if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-						&& time0[index - nx + 1] < 1.e9
-						&& time0[index - nx] < 1.e9) {
-					/* Point 0 */
-					t[0] = tc(X1 + 1, X2, z1 + 1);
-					s[0] = sc(X1 + 1, X2, z1 + 1);
-					r[0] = rzp1;
-					q[0] = qX2;
-					f[0] = fx1p1;
-					g[0] = -1;
-					n[0] = 1;
-					m[0] = 1;
-					/* Point 1 */
-					t[1] = tc(X1, X2, z1 + 1);
-					s[1] = sc(X1, X2, z1 + 1);
-					r[1] = rzp1;
-					q[1] = qX2;
-					f[1] = fx1;
-					g[1] = -1;
-					n[1] = 1;
-					m[1] = -1;
-					/* Point 2 */
-					t[2] = tc(X1, X2 - 1, z1 + 1);
-					s[2] = sc(X1, X2 - 1, z1 + 1);
-					r[2] = rzp1;
-					q[2] = qX2m1;
-					f[2] = fx1;
-					g[2] = -1;
-					n[2] = -1;
-					m[2] = -1;
-					/* Point 3 */
-					t[3] = tc(X1 + 1, X2 - 1, z1 + 1);
-					s[3] = sc(X1 + 1, X2 - 1, z1 + 1);
-					r[3] = rzp1;
-					q[3] = qX2m1;
-					f[3] = fx1p1;
-					g[3] = -1;
-					n[3] = -1;
-					m[3] = 1;
-					/* Point 4 */
-					t[4] = tc(X1 + 1, X2, z1);
-					s[4] = sc(X1 + 1, X2, z1);
-					r[4] = rz1;
-					q[4] = qX2;
-					f[4] = fx1p1;
-					g[4] = 1;
-					n[4] = 1;
-					m[4] = 1;
-					/* Point 6 */
-					t[5] = tc(X1, X2 - 1, z1);
-					s[5] = sc(X1, X2 - 1, z1);
-					r[5] = rz1;
-					q[5] = qX2m1;
-					f[5] = fx1;
-					g[5] = 1;
-					n[5] = -1;
-					m[5] = -1;
-					/* Point 7 */
-					t[6] = tc(X1 + 1, X2 - 1, z1);
-					s[6] = sc(X1 + 1, X2 - 1, z1);
-					r[6] = rz1;
-					q[6] = qX2m1;
-					f[6] = fx1p1;
-					g[6] = 1;
-					n[6] = -1;
-					m[6] = 1;
-					/* Point 5 */
-					s[7] = sc(X1, X2, z1);
-					r[7] = rz1;
-					q[7] = qX2;
-					f[7] = fx1;
-					g[7] = 1;
-					n[7] = 1;
-					m[7] = -1;
-
-				try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-				if (try < guess)
-				guess = try;
+				/* End z1 if condition */
 			}
+			/* End growth loop */
 
-			/* SE corner (point 4) */
-			if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9
-					&& time0[index - nx - 1] < 1.e9
-					&& time0[index - nx] < 1.e9) {
-				/* Point 0 */
-				t[0] = tc(X1, X2, z1 + 1);
-				s[0] = sc(X1, X2, z1 + 1);
-				r[0] = rzp1;
-				q[0] = qX2;
-				f[0] = fx1;
-				g[0] = -1;
-				n[0] = 1;
-				m[0] = 1;
-				/* Point 1 */
-				t[1] = tc(X1 - 1, X2, z1 + 1);
-				s[1] = sc(X1 - 1, X2, z1 + 1);
-				r[1] = rzp1;
-				q[1] = qX2;
-				f[1] = fx1m1;
-				g[1] = -1;
-				n[1] = 1;
-				m[1] = -1;
-				/* Point 2 */
-				t[2] = tc(X1 - 1, X2 - 1, z1 + 1);
-				s[2] = sc(X1 - 1, X2 - 1, z1 + 1);
-				r[2] = rzp1;
-				q[2] = qX2m1;
-				f[2] = fx1m1;
-				g[2] = -1;
-				n[2] = -1;
-				m[2] = -1;
-				/* Point 3 */
-				t[3] = tc(X1, X2 - 1, z1 + 1);
-				s[3] = sc(X1, X2 - 1, z1 + 1);
-				r[3] = rzp1;
-				q[3] = qX2m1;
-				f[3] = fx1;
-				g[3] = -1;
-				n[3] = -1;
-				m[3] = 1;
-				/* Point 5 */
-				t[4] = tc(X1 - 1, X2, z1);
-				s[4] = sc(X1 - 1, X2, z1);
-				r[4] = rz1;
-				q[4] = qX2;
-				f[4] = fx1m1;
-				g[4] = 1;
-				n[4] = 1;
-				m[4] = -1;
-				/* Point 6 */
-				t[5] = tc(X1 - 1, X2 - 1, z1);
-				s[5] = sc(X1 - 1, X2 - 1, z1);
-				r[5] = rz1;
-				q[5] = qX2m1;
-				f[5] = fx1m1;
-				g[5] = 1;
-				n[5] = -1;
-				m[5] = -1;
-				/* Point 7 */
-				t[6] = tc(X1, X2 - 1, z1);
-				s[6] = sc(X1, X2 - 1, z1);
-				r[6] = rz1;
-				q[6] = qX2m1;
-				f[6] = fx1;
-				g[6] = 1;
-				n[6] = -1;
-				m[6] = 1;
-				/* Point 4 */
-				s[7] = sc(X1, X2, z1);
-				r[7] = rz1;
-				q[7] = qX2;
-				f[7] = fx1;
-				g[7] = 1;
-				n[7] = 1;
-				m[7] = 1;
-			try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-			if (try < guess)
-			guess = try;
+			/* BOTTOM SIDE */
+			for (igrow = 1; igrow <= kplus; igrow++)
+			{
+				if (dz2)
+				{
+					ii = 0;
+					for (j = y1 + 1; j <= y2 - 1; j++)
+					{
+						for (i = x1 + 1; i <= x2 - 1; i++)
+						{
+							sort[ii].time = tc(i, j, z2 - 1);
+							sort[ii].i1 = i;
+							sort[ii].i2 = j;
+							ii++;
+						}
+					}
+					qsort((char *)sort, ii, sizeof(struct sorted), compar);
+					for (i = 0; i < ii; i++)
+					{
+						X1 = sort[i].i1;
+						X2 = sort[i].i2;
+						index = z2 * nxy + X2 * nx + X1;
+						fhead = 0.;
+						guess = time0[index];
+
+						rz2 = rc(z2);
+						rzm1 = rc(z2 - 1);
+						qX2 = qc(X2);
+						qX2p1 = qc(X2 + 1);
+						qX2m1 = qc(X2 - 1);
+						fx1 = fc(X1);
+						fx1p1 = fc(X1 + 1);
+						fx1m1 = fc(X1 - 1);
+
+						sinqX2 = sin(qX2);
+
+						/*** 3D Trials ***/
+						/* NW corner (point 2) */
+						if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							/* Point 4 */
+							t[0] = tc(X1 + 1, X2 + 1, z2 - 1);
+							s[0] = sc(X1 + 1, X2 + 1, z2 - 1);
+							r[0] = rzm1;
+							q[0] = qX2p1;
+							f[0] = fx1p1;
+							g[0] = 1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 5 */
+							t[1] = tc(X1, X2 + 1, z2 - 1);
+							s[1] = sc(X1, X2 + 1, z2 - 1);
+							r[1] = rzm1;
+							q[1] = qX2p1;
+							f[1] = fx1;
+							g[1] = 1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 6 */
+							t[2] = tc(X1, X2, z2 - 1);
+							s[2] = sc(X1, X2, z2 - 1);
+							r[2] = rzm1;
+							q[2] = qX2;
+							f[2] = fx1;
+							g[2] = 1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 7 */
+							t[3] = tc(X1 + 1, X2, z2 - 1);
+							s[3] = sc(X1 + 1, X2, z2 - 1);
+							r[3] = rzm1;
+							q[3] = qX2;
+							f[3] = fx1p1;
+							g[3] = 1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 0 */
+							t[4] = tc(X1 + 1, X2 + 1, z2);
+							s[4] = sc(X1 + 1, X2 + 1, z2);
+							r[4] = rz2;
+							q[4] = qX2p1;
+							f[4] = fx1p1;
+							g[4] = -1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 1 */
+							t[5] = tc(X1, X2 + 1, z2);
+							s[5] = sc(X1, X2 + 1, z2);
+							r[5] = rz2;
+							q[5] = qX2p1;
+							f[5] = fx1;
+							g[5] = -1;
+							n[5] = 1;
+							m[5] = -1;
+							/* Point 3 */
+							t[6] = tc(X1 + 1, X2, z2);
+							s[6] = sc(X1 + 1, X2, z2);
+							r[6] = rz2;
+							q[6] = qX2;
+							f[6] = fx1p1;
+							g[6] = -1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 2 */
+							s[7] = sc(X1, X2, z2);
+							r[7] = rz2;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = -1;
+							m[7] = -1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* NE corner (point 3) */
+						if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							/* Point 4 */
+							t[0] = tc(X1, X2 + 1, z2 - 1);
+							s[0] = sc(X1, X2 + 1, z2 - 1);
+							r[0] = rzm1;
+							q[0] = qX2p1;
+							f[0] = fx1;
+							g[0] = 1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 5 */
+							t[1] = tc(X1 - 1, X2 + 1, z2 - 1);
+							s[1] = sc(X1 - 1, X2 + 1, z2 - 1);
+							r[1] = rzm1;
+							q[1] = qX2p1;
+							f[1] = fx1m1;
+							g[1] = 1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 6 */
+							t[2] = tc(X1 - 1, X2, z2 - 1);
+							s[2] = sc(X1 - 1, X2, z2 - 1);
+							r[2] = rzm1;
+							q[2] = qX2;
+							f[2] = fx1m1;
+							g[2] = 1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 7 */
+							t[3] = tc(X1, X2, z2 - 1);
+							s[3] = sc(X1, X2, z2 - 1);
+							r[3] = rzm1;
+							q[3] = qX2;
+							f[3] = fx1;
+							g[3] = 1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 0 */
+							t[4] = tc(X1, X2 + 1, z2);
+							s[4] = sc(X1, X2 + 1, z2);
+							r[4] = rz2;
+							q[4] = qX2p1;
+							f[4] = fx1;
+							g[4] = -1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 1 */
+							t[5] = tc(X1 - 1, X2 + 1, z2);
+							s[5] = sc(X1 - 1, X2 + 1, z2);
+							r[5] = rz2;
+							q[5] = qX2p1;
+							f[5] = fx1m1;
+							g[5] = -1;
+							n[5] = 1;
+							m[5] = -1;
+							/* Point 2 */
+							t[6] = tc(X1 - 1, X2, z2);
+							s[6] = sc(X1 - 1, X2, z2);
+							r[6] = rz2;
+							q[6] = qX2;
+							f[6] = fx1m1;
+							g[6] = -1;
+							n[6] = -1;
+							m[6] = -1;
+							/* Point 3 */
+							s[7] = sc(X1, X2, z2);
+							r[7] = rz2;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = -1;
+							m[7] = 1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* SW corner (point 1) */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							/* Point 4 */
+							t[0] = tc(X1 + 1, X2, z2 - 1);
+							s[0] = sc(X1 + 1, X2, z2 - 1);
+							r[0] = rzm1;
+							q[0] = qX2;
+							f[0] = fx1p1;
+							g[0] = 1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 5 */
+							t[1] = tc(X1, X2, z2 - 1);
+							s[1] = sc(X1, X2, z2 - 1);
+							r[1] = rzm1;
+							q[1] = qX2;
+							f[1] = fx1;
+							g[1] = 1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 6 */
+							t[2] = tc(X1, X2 - 1, z2 - 1);
+							s[2] = sc(X1, X2 - 1, z2 - 1);
+							r[2] = rzm1;
+							q[2] = qX2m1;
+							f[2] = fx1;
+							g[2] = 1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 7 */
+							t[3] = tc(X1 + 1, X2 - 1, z2 - 1);
+							s[3] = sc(X1 + 1, X2 - 1, z2 - 1);
+							r[3] = rzm1;
+							q[3] = qX2m1;
+							f[3] = fx1p1;
+							g[3] = 1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 0 */
+							t[4] = tc(X1 + 1, X2, z2);
+							s[4] = sc(X1 + 1, X2, z2);
+							r[4] = rz2;
+							q[4] = qX2;
+							f[4] = fx1p1;
+							g[4] = -1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 2 */
+							t[5] = tc(X1, X2 - 1, z2);
+							s[5] = sc(X1, X2 - 1, z2);
+							r[5] = rz2;
+							q[5] = qX2m1;
+							f[5] = fx1;
+							g[5] = -1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 3 */
+							t[6] = tc(X1 + 1, X2 - 1, z2);
+							s[6] = sc(X1 + 1, X2 - 1, z2);
+							r[6] = rz2;
+							q[6] = qX2m1;
+							f[6] = fx1p1;
+							g[6] = -1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 1 */
+							s[7] = sc(X1, X2, z2);
+							r[7] = rz2;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = 1;
+							m[7] = -1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* SE corner (point 0) */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							/* Point 4 */
+							t[0] = tc(X1, X2, z2 - 1);
+							s[0] = sc(X1, X2, z2 - 1);
+							r[0] = rzm1;
+							q[0] = qX2;
+							f[0] = fx1;
+							g[0] = 1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 5 */
+							t[1] = tc(X1 - 1, X2, z2 - 1);
+							s[1] = sc(X1 - 1, X2, z2 - 1);
+							r[1] = rzm1;
+							q[1] = qX2;
+							f[1] = fx1m1;
+							g[1] = 1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 6 */
+							t[2] = tc(X1 - 1, X2 - 1, z2 - 1);
+							s[2] = sc(X1 - 1, X2 - 1, z2 - 1);
+							r[2] = rzm1;
+							q[2] = qX2m1;
+							f[2] = fx1m1;
+							g[2] = 1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 7 */
+							t[3] = tc(X1, X2 - 1, z2 - 1);
+							s[3] = sc(X1, X2 - 1, z2 - 1);
+							r[3] = rzm1;
+							q[3] = qX2m1;
+							f[3] = fx1;
+							g[3] = 1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 1 */
+							t[4] = tc(X1 - 1, X2, z2);
+							s[4] = sc(X1 - 1, X2, z2);
+							r[4] = rz2;
+							q[4] = qX2;
+							f[4] = fx1m1;
+							g[4] = -1;
+							n[4] = 1;
+							m[4] = -1;
+							/* Point 2 */
+							t[5] = tc(X1 - 1, X2 - 1, z2);
+							s[5] = sc(X1 - 1, X2 - 1, z2);
+							r[5] = rz2;
+							q[5] = qX2m1;
+							f[5] = fx1m1;
+							g[5] = -1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 3 */
+							t[6] = tc(X1, X2 - 1, z2);
+							s[6] = sc(X1, X2 - 1, z2);
+							r[6] = rz2;
+							q[6] = qX2m1;
+							f[6] = fx1;
+							g[6] = -1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 0 */
+							s[7] = sc(X1, X2, z2);
+							r[7] = rz2;
+							q[7] = qX2;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = 1;
+							m[7] = 1;
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/*** New Edge Trials ***/
+						if (guess > 1.0e9)
+						{
+							/* Eastern edge */
+							if (X1 > 0 && X2 > y1 + 1 && X2 < y2 - 1 && time0[index - 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, X2 - 1, z2 - 1);
+								s[0] = sc(X1 - 1, X2 - 1, z2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, X2, z2 - 1);
+								s[1] = sc(X1 - 1, X2, z2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z2 - 1);
+								s[2] = sc(X1, X2, z2 - 1);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, X2 + 1, z2 - 1);
+								s[3] = sc(X1 - 1, X2 + 1, z2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1 - 1, X2, z2);
+								s[4] = sc(X1 - 1, X2, z2);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z2);
+
+								d01 = rzm1 * dq;
+								d12 = rzm1 * sinqX2 * df;
+								d14 = h;
+								d25 = h;
+								d45 = rz2 * sinqX2 * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Western Edge */
+							if (X1 < nx - 1 && X2 > y1 + 1 && X2 < y2 - 1 && time0[index + 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, X2 + 1, z2 - 1);
+								s[0] = sc(X1 + 1, X2 + 1, z2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, X2, z2 - 1);
+								s[1] = sc(X1 + 1, X2, z2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z2 - 1);
+								s[2] = sc(X1, X2, z2 - 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, X2 - 1, z2 - 1);
+								s[3] = sc(X1 + 1, X2 - 1, z2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1 + 1, X2, z2);
+								s[4] = sc(X1 + 1, X2, z2);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z2);
+
+								d01 = rzm1 * dq;
+								d12 = rzm1 * sinqX2 * df;
+								d14 = h;
+								d25 = h;
+								d45 = rz2 * sinqX2 * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Northern Edge */
+							if (X2 < ny - 1 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index + nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, X2 + 1, z2 - 1);
+								s[0] = sc(X1 - 1, X2 + 1, z2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1, X2 + 1, z2 - 1);
+								s[1] = sc(X1, X2 + 1, z2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z2 - 1);
+								s[2] = sc(X1, X2, z2 - 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, X2 + 1, z2 - 1);
+								s[3] = sc(X1 + 1, X2 + 1, z2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1, X2 + 1, z2);
+								s[4] = sc(X1, X2 + 1, z2);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z2);
+
+								d01 = rzm1 * sin(qX2p1) * df;
+								d12 = rzm1 * dq;
+								d14 = h;
+								d25 = h;
+								d45 = rz2 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Southern Edge */
+							if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, X2 - 1, z2 - 1);
+								s[0] = sc(X1 + 1, X2 - 1, z2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1, X2 - 1, z2 - 1);
+								s[1] = sc(X1, X2 - 1, z2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z2 - 1);
+								s[2] = sc(X1, X2, z2 - 1);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, X2 - 1, z2 - 1);
+								s[3] = sc(X1 - 1, X2 - 1, z2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1, X2 - 1, z2);
+								s[4] = sc(X1, X2 - 1, z2);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z2);
+
+								d01 = rzm1 * sin(qX2m1) * df;
+								d12 = rzm1 * dq;
+								d14 = h;
+								d25 = h;
+								d45 = rz2 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Two-D Trials ***/
+						/* Vertical-East */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, X2, z2);
+							s[1] = sc(X1 + 1, X2, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z2 - 1);
+							s[2] = sc(X1, X2, z2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2, z2 - 1);
+							s[3] = sc(X1 + 1, X2, z2 - 1);
+
+							d01 = rz2 * sinqX2 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rzm1 * sinqX2 * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* Vertical-North */
+						if (X2 > 0 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1, X2 - 1, z2);
+							s[1] = sc(X1, X2 - 1, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z2 - 1);
+							s[2] = sc(X1, X2, z2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1, X2 - 1, z2 - 1);
+							s[3] = sc(X1, X2 - 1, z2 - 1);
+
+							d01 = rz2 * dq;
+							d02 = h;
+							d13 = h;
+							d23 = rzm1 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* Vertical-West */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z2);
+							s[1] = sc(X1 - 1, X2, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z2 - 1);
+							s[2] = sc(X1, X2, z2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, X2, z2 - 1);
+							s[3] = sc(X1 - 1, X2, z2 - 1);
+
+							d01 = rz2 * sinqX2 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rzm1 * sinqX2 * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* Vertical-South */
+						if (X2 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1, X2 + 1, z2);
+							s[1] = sc(X1, X2 + 1, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2, z2 - 1);
+							s[2] = sc(X1, X2, z2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1, X2 + 1, z2 - 1);
+							s[3] = sc(X1, X2 + 1, z2 - 1);
+
+							d01 = rz2 * dq;
+							d02 = h;
+							d13 = h;
+							d23 = rzm1 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* Horizontal - SE */
+						if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, X2, z2);
+							s[1] = sc(X1 + 1, X2, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2 + 1, z2);
+							s[2] = sc(X1, X2 + 1, z2);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2 + 1, z2);
+							s[3] = sc(X1 + 1, X2 + 1, z2);
+							d01 = rz2 * sinqX2 * df;
+							d02 = rz2 * dq;
+							d13 = rz2 * dq;
+							d23 = rz2 * sin(qX2p1) * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Horizontal - NE */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, X2, z2);
+							s[1] = sc(X1 + 1, X2, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2 - 1, z2);
+							s[2] = sc(X1, X2 - 1, z2);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, X2 - 1, z2);
+							s[3] = sc(X1 + 1, X2 - 1, z2);
+							d01 = rz2 * sinqX2 * df;
+							d02 = rz2 * dq;
+							d13 = rz2 * dq;
+							d23 = rz2 * sin(qX2m1) * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Horizontal - SW */
+						if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z2);
+							s[1] = sc(X1 - 1, X2, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2 + 1, z2);
+							s[2] = sc(X1, X2 + 1, z2);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, X2 + 1, z2);
+							s[3] = sc(X1 - 1, X2 + 1, z2);
+							d01 = rz2 * sinqX2 * df;
+							d02 = rz2 * dq;
+							d13 = rz2 * dq;
+							d23 = rz2 * sin(qX2p1) * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Horizontal - NW */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(X1, X2, z2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, X2, z2);
+							s[1] = sc(X1 - 1, X2, z2);
+							/* Point 2 */
+							t[2] = tc(X1, X2 - 1, z2);
+							s[2] = sc(X1, X2 - 1, z2);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, X2 - 1, z2);
+							s[3] = sc(X1 - 1, X2 - 1, z2);
+							d01 = rz2 * sinqX2 * df;
+							d02 = rz2 * dq;
+							d13 = rz2 * dq;
+							d23 = rz2 * sin(qX2m1) * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/*** New Face Trials ***/
+						if (guess > 1.0e9)
+						{
+							if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > y1 + 1 && X2 < y2 - 1)
+							{
+								/* Point 0 */
+								t[0] = tc(X1, X2 + 1, z2 - 1);
+								s[0] = sc(X1, X2 + 1, z2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, X2, z2 - 1);
+								s[1] = sc(X1 - 1, X2, z2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, X2, z2 - 1);
+								s[2] = sc(X1, X2, z2 - 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, X2, z2 - 1);
+								s[3] = sc(X1 + 1, X2, z2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1, X2 - 1, z2 - 1);
+								s[4] = sc(X1, X2 - 1, z2 - 1);
+								/* Point 5 */
+								s[5] = sc(X1, X2, z2);
+								d02 = rzm1 * dq;
+								d12 = rzm1 * sinqX2 * df;
+								d25 = h;
+								try
+									= fdsphnf(t, s, d02, d12, d25);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Edge Trials ***/
+						/* Change in Depth */
+						try
+							= tc(X1, X2, z2 - 1) + .5 * (sc(X1, X2, z2) + sc(X1, X2, z2 - 1)) * h;
+						if (try < guess)
+							guess = try
+								;
+						/* Change in East Longitude */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							try
+								= tc(X1 + 1, X2, z2) + .5 * (sc(X1, X2, z2) + sc(X1 + 1, X2, z2)) * rz2 * df * sinqX2;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz2 * df * sinqX2 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in West Longitude */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							try
+								= tc(X1 - 1, X2, z2) + .5 * (sc(X1, X2, z2) + sc(X1 - 1, X2, z2)) * rz2 * df * sinqX2;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz2 * df * sinqX2 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in South Latitude */
+						if (X2 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							try
+								= tc(X1, X2 + 1, z2) + .5 * (sc(X1, X2, z2) + sc(X1, X2 + 1, z2)) * rz2 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz2 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in North Latitude */
+						if (X2 > 0 && time0[index - nx] < 1.e9)
+						{
+							try
+								= tc(X1, X2 - 1, z2) + .5 * (sc(X1, X2, z2) + sc(X1, X2 - 1, z2)) * rz2 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rz2 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						if (guess < time0[index])
+						{
+							time0[index] = guess;
+							if (fhead > headtest)
+								headw[6]++;
+						}
+					}
+					if (z2 == nz - 1)
+						dz2 = 0;
+					z2++;
+				}
+				/* End z2 if condition */
+			}
+			/* End growth loop */
+
+			/* EAST (RIGHT) SIDE */
+			for (igrow = 1; igrow <= iplus; igrow++)
+			{
+				if (dx2)
+				{
+					ii = 0;
+					for (k = z1 + 1; k <= z2 - 1; k++)
+					{
+						for (j = y1 + 1; j <= y2 - 1; j++)
+						{
+							sort[ii].time = tc(x2 - 1, j, k);
+							sort[ii].i1 = j;
+							sort[ii].i2 = k;
+							ii++;
+						}
+					}
+					qsort((char *)sort, ii, sizeof(struct sorted), compar);
+
+					for (i = 0; i < ii; i++)
+					{
+						X1 = sort[i].i1;
+						X2 = sort[i].i2;
+						index = X2 * nxy + X1 * nx + x2;
+						fhead = 0.;
+						guess = time0[index];
+
+						rX2 = rc(X2);
+						rXp1 = rc(X2 + 1);
+						rXm1 = rc(X2 - 1);
+						qX1 = qc(X1);
+						qX1p1 = qc(X1 + 1);
+						qX1m1 = qc(X1 - 1);
+						fx2 = fc(x2);
+						fx2m1 = fc(x2 - 1);
+
+						sinqX1 = sin(qX1);
+
+						/*** 3D Trials ***/
+						/* Top North corner (point 7) */
+						/*                       if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
+						if (X2 < nz - 1 && X1 < ny - 1)
+						{
+							if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9 && time0[index + nxy])
+							{
+								/* Point 1 */
+								t[0] = tc(x2 - 1, X1 + 1, X2 + 1);
+								s[0] = sc(x2 - 1, X1 + 1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qX1p1;
+								f[0] = fx2m1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = -1;
+								/* Point 0 */
+								t[1] = tc(x2, X1 + 1, X2 + 1);
+								s[1] = sc(x2, X1 + 1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qX1p1;
+								f[1] = fx2;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = 1;
+								/* Point 3 */
+								t[2] = tc(x2, X1, X2 + 1);
+								s[2] = sc(x2, X1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qX1;
+								f[2] = fx2;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = 1;
+								/* Point 2 */
+								t[3] = tc(x2 - 1, X1, X2 + 1);
+								s[3] = sc(x2 - 1, X1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qX1;
+								f[3] = fx2m1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = -1;
+								/* Point 5 */
+								t[4] = tc(x2 - 1, X1 + 1, X2);
+								s[4] = sc(x2 - 1, X1 + 1, X2);
+								r[4] = rX2;
+								q[4] = qX1p1;
+								f[4] = fx2m1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = -1;
+								/* Point 4 */
+								t[5] = tc(x2, X1 + 1, X2);
+								s[5] = sc(x2, X1 + 1, X2);
+								r[5] = rX2;
+								q[5] = qX1p1;
+								f[5] = fx2;
+								g[5] = 1;
+								n[5] = 1;
+								m[5] = 1;
+								/* Point 6 */
+								t[6] = tc(x2 - 1, X1, X2);
+								s[6] = sc(x2 - 1, X1, X2);
+								r[6] = rX2;
+								q[6] = qX1;
+								f[6] = fx2m1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = -1;
+								/* Point 7 */
+								s[7] = sc(x2, X1, X2);
+								r[7] = rX2;
+								q[7] = qX1;
+								f[7] = fx2;
+								g[7] = 1;
+								n[7] = -1;
+								m[7] = 1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/* Top South corner (point 4) */
+						/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 1 */
+								t[0] = tc(x2 - 1, X1, X2 + 1);
+								s[0] = sc(x2 - 1, X1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qX1;
+								f[0] = fx2m1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = -1;
+								/* Point 0 */
+								t[1] = tc(x2, X1, X2 + 1);
+								s[1] = sc(x2, X1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qX1;
+								f[1] = fx2;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = 1;
+								/* Point 3 */
+								t[2] = tc(x2, X1 - 1, X2 + 1);
+								s[2] = sc(x2, X1 - 1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qX1m1;
+								f[2] = fx2;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = 1;
+								/* Point 2 */
+								t[3] = tc(x2 - 1, X1 - 1, X2 + 1);
+								s[3] = sc(x2 - 1, X1 - 1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qX1m1;
+								f[3] = fx2m1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = -1;
+								/* Point 5 */
+								t[4] = tc(x2 - 1, X1, X2);
+								s[4] = sc(x2 - 1, X1, X2);
+								r[4] = rX2;
+								q[4] = qX1;
+								f[4] = fx2m1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = -1;
+								/* Point 7 */
+								t[5] = tc(x2, X1 - 1, X2);
+								s[5] = sc(x2, X1 - 1, X2);
+								r[5] = rX2;
+								q[5] = qX1m1;
+								f[5] = fx2;
+								g[5] = 1;
+								n[5] = -1;
+								m[5] = 1;
+								/* Point 6 */
+								t[6] = tc(x2 - 1, X1 - 1, X2);
+								s[6] = sc(x2 - 1, X1 - 1, X2);
+								r[6] = rX2;
+								q[6] = qX1m1;
+								f[6] = fx2m1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = -1;
+								/* Point 4 */
+								s[7] = sc(x2, X1, X2);
+								r[7] = rX2;
+								q[7] = qX1;
+								f[7] = fx2;
+								g[7] = 1;
+								n[7] = 1;
+								m[7] = 1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*  Bottom North corner (point 3) */
+						if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9 && time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 1 */
+							t[0] = tc(x2 - 1, X1 + 1, X2);
+							s[0] = sc(x2 - 1, X1 + 1, X2);
+							r[0] = rX2;
+							q[0] = qX1p1;
+							f[0] = fx2m1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = -1;
+							/* Point 0 */
+							t[1] = tc(x2, X1 + 1, X2);
+							s[1] = sc(x2, X1 + 1, X2);
+							r[1] = rX2;
+							q[1] = qX1p1;
+							f[1] = fx2;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = 1;
+							/* Point 2 */
+							t[2] = tc(x2 - 1, X1, X2);
+							s[2] = sc(x2 - 1, X1, X2);
+							r[2] = rX2;
+							q[2] = qX1;
+							f[2] = fx2m1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 5 */
+							t[3] = tc(x2 - 1, X1 + 1, X2 - 1);
+							s[3] = sc(x2 - 1, X1 + 1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qX1p1;
+							f[3] = fx2m1;
+							g[3] = 1;
+							n[3] = 1;
+							m[3] = -1;
+							/* Point 4 */
+							t[4] = tc(x2, X1 + 1, X2 - 1);
+							s[4] = sc(x2, X1 + 1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qX1p1;
+							f[4] = fx2;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 7 */
+							t[5] = tc(x2, X1, X2 - 1);
+							s[5] = sc(x2, X1, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qX1;
+							f[5] = fx2;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = 1;
+							/* Point 6 */
+							t[6] = tc(x2 - 1, X1, X2 - 1);
+							s[6] = sc(x2 - 1, X1, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qX1;
+							f[6] = fx2m1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = -1;
+							/* Point 3 */
+							s[7] = sc(x2, X1, X2);
+							r[7] = rX2;
+							q[7] = qX1;
+							f[7] = fx2;
+							g[7] = -1;
+							n[7] = -1;
+							m[7] = 1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* Bottom South corner (point 0) */
+						if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9 && time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 1 */
+							t[0] = tc(x2 - 1, X1, X2);
+							s[0] = sc(x2 - 1, X1, X2);
+							r[0] = rX2;
+							q[0] = qX1;
+							f[0] = fx2m1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = -1;
+							/* Point 3 */
+							t[1] = tc(x2, X1 - 1, X2);
+							s[1] = sc(x2, X1 - 1, X2);
+							r[1] = rX2;
+							q[1] = qX1m1;
+							f[1] = fx2;
+							g[1] = -1;
+							n[1] = -1;
+							m[1] = 1;
+							/* Point 2 */
+							t[2] = tc(x2 - 1, X1 - 1, X2);
+							s[2] = sc(x2 - 1, X1 - 1, X2);
+							r[2] = rX2;
+							q[2] = qX1m1;
+							f[2] = fx2m1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 5 */
+							t[3] = tc(x2 - 1, X1, X2 - 1);
+							s[3] = sc(x2 - 1, X1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qX1;
+							f[3] = fx2m1;
+							g[3] = 1;
+							n[3] = 1;
+							m[3] = -1;
+							/* Point 4 */
+							t[4] = tc(x2, X1, X2 - 1);
+							s[4] = sc(x2, X1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qX1;
+							f[4] = fx2;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = 1;
+							/* Point 7 */
+							t[5] = tc(x2, X1 - 1, X2 - 1);
+							s[5] = sc(x2, X1 - 1, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qX1m1;
+							f[5] = fx2;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = 1;
+							/* Point 6 */
+							t[6] = tc(x2 - 1, X1 - 1, X2 - 1);
+							s[6] = sc(x2 - 1, X1 - 1, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qX1m1;
+							f[6] = fx2m1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = -1;
+							/* Point 0 */
+							s[7] = sc(x2, X1, X2);
+							r[7] = rX2;
+							q[7] = qX1;
+							f[7] = fx2;
+							g[7] = -1;
+							n[7] = 1;
+							m[7] = 1;
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/*** New Edge Trials ***/
+						if (guess > 1.0e9)
+						{
+							/* Top edge */
+							/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>y1+1 && X1<y2-1 )  {*/
+							if (X2 < nz - 1 && X1 > y1 + 1 && X1 < y2 - 1)
+							{
+								if (time0[index + nxy] < 1.e9)
+								{
+									/* Point 0 */
+									t[0] = tc(x2 - 1, X1 - 1, X2 + 1);
+									s[0] = sc(x2 - 1, X1 - 1, X2 + 1);
+									/* Point 1 */
+									t[1] = tc(x2 - 1, X1, X2 + 1);
+									s[1] = sc(x2 - 1, X1, X2 + 1);
+									/* Point 2 */
+									t[2] = tc(x2 - 1, X1, X2);
+									s[2] = sc(x2 - 1, X1, X2);
+									/* Point 3 */
+									t[3] = tc(x2 - 1, X1 + 1, X2 + 1);
+									s[3] = sc(x2 - 1, X1 + 1, X2 + 1);
+									/* Point 4 */
+									t[4] = tc(x2, X1, X2 + 1);
+									s[4] = sc(x2, X1, X2 + 1);
+									/* Point 5 */
+									s[5] = sc(x2, X1, X2);
+
+									d01 = rXp1 * dq;
+									d12 = h;
+									d14 = rXp1 * sin(qX1) * df;
+									d25 = rX2 * sin(qX1) * df;
+									d45 = h;
+
+									try
+										= fdsphne(t, s, d01, d12, d14, d25,
+												  d45);
+									if (try < guess)
+										guess = try
+											;
+								}
+							}
+							/* Bottom Edge */
+							if (X2 > 0 && X1 > y1 + 1 && X1 < y2 - 1 && time0[index - nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x2 - 1, X1 + 1, X2 - 1);
+								s[0] = sc(x2 - 1, X1 + 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(x2 - 1, X1, X2 - 1);
+								s[1] = sc(x2 - 1, X1, X2 - 1);
+								/* Point 2 */
+								t[2] = tc(x2 - 1, X1, X2);
+								s[2] = sc(x2 - 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x2 - 1, X1 - 1, X2 - 1);
+								s[3] = sc(x2 - 1, X1 - 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(x2, X1, X2 - 1);
+								s[4] = sc(x2, X1, X2 - 1);
+								/* Point 5 */
+								s[5] = sc(x2, X1, X2);
+
+								d01 = rXm1 * dq;
+								d12 = h;
+								d14 = rXm1 * sin(qX1) * df;
+								d25 = rX2 * sin(qX1) * df;
+								d45 = h;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Northern Edge */
+							if (X1 < ny - 1 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index + nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x2 - 1, X1 + 1, X2 + 1);
+								s[0] = sc(x2 - 1, X1 + 1, X2 + 1);
+								/* Point 1 */
+								t[1] = tc(x2 - 1, X1 + 1, X2);
+								s[1] = sc(x2 - 1, X1 + 1, X2);
+								/* Point 2 */
+								t[2] = tc(x2 - 1, X1, X2);
+								s[2] = sc(x2 - 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x2 - 1, X1 + 1, X2 - 1);
+								s[3] = sc(x2 - 1, X1 + 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(x2, X1 + 1, X2);
+								s[4] = sc(x2, X1 + 1, X2);
+								/* Point 5 */
+								s[5] = sc(x2, X1, X2);
+
+								d01 = h;
+								d12 = rX2 * dq;
+								d14 = rX2 * sin(qX1p1) * df;
+								d25 = rX2 * sin(qX1) * df;
+								d45 = rX2 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Southern Edge */
+							if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index - nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x2 - 1, X1 - 1, X2 - 1);
+								s[0] = sc(x2 - 1, X1 - 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(x2 - 1, X1 - 1, X2);
+								s[1] = sc(x2 - 1, X1 - 1, X2);
+								/* Point 2 */
+								t[2] = tc(x2 - 1, X1, X2);
+								s[2] = sc(x2 - 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x2 - 1, X1 - 1, X2 + 1);
+								s[3] = sc(x2 - 1, X1 - 1, X2 + 1);
+								/* Point 4 */
+								t[4] = tc(x2, X1 - 1, X2);
+								s[4] = sc(x2, X1 - 1, X2);
+								/* Point 5 */
+								s[5] = sc(x2, X1, X2);
+
+								d01 = h;
+								d12 = rX2 * dq;
+								d14 = rX2 * sin(qX1m1) * df;
+								d25 = rX2 * sin(qX1) * df;
+								d45 = rX2 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Two-D Trials ***/
+						/* East-North */
+						if (X1 > 0 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(x2, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x2, X1 - 1, X2);
+							s[1] = sc(x2, X1 - 1, X2);
+							/* Point 2 */
+							t[2] = tc(x2 - 1, X1, X2);
+							s[2] = sc(x2 - 1, X1, X2);
+							/* Point 3 */
+							t[3] = tc(x2 - 1, X1 - 1, X2);
+							s[3] = sc(x2 - 1, X1 - 1, X2);
+
+							d01 = rX2 * dq;
+							d02 = rX2 * sinqX1 * df;
+							d13 = rX2 * sin(qX1m1) * df;
+							d23 = rX2 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* East-South */
+						if (X1 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(x2, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x2, X1 + 1, X2);
+							s[1] = sc(x2, X1 + 1, X2);
+							/* Point 2 */
+							t[2] = tc(x2 - 1, X1, X2);
+							s[2] = sc(x2 - 1, X1, X2);
+							/* Point 3 */
+							t[3] = tc(x2 - 1, X1 + 1, X2);
+							s[3] = sc(x2 - 1, X1 + 1, X2);
+
+							d01 = rX2 * dq;
+							d02 = rX2 * sinqX1 * df;
+							d13 = rX2 * sin(qX1p1) * df;
+							d23 = rX2 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* East-Top */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(x2, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x2, X1, X2 - 1);
+							s[1] = sc(x2, X1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(x2 - 1, X1, X2);
+							s[2] = sc(x2 - 1, X1, X2);
+							/* Point 3 */
+							t[3] = tc(x2 - 1, X1, X2 - 1);
+							s[3] = sc(x2 - 1, X1, X2 - 1);
+
+							d01 = h;
+							d02 = rX2 * sinqX1 * df;
+							d13 = rXm1 * sinqX1 * df;
+							d23 = h;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* East-Bottom */
+						/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  {*/
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(x2, X1, X2);
+								/* Point 1 */
+								t[1] = tc(x2, X1, X2 + 1);
+								s[1] = sc(x2, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x2 - 1, X1, X2);
+								s[2] = sc(x2 - 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x2 - 1, X1, X2 + 1);
+								s[3] = sc(x2 - 1, X1, X2 + 1);
+
+								d01 = h;
+								d02 = rX2 * sinqX1 * df;
+								d13 = rXp1 * sinqX1 * df;
+								d23 = h;
+
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+						/* Parallel - North Bottom */
+						/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(x2, X1, X2);
+								/* Point 1 */
+								t[1] = tc(x2, X1, X2 + 1);
+								s[1] = sc(x2, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x2, X1 - 1, X2);
+								s[2] = sc(x2, X1 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(x2, X1 - 1, X2 + 1);
+								s[3] = sc(x2, X1 - 1, X2 + 1);
+								d01 = h;
+								d02 = rX2 * dq;
+								d13 = rXp1 * dq;
+								d23 = h;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - North Top */
+						if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9 && time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(x2, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x2, X1, X2 - 1);
+							s[1] = sc(x2, X1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(x2, X1 - 1, X2);
+							s[2] = sc(x2, X1 - 1, X2);
+							/* Point 3 */
+							t[3] = tc(x2, X1 - 1, X2 - 1);
+							s[3] = sc(x2, X1 - 1, X2 - 1);
+							d01 = h;
+							d02 = rX2 * dq;
+							d13 = rXm1 * dq;
+							d23 = h;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Parallel - South Bottom */
+						/*if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
+						if (X2 < nz - 1 && X1 < ny - 1)
+						{
+							if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(x2, X1, X2);
+								/* Point 1 */
+								t[1] = tc(x2, X1, X2 + 1);
+								s[1] = sc(x2, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x2, X1 + 1, X2);
+								s[2] = sc(x2, X1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(x2, X1 + 1, X2 + 1);
+								s[3] = sc(x2, X1 + 1, X2 + 1);
+								d01 = h;
+								d02 = rX2 * dq;
+								d13 = rXp1 * dq;
+								d23 = h;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - South Top */
+						if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9 && time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(x2, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x2, X1, X2 - 1);
+							s[1] = sc(x2, X1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(x2, X1 + 1, X2);
+							s[2] = sc(x2, X1 + 1, X2);
+							/* Point 3 */
+							t[3] = tc(x2, X1 + 1, X2 - 1);
+							s[3] = sc(x2, X1 + 1, X2 - 1);
+							d01 = h;
+							d02 = rX2 * dq;
+							d13 = rXm1 * dq;
+							d23 = h;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/*** New Face Trials ***/
+						if (guess > 1.0e9)
+						{
+							if (X1 > y1 + 1 && X1 < y2 - 1 && X2 > z1 + 1 && X2 < z2 - 1)
+							{
+								/* Point 0 */
+								t[0] = tc(x2 - 1, X1 + 1, X2);
+								s[0] = sc(x2 - 1, X1 + 1, X2);
+								/* Point 1 */
+								t[1] = tc(x2 - 1, X1, X2 - 1);
+								s[1] = sc(x2 - 1, X1, X2 - 1);
+								/* Point 2 */
+								t[2] = tc(x2 - 1, X1, X2);
+								s[2] = sc(x2 - 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x2 - 1, X1, X2 + 1);
+								s[3] = sc(x2 - 1, X1, X2 + 1);
+								/* Point 4 */
+								t[4] = tc(x2 - 1, X1 - 1, X2);
+								s[4] = sc(x2 - 1, X1 - 1, X2);
+								/* Point 5 */
+								s[5] = sc(x2, X1, X2);
+								d02 = rX2 * dq;
+								d12 = h;
+								d25 = rX2 * sinqX1 * df;
+								try
+									= fdsphnf(t, s, d02, d12, d25);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Edge Trials ***/
+						/* Change in Longitude */
+						try
+							= tc(x2 - 1, X1, X2) + .5 * (sc(x2, X1, X2) + sc(x2 - 1, X1, X2)) * rX2 * sinqX1 * df;
+						if (try < guess)
+							guess = try
+								;
+						/* Change in South Latitude */
+						if (X1 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							try
+								= tc(x2, X1 + 1, X2) + .5 * (sc(x2, X1, X2) + sc(x2, X1 + 1, X2)) * rX2 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in North Latitude */
+						if (X1 > 0 && time0[index - nx] < 1.e9)
+						{
+							try
+								= tc(x2, X1 - 1, X2) + .5 * (sc(x2, X1, X2) + sc(x2, X1 - 1, X2)) * rX2 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in depth (increasing) */
+						/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								try
+									= tc(x2, X1, X2 + 1) + .5 * (sc(x2, X1, X2) + sc(x2, X1, X2 + 1)) * h;
+								if (try < guess)
+								{
+									fhead = (guess - try) / (h * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Change in depth (decreasing) */
+						/*if ( time0[index-nxy]<1.e9 && X2>0 )  { */
+						if (X2 > 0)
+						{
+							if (time0[index - nxy] < 1.e9)
+							{
+								try
+									= tc(x2, X1, X2 - 1) + .5 * (sc(x2, X1, X2) + sc(x2, X1, X2 - 1)) * h;
+								if (try < guess)
+								{
+									fhead = (guess - try) / (h * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						if (guess < time0[index])
+						{
+							time0[index] = guess;
+							if (fhead > headtest)
+								headw[2]++;
+						}
+					}
+					if (x2 == nx - 1)
+						dx2 = 0;
+					x2++;
+				}
+				/* End x2 if condition */
+			}
+			/* End growth loop */
+
+			/* WEST (LEFT) SIDE */
+			for (igrow = 1; igrow <= iminus; igrow++)
+			{
+				if (dx1)
+				{
+					ii = 0;
+					for (k = z1 + 1; k <= z2 - 1; k++)
+					{
+						for (j = y1 + 1; j <= y2 - 1; j++)
+						{
+							sort[ii].time = tc(x1 + 1, j, k);
+							sort[ii].i1 = j;
+							sort[ii].i2 = k;
+							ii++;
+						}
+					}
+					qsort((char *)sort, ii, sizeof(struct sorted), compar);
+					for (i = 0; i < ii; i++)
+					{
+						X1 = sort[i].i1;
+						X2 = sort[i].i2;
+						index = X2 * nxy + X1 * nx + x1;
+						fhead = 0.;
+						guess = time0[index];
+
+						rX2 = rc(X2);
+						rXp1 = rc(X2 + 1);
+						rXm1 = rc(X2 - 1);
+						qX1 = qc(X1);
+						qX1p1 = qc(X1 + 1);
+						qX1m1 = qc(X1 - 1);
+						fx1 = fc(x1);
+						fx1p1 = fc(x1 + 1);
+						fx1m1 = fc(x1 - 1);
+
+						sinqX1 = sin(qX1);
+
+						/*** 3D Trials ***/
+						/* Top North corner (point 6) */
+						/*if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
+						if (X2 < nz - 1 && X1 < ny - 1)
+						{
+							if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x1 + 1, X1 + 1, X2 + 1);
+								s[0] = sc(x1 + 1, X1 + 1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qX1p1;
+								f[0] = fx1p1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = 1;
+								/* Point 1 */
+								t[1] = tc(x1, X1 + 1, X2 + 1);
+								s[1] = sc(x1, X1 + 1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qX1p1;
+								f[1] = fx1;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = -1;
+								/* Point 2 */
+								t[2] = tc(x1, X1, X2 + 1);
+								s[2] = sc(x1, X1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qX1;
+								f[2] = fx1;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = -1;
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1, X2 + 1);
+								s[3] = sc(x1 + 1, X1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qX1;
+								f[3] = fx1p1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = 1;
+								/* Point 4 */
+								t[4] = tc(x1 + 1, X1 + 1, X2);
+								s[4] = sc(x1 + 1, X1 + 1, X2);
+								r[4] = rX2;
+								q[4] = qX1p1;
+								f[4] = fx1p1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = 1;
+								/* Point 5 */
+								t[5] = tc(x1, X1 + 1, X2);
+								s[5] = sc(x1, X1 + 1, X2);
+								r[5] = rX2;
+								q[5] = qX1p1;
+								f[5] = fx1;
+								g[5] = 1;
+								n[5] = 1;
+								m[5] = -1;
+								/* Point 7 */
+								t[6] = tc(x1 + 1, X1, X2);
+								s[6] = sc(x1 + 1, X1, X2);
+								r[6] = rX2;
+								q[6] = qX1;
+								f[6] = fx1p1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = 1;
+								/* Point 6 */
+								s[7] = sc(x1, X1, X2);
+								r[7] = rX2;
+								q[7] = qX1;
+								f[7] = fx1;
+								g[7] = 1;
+								n[7] = -1;
+								m[7] = -1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/* Top South corner (point 5) */
+						/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x1 + 1, X1, X2 + 1);
+								s[0] = sc(x1 + 1, X1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qX1;
+								f[0] = fx1p1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = 1;
+								/* Point 1 */
+								t[1] = tc(x1, X1, X2 + 1);
+								s[1] = sc(x1, X1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qX1;
+								f[1] = fx1;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = -1;
+								/* Point 2 */
+								t[2] = tc(x1, X1 - 1, X2 + 1);
+								s[2] = sc(x1, X1 - 1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qX1m1;
+								f[2] = fx1;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = -1;
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1 - 1, X2 + 1);
+								s[3] = sc(x1 + 1, X1 - 1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qX1m1;
+								f[3] = fx1p1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = 1;
+								/* Point 4 */
+								t[4] = tc(x1 + 1, X1, X2);
+								s[4] = sc(x1 + 1, X1, X2);
+								r[4] = rX2;
+								q[4] = qX1;
+								f[4] = fx1p1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = 1;
+								/* Point 6 */
+								t[5] = tc(x1, X1 - 1, X2);
+								s[5] = sc(x1, X1 - 1, X2);
+								r[5] = rX2;
+								q[5] = qX1m1;
+								f[5] = fx1;
+								g[5] = 1;
+								n[5] = -1;
+								m[5] = -1;
+								/* Point 7 */
+								t[6] = tc(x1 + 1, X1 - 1, X2);
+								s[6] = sc(x1 + 1, X1 - 1, X2);
+								r[6] = rX2;
+								q[6] = qX1m1;
+								f[6] = fx1p1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = 1;
+								/* Point 5 */
+								s[7] = sc(x1, X1, X2);
+								r[7] = rX2;
+								q[7] = qX1;
+								f[7] = fx1;
+								g[7] = 1;
+								n[7] = 1;
+								m[7] = -1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*  Bottom North corner (point 2) */
+						if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9 && time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(x1 + 1, X1 + 1, X2);
+							s[0] = sc(x1 + 1, X1 + 1, X2);
+							r[0] = rX2;
+							q[0] = qX1p1;
+							f[0] = fx1p1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 1 */
+							t[1] = tc(x1, X1 + 1, X2);
+							s[1] = sc(x1, X1 + 1, X2);
+							r[1] = rX2;
+							q[1] = qX1p1;
+							f[1] = fx1;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 3 */
+							t[2] = tc(x1 + 1, X1, X2);
+							s[2] = sc(x1 + 1, X1, X2);
+							r[2] = rX2;
+							q[2] = qX1;
+							f[2] = fx1p1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = 1;
+							/* Point 4 */
+							t[3] = tc(x1 + 1, X1 + 1, X2 - 1);
+							s[3] = sc(x1 + 1, X1 + 1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qX1p1;
+							f[3] = fx1p1;
+							g[3] = 1;
+							n[3] = 1;
+							m[3] = 1;
+							/* Point 5 */
+							t[4] = tc(x1, X1 + 1, X2 - 1);
+							s[4] = sc(x1, X1 + 1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qX1p1;
+							f[4] = fx1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = -1;
+							/* Point 6 */
+							t[5] = tc(x1, X1, X2 - 1);
+							s[5] = sc(x1, X1, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qX1;
+							f[5] = fx1;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 7 */
+							t[6] = tc(x1 + 1, X1, X2 - 1);
+							s[6] = sc(x1 + 1, X1, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qX1;
+							f[6] = fx1p1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 2 */
+							s[7] = sc(x1, X1, X2);
+							r[7] = rX2;
+							q[7] = qX1;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = -1;
+							m[7] = -1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* Bottom South corner (point 1) */
+						if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9 && time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(x1 + 1, X1, X2);
+							s[0] = sc(x1 + 1, X1, X2);
+							r[0] = rX2;
+							q[0] = qX1;
+							f[0] = fx1p1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 2 */
+							t[1] = tc(x1, X1 - 1, X2);
+							s[1] = sc(x1, X1 - 1, X2);
+							r[1] = rX2;
+							q[1] = qX1m1;
+							f[1] = fx1;
+							g[1] = -1;
+							n[1] = -1;
+							m[1] = -1;
+							/* Point 3 */
+							t[2] = tc(x1 + 1, X1 - 1, X2);
+							s[2] = sc(x1 + 1, X1 - 1, X2);
+							r[2] = rX2;
+							q[2] = qX1m1;
+							f[2] = fx1p1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = 1;
+							/* Point 4 */
+							t[3] = tc(x1 + 1, X1, X2 - 1);
+							s[3] = sc(x1 + 1, X1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qX1;
+							f[3] = fx1p1;
+							g[3] = 1;
+							n[3] = 1;
+							m[3] = 1;
+							/* Point 5 */
+							t[4] = tc(x1, X1, X2 - 1);
+							s[4] = sc(x1, X1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qX1;
+							f[4] = fx1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = -1;
+							/* Point 6 */
+							t[5] = tc(x1, X1 - 1, X2 - 1);
+							s[5] = sc(x1, X1 - 1, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qX1m1;
+							f[5] = fx1;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 7 */
+							t[6] = tc(x1 + 1, X1 - 1, X2 - 1);
+							s[6] = sc(x1 + 1, X1 - 1, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qX1m1;
+							f[6] = fx1p1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 1 */
+							s[7] = sc(x1, X1, X2);
+							r[7] = rX2;
+							q[7] = qX1;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = 1;
+							m[7] = -1;
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/*** New Edge Trials ***/
+						if (guess > 1.0e9)
+						{
+							/* Top edge */
+							/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>y1+1 && X1<y2-1 )  {*/
+							if (X2 < nz - 1 && X1 > y1 + 1 && X1 < y2 - 1)
+							{
+								if (time0[index + nxy] < 1.e9)
+								{
+									/* Point 0 */
+									t[0] = tc(x1 + 1, X1 + 1, X2 + 1);
+									s[0] = sc(x1 + 1, X1 + 1, X2 + 1);
+									/* Point 1 */
+									t[1] = tc(x1 + 1, X1, X2 + 1);
+									s[1] = sc(x1 + 1, X1, X2 + 1);
+									/* Point 2 */
+									t[2] = tc(x1 + 1, X1, X2);
+									s[2] = sc(x1 + 1, X1, X2);
+									/* Point 3 */
+									t[3] = tc(x1 + 1, X1 - 1, X2 + 1);
+									s[3] = sc(x1 + 1, X1 - 1, X2 + 1);
+									/* Point 4 */
+									t[4] = tc(x1, X1, X2 + 1);
+									s[4] = sc(x1, X1, X2 + 1);
+									/* Point 5 */
+									s[5] = sc(x1, X1, X2);
+
+									d01 = rXp1 * dq;
+									d12 = h;
+									d14 = rXp1 * sin(qX1) * df;
+									d25 = rX2 * sin(qX1) * df;
+									d45 = h;
+
+									try
+										= fdsphne(t, s, d01, d12, d14, d25,
+												  d45);
+									if (try < guess)
+										guess = try
+											;
+								}
+							}
+							/* Bottom Edge */
+							if (X2 > 0 && X1 > y1 + 1 && X1 < y2 - 1 && time0[index - nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x1 + 1, X1 - 1, X2 - 1);
+								s[0] = sc(x1 + 1, X1 - 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(x1 + 1, X1, X2 - 1);
+								s[1] = sc(x1 + 1, X1, X2 - 1);
+								/* Point 2 */
+								t[2] = tc(x1 + 1, X1, X2);
+								s[2] = sc(x1 + 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1 + 1, X2 - 1);
+								s[3] = sc(x1 + 1, X1 + 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(x1, X1, X2 - 1);
+								s[4] = sc(x1, X1, X2 - 1);
+								/* Point 5 */
+								s[5] = sc(x1, X1, X2);
+
+								d01 = rXm1 * dq;
+								d12 = h;
+								d14 = rXm1 * sin(qX1) * df;
+								d25 = rX2 * sin(qX1) * df;
+								d45 = h;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Northern Edge */
+							if (X1 < ny - 1 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index + nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x1 + 1, X1 + 1, X2 - 1);
+								s[0] = sc(x1 + 1, X1 + 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(x1 + 1, X1 + 1, X2);
+								s[1] = sc(x1 + 1, X1 + 1, X2);
+								/* Point 2 */
+								t[2] = tc(x1 + 1, X1, X2);
+								s[2] = sc(x1 + 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1 + 1, X2 + 1);
+								s[3] = sc(x1 + 1, X1 + 1, X2 + 1);
+								/* Point 4 */
+								t[4] = tc(x1, X1 + 1, X2);
+								s[4] = sc(x1, X1 + 1, X2);
+								/* Point 5 */
+								s[5] = sc(x1, X1, X2);
+
+								d01 = h;
+								d12 = rX2 * dq;
+								d14 = rX2 * sin(qX1p1) * df;
+								d25 = rX2 * sin(qX1) * df;
+								d45 = rX2 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Southern Edge */
+							if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index - nx] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(x1 + 1, X1 - 1, X2 + 1);
+								s[0] = sc(x1 + 1, X1 - 1, X2 + 1);
+								/* Point 1 */
+								t[1] = tc(x1 + 1, X1 - 1, X2);
+								s[1] = sc(x1 + 1, X1 - 1, X2);
+								/* Point 2 */
+								t[2] = tc(x1 + 1, X1, X2);
+								s[2] = sc(x1 + 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1 - 1, X2 - 1);
+								s[3] = sc(x1 + 1, X1 - 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(x1, X1 - 1, X2);
+								s[4] = sc(x1, X1 - 1, X2);
+								/* Point 5 */
+								s[5] = sc(x1, X1, X2);
+
+								d01 = h;
+								d12 = rX2 * dq;
+								d14 = rX2 * sin(qX1m1) * df;
+								d25 = rX2 * sin(qX1) * df;
+								d45 = rX2 * dq;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Two-D Trials ***/
+						/* West-North */
+						if (X1 > 0 && time0[index - nx] < 1.e9)
+						{
+							s[0] = sc(x1, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x1, X1 - 1, X2);
+							s[1] = sc(x1, X1 - 1, X2);
+							/* Point 2 */
+							t[2] = tc(x1 + 1, X1, X2);
+							s[2] = sc(x1 + 1, X1, X2);
+							/* Point 3 */
+							t[3] = tc(x1 + 1, X1 - 1, X2);
+							s[3] = sc(x1 + 1, X1 - 1, X2);
+
+							d01 = rX2 * dq;
+							d02 = rX2 * sinqX1 * df;
+							d13 = rX2 * sin(qX1m1) * df;
+							d23 = rX2 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* West-South */
+						if (X1 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							s[0] = sc(x1, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x1, X1 + 1, X2);
+							s[1] = sc(x1, X1 + 1, X2);
+							/* Point 2 */
+							t[2] = tc(x1 + 1, X1, X2);
+							s[2] = sc(x1 + 1, X1, X2);
+							/* Point 3 */
+							t[3] = tc(x1 + 1, X1 + 1, X2);
+							s[3] = sc(x1 + 1, X1 + 1, X2);
+
+							d01 = rX2 * dq;
+							d02 = rX2 * sinqX1 * df;
+							d13 = rX2 * sin(qX1p1) * df;
+							d23 = rX2 * dq;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* West-Top */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(x1, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x1, X1, X2 - 1);
+							s[1] = sc(x1, X1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(x1 + 1, X1, X2);
+							s[2] = sc(x1 + 1, X1, X2);
+							/* Point 3 */
+							t[3] = tc(x1 + 1, X1, X2 - 1);
+							s[3] = sc(x1 + 1, X1, X2 - 1);
+
+							d01 = h;
+							d02 = rX2 * sinqX1 * df;
+							d13 = rXm1 * sinqX1 * df;
+							d23 = h;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* West-Bottom */
+						/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  { */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(x1, X1, X2);
+								/* Point 1 */
+								t[1] = tc(x1, X1, X2 + 1);
+								s[1] = sc(x1, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x1 + 1, X1, X2);
+								s[2] = sc(x1 + 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1, X2 + 1);
+								s[3] = sc(x1 + 1, X1, X2 + 1);
+
+								d01 = h;
+								d02 = rX2 * sinqX1 * df;
+								d13 = rXp1 * sinqX1 * df;
+								d23 = h;
+
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+						/* Parallel - North Bottom */
+						/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(x1, X1, X2);
+								/* Point 1 */
+								t[1] = tc(x1, X1, X2 + 1);
+								s[1] = sc(x1, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x1, X1 - 1, X2);
+								s[2] = sc(x1, X1 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(x1, X1 - 1, X2 + 1);
+								s[3] = sc(x1, X1 - 1, X2 + 1);
+								d01 = h;
+								d02 = rX2 * dq;
+								d13 = rXp1 * dq;
+								d23 = h;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - North Top */
+						if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9 && time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(x1, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x1, X1, X2 - 1);
+							s[1] = sc(x1, X1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(x1, X1 - 1, X2);
+							s[2] = sc(x1, X1 - 1, X2);
+							/* Point 3 */
+							t[3] = tc(x1, X1 - 1, X2 - 1);
+							s[3] = sc(x1, X1 - 1, X2 - 1);
+							d01 = h;
+							d02 = rX2 * dq;
+							d13 = rXm1 * dq;
+							d23 = h;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Parallel - South Bottom */
+						/*if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
+						if (X2 < nz - 1 && X1 < ny - 1)
+						{
+							if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(x1, X1, X2);
+								/* Point 1 */
+								t[1] = tc(x1, X1, X2 + 1);
+								s[1] = sc(x1, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x1, X1 + 1, X2);
+								s[2] = sc(x1, X1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(x1, X1 + 1, X2 + 1);
+								s[3] = sc(x1, X1 + 1, X2 + 1);
+								d01 = h;
+								d02 = rX2 * dq;
+								d13 = rXp1 * dq;
+								d23 = h;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - South Top */
+						if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9 && time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(x1, X1, X2);
+							/* Point 1 */
+							t[1] = tc(x1, X1, X2 - 1);
+							s[1] = sc(x1, X1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(x1, X1 + 1, X2);
+							s[2] = sc(x1, X1 + 1, X2);
+							/* Point 3 */
+							t[3] = tc(x1, X1 + 1, X2 - 1);
+							s[3] = sc(x1, X1 + 1, X2 - 1);
+							d01 = h;
+							d02 = rX2 * dq;
+							d13 = rXm1 * dq;
+							d23 = h;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/*** New Face Trials ***/
+						if (guess > 1.0e9)
+						{
+							if (X1 > y1 + 1 && X1 < y2 - 1 && X2 > z1 + 1 && X2 < z2 - 1)
+							{
+								/* Point 0 */
+								t[0] = tc(x1 + 1, X1 + 1, X2);
+								s[0] = sc(x1 + 1, X1 + 1, X2);
+								/* Point 1 */
+								t[1] = tc(x1 + 1, X1, X2 + 1);
+								s[1] = sc(x1 + 1, X1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(x1 + 1, X1, X2);
+								s[2] = sc(x1 + 1, X1, X2);
+								/* Point 3 */
+								t[3] = tc(x1 + 1, X1, X2 - 1);
+								s[3] = sc(x1 + 1, X1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(x1 + 1, X1 - 1, X2);
+								s[4] = sc(x1 + 1, X1 - 1, X2);
+								/* Point 5 */
+								s[5] = sc(x1, X1, X2);
+								d02 = rX2 * dq;
+								d12 = h;
+								d25 = rX2 * sinqX1 * df;
+								try
+									= fdsphnf(t, s, d02, d12, d25);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Edge Trials ***/
+						/* Change in Longitude */
+						try
+							= tc(x1 + 1, X1, X2) + .5 * (sc(x1, X1, X2) + sc(x1 + 1, X1, X2)) * rX2 * sinqX1 * df;
+						if (try < guess)
+							guess = try
+								;
+						/* Change in South Latitude */
+						if (X1 < ny - 1 && time0[index + nx] < 1.e9)
+						{
+							try
+								= tc(x1, X1 + 1, X2) + .5 * (sc(x1, X1, X2) + sc(x1, X1 + 1, X2)) * rX2 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in North Latitude */
+						if (X1 > 0 && time0[index - nx] < 1.e9)
+						{
+							try
+								= tc(x1, X1 - 1, X2) + .5 * (sc(x1, X1, X2) + sc(x1, X1 - 1, X2)) * rX2 * dq;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * dq * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in depth (increasing) */
+						/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  { */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								try
+									= tc(x1, X1, X2 + 1) + .5 * (sc(x1, X1, X2) + sc(x1, X1, X2 + 1)) * h;
+								if (try < guess)
+								{
+									fhead = (guess - try) / (h * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Change in depth (decreasing) */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							try
+								= tc(x1, X1, X2 - 1) + .5 * (sc(x1, X1, X2) + sc(x1, X1, X2 - 1)) * h;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (h * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						if (guess < time0[index])
+						{
+							time0[index] = guess;
+							if (fhead > headtest)
+								headw[1]++;
+						}
+					}
+					if (x1 == 0)
+						dx1 = 0;
+					x1--;
+				}
+				/* End x1 if condition */
+			}
+			/* End growth loop */
+
+			/* NORTH (FRONT) SIDE */
+			for (igrow = 1; igrow <= jminus; igrow++)
+			{
+				if (dy1)
+				{
+					ii = 0;
+					for (k = z1 + 1; k <= z2 - 1; k++)
+					{
+						for (i = x1 + 1; i <= x2 - 1; i++)
+						{
+							sort[ii].time = tc(i, y1 + 1, k);
+							sort[ii].i1 = i;
+							sort[ii].i2 = k;
+							ii++;
+						}
+					}
+					qsort((char *)sort, ii, sizeof(struct sorted), compar);
+					for (i = 0; i < ii; i++)
+					{
+						X1 = sort[i].i1;
+						X2 = sort[i].i2;
+						index = X2 * nxy + y1 * nx + X1;
+						fhead = 0.;
+						guess = time0[index];
+
+						rX2 = rc(X2);
+						rXp1 = rc(X2 + 1);
+						rXm1 = rc(X2 - 1);
+						qy1 = qc(y1);
+						qy1p1 = qc(y1 + 1);
+						fx1 = fc(X1);
+						fx1p1 = fc(X1 + 1);
+						fx1m1 = fc(X1 - 1);
+
+						sinqy1 = sin(qy1);
+
+						/*** 3D Trials ***/
+						/* Top West corner (point 6) */
+						/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
+						if (X2 < nz - 1 && X1 < nx - 1)
+						{
+							if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, y1 + 1, X2 + 1);
+								s[0] = sc(X1 + 1, y1 + 1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qy1p1;
+								f[0] = fx1p1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = 1;
+								/* Point 1 */
+								t[1] = tc(X1, y1 + 1, X2 + 1);
+								s[1] = sc(X1, y1 + 1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qy1p1;
+								f[1] = fx1;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = -1;
+								/* Point 2 */
+								t[2] = tc(X1, y1, X2 + 1);
+								s[2] = sc(X1, y1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qy1;
+								f[2] = fx1;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = -1;
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y1, X2 + 1);
+								s[3] = sc(X1 + 1, y1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qy1;
+								f[3] = fx1p1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = 1;
+								/* Point 4 */
+								t[4] = tc(X1 + 1, y1 + 1, X2);
+								s[4] = sc(X1 + 1, y1 + 1, X2);
+								r[4] = rX2;
+								q[4] = qy1p1;
+								f[4] = fx1p1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = 1;
+								/* Point 5 */
+								t[5] = tc(X1, y1 + 1, X2);
+								s[5] = sc(X1, y1 + 1, X2);
+								r[5] = rX2;
+								q[5] = qy1p1;
+								f[5] = fx1;
+								g[5] = 1;
+								n[5] = 1;
+								m[5] = -1;
+								/* Point 7 */
+								t[6] = tc(X1 + 1, y1, X2);
+								s[6] = sc(X1 + 1, y1, X2);
+								r[6] = rX2;
+								q[6] = qy1;
+								f[6] = fx1p1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = 1;
+								/* Point 6 */
+								s[7] = sc(X1, y1, X2);
+								r[7] = rX2;
+								q[7] = qy1;
+								f[7] = fx1;
+								g[7] = 1;
+								n[7] = -1;
+								m[7] = -1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/* Top East corner (point 7) */
+						/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1, y1 + 1, X2 + 1);
+								s[0] = sc(X1, y1 + 1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qy1p1;
+								f[0] = fx1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = 1;
+								/* Point 1 */
+								t[1] = tc(X1 - 1, y1 + 1, X2 + 1);
+								s[1] = sc(X1 - 1, y1 + 1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qy1p1;
+								f[1] = fx1m1;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = -1;
+								/* Point 2 */
+								t[2] = tc(X1 - 1, y1, X2 + 1);
+								s[2] = sc(X1 - 1, y1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qy1;
+								f[2] = fx1m1;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = -1;
+								/* Point 3 */
+								t[3] = tc(X1, y1, X2 + 1);
+								s[3] = sc(X1, y1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qy1;
+								f[3] = fx1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = 1;
+								/* Point 4 */
+								t[4] = tc(X1, y1 + 1, X2);
+								s[4] = sc(X1, y1 + 1, X2);
+								r[4] = rX2;
+								q[4] = qy1p1;
+								f[4] = fx1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = 1;
+								/* Point 5 */
+								t[5] = tc(X1 - 1, y1 + 1, X2);
+								s[5] = sc(X1 - 1, y1 + 1, X2);
+								r[5] = rX2;
+								q[5] = qy1p1;
+								f[5] = fx1m1;
+								g[5] = 1;
+								n[5] = 1;
+								m[5] = -1;
+								/* Point 6 */
+								t[6] = tc(X1 - 1, y1, X2);
+								s[6] = sc(X1 - 1, y1, X2);
+								r[6] = rX2;
+								q[6] = qy1;
+								f[6] = fx1m1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = -1;
+								/* Point 7 */
+								s[7] = sc(X1, y1, X2);
+								r[7] = rX2;
+								q[7] = qy1;
+								f[7] = fx1;
+								g[7] = 1;
+								n[7] = -1;
+								m[7] = 1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*  Bottom West corner (point 2) */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(X1 + 1, y1 + 1, X2);
+							s[0] = sc(X1 + 1, y1 + 1, X2);
+							r[0] = rX2;
+							q[0] = qy1p1;
+							f[0] = fx1p1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 1 */
+							t[1] = tc(X1, y1 + 1, X2);
+							s[1] = sc(X1, y1 + 1, X2);
+							r[1] = rX2;
+							q[1] = qy1p1;
+							f[1] = fx1;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 3 */
+							t[2] = tc(X1 + 1, y1, X2);
+							s[2] = sc(X1 + 1, y1, X2);
+							r[2] = rX2;
+							q[2] = qy1;
+							f[2] = fx1p1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = 1;
+							/* Point 4 */
+							t[3] = tc(X1 + 1, y1 + 1, X2 - 1);
+							s[3] = sc(X1 + 1, y1 + 1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qy1p1;
+							f[3] = fx1p1;
+							g[3] = 1;
+							n[3] = 1;
+							m[3] = 1;
+							/* Point 5 */
+							t[4] = tc(X1, y1 + 1, X2 - 1);
+							s[4] = sc(X1, y1 + 1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qy1p1;
+							f[4] = fx1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = -1;
+							/* Point 6 */
+							t[5] = tc(X1, y1, X2 - 1);
+							s[5] = sc(X1, y1, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qy1;
+							f[5] = fx1;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 7 */
+							t[6] = tc(X1 + 1, y1, X2 - 1);
+							s[6] = sc(X1 + 1, y1, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qy1;
+							f[6] = fx1p1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 2 */
+							s[7] = sc(X1, y1, X2);
+							r[7] = rX2;
+							q[7] = qy1;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = -1;
+							m[7] = -1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* Bottom East corner (point 3) */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 0 */
+							t[0] = tc(X1, y1 + 1, X2);
+							s[0] = sc(X1, y1 + 1, X2);
+							r[0] = rX2;
+							q[0] = qy1p1;
+							f[0] = fx1;
+							g[0] = -1;
+							n[0] = 1;
+							m[0] = 1;
+							/* Point 1 */
+							t[1] = tc(X1 - 1, y1 + 1, X2);
+							s[1] = sc(X1 - 1, y1 + 1, X2);
+							r[1] = rX2;
+							q[1] = qy1p1;
+							f[1] = fx1m1;
+							g[1] = -1;
+							n[1] = 1;
+							m[1] = -1;
+							/* Point 2 */
+							t[2] = tc(X1 - 1, y1, X2);
+							s[2] = sc(X1 - 1, y1, X2);
+							r[2] = rX2;
+							q[2] = qy1;
+							f[2] = fx1m1;
+							g[2] = -1;
+							n[2] = -1;
+							m[2] = -1;
+							/* Point 4 */
+							t[3] = tc(X1, y1 + 1, X2 - 1);
+							s[3] = sc(X1, y1 + 1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qy1p1;
+							f[3] = fx1;
+							g[3] = 1;
+							n[3] = 1;
+							m[3] = 1;
+							/* Point 5 */
+							t[4] = tc(X1 - 1, y1 + 1, X2 - 1);
+							s[4] = sc(X1 - 1, y1 + 1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qy1p1;
+							f[4] = fx1m1;
+							g[4] = 1;
+							n[4] = 1;
+							m[4] = -1;
+							/* Point 6 */
+							t[5] = tc(X1 - 1, y1, X2 - 1);
+							s[5] = sc(X1 - 1, y1, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qy1;
+							f[5] = fx1m1;
+							g[5] = 1;
+							n[5] = -1;
+							m[5] = -1;
+							/* Point 7 */
+							t[6] = tc(X1, y1, X2 - 1);
+							s[6] = sc(X1, y1, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qy1;
+							f[6] = fx1;
+							g[6] = 1;
+							n[6] = -1;
+							m[6] = 1;
+							/* Point 3 */
+							s[7] = sc(X1, y1, X2);
+							r[7] = rX2;
+							q[7] = qy1;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = -1;
+							m[7] = 1;
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/*** New Edge Trials ***/
+						if (guess > 1.0e9)
+						{
+							/* Top edge */
+							/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>x1+1 && X1<x2-1 )  { */
+							if (X2 < nz - 1 && X1 > x1 + 1 && X1 < x2 - 1)
+							{
+								if (time0[index + nxy] < 1.e9)
+								{
+									/* Point 0 */
+									t[0] = tc(X1 - 1, y1 + 1, X2 + 1);
+									s[0] = sc(X1 - 1, y1 + 1, X2 + 1);
+									/* Point 1 */
+									t[1] = tc(X1, y1 + 1, X2 + 1);
+									s[1] = sc(X1, y1 + 1, X2 + 1);
+									/* Point 2 */
+									t[2] = tc(X1, y1 + 1, X2);
+									s[2] = sc(X1, y1 + 1, X2);
+									/* Point 3 */
+									t[3] = tc(X1 + 1, y1 + 1, X2 + 1);
+									s[3] = sc(X1 + 1, y1 + 1, X2 + 1);
+									/* Point 4 */
+									t[4] = tc(X1, y1, X2 + 1);
+									s[4] = sc(X1, y1, X2 + 1);
+									/* Point 5 */
+									s[5] = sc(X1, y1, X2);
+
+									d01 = rXp1 * sin(qy1p1) * df;
+									d12 = h;
+									d14 = rXp1 * dq;
+									d25 = rX2 * dq;
+									d45 = h;
+
+									try
+										= fdsphne(t, s, d01, d12, d14, d25,
+												  d45);
+									if (try < guess)
+										guess = try
+											;
+								}
+							}
+							/* Bottom Edge */
+							if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, y1 + 1, X2 - 1);
+								s[0] = sc(X1 + 1, y1 + 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1, y1 + 1, X2 - 1);
+								s[1] = sc(X1, y1 + 1, X2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, y1 + 1, X2);
+								s[2] = sc(X1, y1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, y1 + 1, X2 - 1);
+								s[3] = sc(X1 - 1, y1 + 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1, y1, X2 - 1);
+								s[4] = sc(X1, y1, X2 - 1);
+								/* Point 5 */
+								s[5] = sc(X1, y1, X2);
+
+								d01 = rXm1 * sin(qy1p1) * df;
+								d12 = h;
+								d14 = rXm1 * dq;
+								d25 = rX2 * dq;
+								d45 = h;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Eastern Edge */
+							if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 & time0[index - 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, y1 + 1, X2 - 1);
+								s[0] = sc(X1 - 1, y1 + 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, y1 + 1, X2);
+								s[1] = sc(X1 - 1, y1 + 1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y1 + 1, X2);
+								s[2] = sc(X1, y1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, y1 + 1, X2 + 1);
+								s[3] = sc(X1 - 1, y1 + 1, X2 + 1);
+								/* Point 4 */
+								t[4] = tc(X1 - 1, y1, X2);
+								s[4] = sc(X1 - 1, y1, X2);
+								/* Point 5 */
+								s[5] = sc(X1, y1, X2);
+
+								d01 = h;
+								d12 = rX2 * sin(qy1p1) * df;
+								d14 = rX2 * dq;
+								d25 = rX2 * dq;
+								d45 = rX2 * sin(qy1) * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Western Edge */
+							if (X1 < nx - 1 && X2 > z1 + 1 && X2 < z2 - 1 & time0[index + 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, y1 + 1, X2 + 1);
+								s[0] = sc(X1 + 1, y1 + 1, X2 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, y1 + 1, X2);
+								s[1] = sc(X1 + 1, y1 + 1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y1 + 1, X2);
+								s[2] = sc(X1, y1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y1 + 1, X2 - 1);
+								s[3] = sc(X1 + 1, y1 + 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1 + 1, y1, X2);
+								s[4] = sc(X1 + 1, y1, X2);
+								/* Point 5 */
+								s[5] = sc(X1, y1, X2);
+
+								d01 = h;
+								d12 = rX2 * sin(qy1p1) * df;
+								d14 = rX2 * dq;
+								d25 = rX2 * dq;
+								d45 = rX2 * sin(qy1) * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Two-D Trials ***/
+						/* North-East */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							s[0] = sc(X1, y1, X2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, y1, X2);
+							s[1] = sc(X1 + 1, y1, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y1 + 1, X2);
+							s[2] = sc(X1, y1 + 1, X2);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, y1 + 1, X2);
+							s[3] = sc(X1 + 1, y1 + 1, X2);
+
+							d01 = rX2 * sinqy1 * df;
+							d02 = rX2 * dq;
+							d13 = rX2 * dq;
+							d23 = rX2 * sin(qy1p1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* North-West */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							s[0] = sc(X1, y1, X2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, y1, X2);
+							s[1] = sc(X1 - 1, y1, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y1 + 1, X2);
+							s[2] = sc(X1, y1 + 1, X2);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, y1 + 1, X2);
+							s[3] = sc(X1 - 1, y1 + 1, X2);
+
+							d01 = rX2 * sinqy1 * df;
+							d02 = rX2 * dq;
+							d13 = rX2 * dq;
+							d23 = rX2 * sin(qy1p1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* North-Top */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(X1, y1, X2);
+							/* Point 1 */
+							t[1] = tc(X1, y1, X2 - 1);
+							s[1] = sc(X1, y1, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(X1, y1 + 1, X2);
+							s[2] = sc(X1, y1 + 1, X2);
+							/* Point 3 */
+							t[3] = tc(X1, y1 + 1, X2 - 1);
+							s[3] = sc(X1, y1 + 1, X2 - 1);
+
+							d01 = h;
+							d02 = rX2 * dq;
+							d13 = rXm1 * dq;
+							d23 = h;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* North-Bottom */
+						/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  { */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(X1, y1, X2);
+								/* Point 1 */
+								t[1] = tc(X1, y1, X2 + 1);
+								s[1] = sc(X1, y1, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, y1 + 1, X2);
+								s[2] = sc(X1, y1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1, y1 + 1, X2 + 1);
+								s[3] = sc(X1, y1 + 1, X2 + 1);
+
+								d01 = h;
+								d02 = rX2 * dq;
+								d13 = rXp1 * dq;
+								d23 = h;
+
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+						/* Parallel - East Bottom */
+						/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
+						if (X2 < nz - 1 && X1 < nx - 1)
+						{
+							if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(X1, y1, X2);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, y1, X2);
+								s[1] = sc(X1 + 1, y1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y1, X2 + 1);
+								s[2] = sc(X1, y1, X2 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y1, X2 + 1);
+								s[3] = sc(X1 + 1, y1, X2 + 1);
+
+								d01 = rX2 * sinqy1 * df;
+								d02 = h;
+								d13 = h;
+								d23 = rXp1 * sinqy1 * df;
+
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - East Top */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(X1, y1, X2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, y1, X2);
+							s[1] = sc(X1 + 1, y1, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y1, X2 - 1);
+							s[2] = sc(X1, y1, X2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, y1, X2 - 1);
+							s[3] = sc(X1 + 1, y1, X2 - 1);
+
+							d01 = rX2 * sinqy1 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rXm1 * sinqy1 * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Parallel - West Bottom */
+						/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(X1, y1, X2);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, y1, X2);
+								s[1] = sc(X1 - 1, y1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y1, X2 + 1);
+								s[2] = sc(X1, y1, X2 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, y1, X2 + 1);
+								s[3] = sc(X1 - 1, y1, X2 + 1);
+								d01 = rX2 * sinqy1 * df;
+								d02 = h;
+								d13 = h;
+								d23 = rXp1 * sinqy1 * df;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - West Top */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(X1, y1, X2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, y1, X2);
+							s[1] = sc(X1 - 1, y1, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y1, X2 - 1);
+							s[2] = sc(X1, y1, X2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, y1, X2 - 1);
+							s[3] = sc(X1 - 1, y1, X2 - 1);
+
+							d01 = rX2 * sinqy1 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rXm1 * sinqy1 * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/*** New Face Trials ***/
+						if (guess > 1.0e9)
+						{
+							if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > z1 + 1 && X2 < z2 - 1)
+							{
+								/* Point 0 */
+								t[0] = tc(X1, y1 + 1, X2 + 1);
+								s[0] = sc(X1, y1 + 1, X2 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, y1 + 1, X2);
+								s[1] = sc(X1 + 1, y1 + 1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y1 + 1, X2);
+								s[2] = sc(X1, y1 + 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, y1 + 1, X2);
+								s[3] = sc(X1 - 1, y1 + 1, X2);
+								/* Point 4 */
+								t[4] = tc(X1, y1 + 1, X2 - 1);
+								s[4] = sc(X1, y1 + 1, X2 - 1);
+								/* Point 5 */
+								s[5] = sc(X1, y1, X2);
+								d02 = h;
+								d12 = rX2 * sin(qy1p1) * df;
+								d25 = rX2 * dq;
+								try
+									= fdsphnf(t, s, d02, d12, d25);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Edge Trials ***/
+						/* Change in Latitude */
+						try
+							= tc(X1, y1 + 1, X2) + .5 * (sc(X1, y1 + 1, X2) + sc(X1, y1, X2)) * rX2 * dq;
+						if (try < guess)
+							guess = try
+								;
+						/* Change in East Longitude */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							try
+								= tc(X1 + 1, y1, X2) + .5 * (sc(X1, y1, X2) + sc(X1 + 1, y1, X2)) * rX2 * df * sinqy1;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * df * sinqy1 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in West Longitude */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							try
+								= tc(X1 - 1, y1, X2) + .5 * (sc(X1, y1, X2) + sc(X1 - 1, y1, X2)) * rX2 * df * sinqy1;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * df * sinqy1 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in depth (increasing) */
+						/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  { */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								try
+									= tc(X1, y1, X2 + 1) + .5 * (sc(X1, y1, X2) + sc(X1, y1, X2 + 1)) * h;
+								if (try < guess)
+								{
+									fhead = (guess - try) / (h * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Change in depth (decreasing) */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							try
+								= tc(X1, y1, X2 - 1) + .5 * (sc(X1, y1, X2) + sc(X1, y1, X2 - 1)) * h;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (h * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						if (guess < time0[index])
+						{
+							time0[index] = guess;
+							if (fhead > headtest)
+								headw[3]++;
+						}
+					}
+					if (y1 == 0)
+						dy1 = 0;
+					y1--;
+				}
+				/* End y1 if condition */
+			}
+			/* End growth loop */
+
+			/* SOUTH (BACK) SIDE */
+			for (igrow = 1; igrow <= jplus; igrow++)
+			{
+				if (dy2)
+				{
+					ii = 0;
+					for (k = z1 + 1; k <= z2 - 1; k++)
+					{
+						for (i = x1 + 1; i <= x2 - 1; i++)
+						{
+							sort[ii].time = tc(i, y2 - 1, k);
+							sort[ii].i1 = i;
+							sort[ii].i2 = k;
+							ii++;
+						}
+					}
+					qsort((char *)sort, ii, sizeof(struct sorted), compar);
+					for (i = 0; i < ii; i++)
+					{
+						X1 = sort[i].i1;
+						X2 = sort[i].i2;
+						index = X2 * nxy + y2 * nx + X1;
+						fhead = 0.;
+						guess = time0[index];
+
+						rX2 = rc(X2);
+						rXp1 = rc(X2 + 1);
+						rXm1 = rc(X2 - 1);
+						qy2 = qc(y2);
+						qy2m1 = qc(y2 - 1);
+						fx1 = fc(X1);
+						fx1p1 = fc(X1 + 1);
+						fx1m1 = fc(X1 - 1);
+
+						sinqy2 = sin(qy2);
+
+						/*** 3D Trials ***/
+						/* Top West corner (point 5) */
+						/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
+						if (X2 < nz - 1 && X1 < nx - 1)
+						{
+							if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, y2, X2 + 1);
+								s[0] = sc(X1 + 1, y2, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qy2;
+								f[0] = fx1p1;
+								g[0] = -1;
+								n[0] = 1;
+								m[0] = 1;
+								/* Point 1 */
+								t[1] = tc(X1, y2, X2 + 1);
+								s[1] = sc(X1, y2, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qy2;
+								f[1] = fx1;
+								g[1] = -1;
+								n[1] = 1;
+								m[1] = -1;
+								/* Point 2 */
+								t[2] = tc(X1, y2 - 1, X2 + 1);
+								s[2] = sc(X1, y2 - 1, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qy2m1;
+								f[2] = fx1;
+								g[2] = -1;
+								n[2] = -1;
+								m[2] = -1;
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y2 - 1, X2 + 1);
+								s[3] = sc(X1 + 1, y2 - 1, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qy2m1;
+								f[3] = fx1p1;
+								g[3] = -1;
+								n[3] = -1;
+								m[3] = 1;
+								/* Point 4 */
+								t[4] = tc(X1 + 1, y2, X2);
+								s[4] = sc(X1 + 1, y2, X2);
+								r[4] = rX2;
+								q[4] = qy2;
+								f[4] = fx1p1;
+								g[4] = 1;
+								n[4] = 1;
+								m[4] = 1;
+								/* Point 6 */
+								t[5] = tc(X1, y2 - 1, X2);
+								s[5] = sc(X1, y2 - 1, X2);
+								r[5] = rX2;
+								q[5] = qy2m1;
+								f[5] = fx1;
+								g[5] = 1;
+								n[5] = -1;
+								m[5] = -1;
+								/* Point 7 */
+								t[6] = tc(X1 + 1, y2 - 1, X2);
+								s[6] = sc(X1 + 1, y2 - 1, X2);
+								r[6] = rX2;
+								q[6] = qy2m1;
+								f[6] = fx1p1;
+								g[6] = 1;
+								n[6] = -1;
+								m[6] = 1;
+								/* Point 5 */
+								s[7] = sc(X1, y2, X2);
+								r[7] = rX2;
+								q[7] = qy2;
+								f[7] = fx1;
+								g[7] = 1;
+								n[7] = 1;
+								m[7] = -1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/* Top East corner (point 4) */
+						/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								/* Point 3 */
+								t[0] = tc(X1, y2 - 1, X2 + 1);
+								s[0] = sc(X1, y2 - 1, X2 + 1);
+								r[0] = rXp1;
+								q[0] = qy2m1;
+								f[0] = fx1;
+								g[0] = -1;
+								n[0] = -1;
+								m[0] = 1;
+								/* Point 2 */
+								t[1] = tc(X1 - 1, y2 - 1, X2 + 1);
+								s[1] = sc(X1 - 1, y2 - 1, X2 + 1);
+								r[1] = rXp1;
+								q[1] = qy2m1;
+								f[1] = fx1m1;
+								g[1] = -1;
+								n[1] = -1;
+								m[1] = -1;
+								/* Point 1 */
+								t[2] = tc(X1 - 1, y2, X2 + 1);
+								s[2] = sc(X1 - 1, y2, X2 + 1);
+								r[2] = rXp1;
+								q[2] = qy2;
+								f[2] = fx1m1;
+								g[2] = -1;
+								n[2] = 1;
+								m[2] = -1;
+								/* Point 0 */
+								t[3] = tc(X1, y2, X2 + 1);
+								s[3] = sc(X1, y2, X2 + 1);
+								r[3] = rXp1;
+								q[3] = qy2;
+								f[3] = fx1;
+								g[3] = -1;
+								n[3] = 1;
+								m[3] = 1;
+								/* Point 7 */
+								t[4] = tc(X1, y2 - 1, X2);
+								s[4] = sc(X1, y2 - 1, X2);
+								r[4] = rX2;
+								q[4] = qy2m1;
+								f[4] = fx1;
+								g[4] = 1;
+								n[4] = -1;
+								m[4] = 1;
+								/* Point 6 */
+								t[5] = tc(X1 - 1, y2 - 1, X2);
+								s[5] = sc(X1 - 1, y2 - 1, X2);
+								r[5] = rX2;
+								q[5] = qy2m1;
+								f[5] = fx1m1;
+								g[5] = 1;
+								n[5] = -1;
+								m[5] = -1;
+								/* Point 5 */
+								t[6] = tc(X1 - 1, y2, X2);
+								s[6] = sc(X1 - 1, y2, X2);
+								r[6] = rX2;
+								q[6] = qy2;
+								f[6] = fx1m1;
+								g[6] = 1;
+								n[6] = 1;
+								m[6] = -1;
+								/* Point 4 */
+								s[7] = sc(X1, y2, X2);
+								r[7] = rX2;
+								q[7] = qy2;
+								f[7] = fx1;
+								g[7] = 1;
+								n[7] = 1;
+								m[7] = 1;
+
+								try
+									= fdsph3d(t, s, r, q, f, g, n, m, h, dq,
+											  df);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*  Bottom West corner (point 1) */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 3 */
+							t[0] = tc(X1 + 1, y2 - 1, X2);
+							s[0] = sc(X1 + 1, y2 - 1, X2);
+							r[0] = rX2;
+							q[0] = qy2m1;
+							f[0] = fx1p1;
+							g[0] = -1;
+							n[0] = -1;
+							m[0] = 1;
+							/* Point 2 */
+							t[1] = tc(X1, y2 - 1, X2);
+							s[1] = sc(X1, y2 - 1, X2);
+							r[1] = rX2;
+							q[1] = qy2m1;
+							f[1] = fx1;
+							g[1] = -1;
+							n[1] = -1;
+							m[1] = -1;
+							/* Point 0 */
+							t[2] = tc(X1 + 1, y2, X2);
+							s[2] = sc(X1 + 1, y2, X2);
+							r[2] = rX2;
+							q[2] = qy2;
+							f[2] = fx1p1;
+							g[2] = -1;
+							n[2] = 1;
+							m[2] = 1;
+							/* Point 7 */
+							t[3] = tc(X1 + 1, y2 - 1, X2 - 1);
+							s[3] = sc(X1 + 1, y2 - 1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qy2m1;
+							f[3] = fx1p1;
+							g[3] = 1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 6 */
+							t[4] = tc(X1, y2 - 1, X2 - 1);
+							s[4] = sc(X1, y2 - 1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qy2m1;
+							f[4] = fx1;
+							g[4] = 1;
+							n[4] = -1;
+							m[4] = -1;
+							/* Point 5 */
+							t[5] = tc(X1, y2, X2 - 1);
+							s[5] = sc(X1, y2, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qy2;
+							f[5] = fx1;
+							g[5] = 1;
+							n[5] = 1;
+							m[5] = -1;
+							/* Point 4 */
+							t[6] = tc(X1 + 1, y2, X2 - 1);
+							s[6] = sc(X1 + 1, y2, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qy2;
+							f[6] = fx1p1;
+							g[6] = 1;
+							n[6] = 1;
+							m[6] = 1;
+							/* Point 1 */
+							s[7] = sc(X1, y2, X2);
+							r[7] = rX2;
+							q[7] = qy2;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = 1;
+							m[7] = -1;
+
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/* Bottom East corner (point 0) */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							/* Point 3 */
+							t[0] = tc(X1, y2 - 1, X2);
+							s[0] = sc(X1, y2 - 1, X2);
+							r[0] = rX2;
+							q[0] = qy2m1;
+							f[0] = fx1;
+							g[0] = -1;
+							n[0] = -1;
+							m[0] = 1;
+							/* Point 2 */
+							t[1] = tc(X1 - 1, y2 - 1, X2);
+							s[1] = sc(X1 - 1, y2 - 1, X2);
+							r[1] = rX2;
+							q[1] = qy2m1;
+							f[1] = fx1m1;
+							g[1] = -1;
+							n[1] = -1;
+							m[1] = -1;
+							/* Point 1 */
+							t[2] = tc(X1 - 1, y2, X2);
+							s[2] = sc(X1 - 1, y2, X2);
+							r[2] = rX2;
+							q[2] = qy2;
+							f[2] = fx1m1;
+							g[2] = -1;
+							n[2] = 1;
+							m[2] = -1;
+							/* Point 7 */
+							t[3] = tc(X1, y2 - 1, X2 - 1);
+							s[3] = sc(X1, y2 - 1, X2 - 1);
+							r[3] = rXm1;
+							q[3] = qy2m1;
+							f[3] = fx1;
+							g[3] = 1;
+							n[3] = -1;
+							m[3] = 1;
+							/* Point 6 */
+							t[4] = tc(X1 - 1, y2 - 1, X2 - 1);
+							s[4] = sc(X1 - 1, y2 - 1, X2 - 1);
+							r[4] = rXm1;
+							q[4] = qy2m1;
+							f[4] = fx1m1;
+							g[4] = 1;
+							n[4] = -1;
+							m[4] = -1;
+							/* Point 5 */
+							t[5] = tc(X1 - 1, y2, X2 - 1);
+							s[5] = sc(X1 - 1, y2, X2 - 1);
+							r[5] = rXm1;
+							q[5] = qy2;
+							f[5] = fx1m1;
+							g[5] = 1;
+							n[5] = 1;
+							m[5] = -1;
+							/* Point 4 */
+							t[6] = tc(X1, y2, X2 - 1);
+							s[6] = sc(X1, y2, X2 - 1);
+							r[6] = rXm1;
+							q[6] = qy2;
+							f[6] = fx1;
+							g[6] = 1;
+							n[6] = 1;
+							m[6] = 1;
+							/* Point 0 */
+							s[7] = sc(X1, y2, X2);
+							r[7] = rX2;
+							q[7] = qy2;
+							f[7] = fx1;
+							g[7] = -1;
+							n[7] = 1;
+							m[7] = 1;
+							try
+								= fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
+							if (try < guess)
+								guess = try
+									;
+						}
+
+						/*** New Edge Trials ***/
+						if (guess > 1.0e9)
+						{
+							/* Top edge */
+							/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>x1+1 && X1<x2-1 )  { */
+							if (X2 < nz - 1 && X1 > x1 + 1 && X1 < x2 - 1)
+							{
+								if (time0[index + nxy] < 1.e9)
+								{
+									/* Point 0 */
+									t[0] = tc(X1 + 1, y2 - 1, X2 + 1);
+									s[0] = sc(X1 + 1, y2 - 1, X2 + 1);
+									/* Point 1 */
+									t[1] = tc(X1, y2 - 1, X2 + 1);
+									s[1] = sc(X1, y2 - 1, X2 + 1);
+									/* Point 2 */
+									t[2] = tc(X1, y2 - 1, X2);
+									s[2] = sc(X1, y2 - 1, X2);
+									/* Point 3 */
+									t[3] = tc(X1 - 1, y2 - 1, X2 + 1);
+									s[3] = sc(X1 - 1, y2 - 1, X2 + 1);
+									/* Point 4 */
+									t[4] = tc(X1, y2, X2 + 1);
+									s[4] = sc(X1, y2, X2 + 1);
+									/* Point 5 */
+									s[5] = sc(X1, y2, X2);
+
+									d01 = rXp1 * sin(qy2m1) * df;
+									d12 = h;
+									d14 = rXp1 * dq;
+									d25 = rX2 * dq;
+									d45 = h;
+
+									try
+										= fdsphne(t, s, d01, d12, d14, d25,
+												  d45);
+									if (try < guess)
+										guess = try
+											;
+								}
+							}
+							/* Bottom Edge */
+							if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nxy] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, y2 - 1, X2 - 1);
+								s[0] = sc(X1 - 1, y2 - 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1, y2 - 1, X2 - 1);
+								s[1] = sc(X1, y2 - 1, X2 - 1);
+								/* Point 2 */
+								t[2] = tc(X1, y2 - 1, X2);
+								s[2] = sc(X1, y2 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y2 - 1, X2 - 1);
+								s[3] = sc(X1 + 1, y2 - 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1, y2, X2 - 1);
+								s[4] = sc(X1, y2, X2 - 1);
+								/* Point 5 */
+								s[5] = sc(X1, y2, X2);
+
+								d01 = rXm1 * sin(qy2m1) * df;
+								d12 = h;
+								d14 = rXm1 * dq;
+								d25 = rX2 * dq;
+								d45 = h;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Eastern Edge */
+							if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index - 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 - 1, y2 - 1, X2 + 1);
+								s[0] = sc(X1 - 1, y2 - 1, X2 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, y2 - 1, X2);
+								s[1] = sc(X1 - 1, y2 - 1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y2 - 1, X2);
+								s[2] = sc(X1, y2 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, y2 - 1, X2 - 1);
+								s[3] = sc(X1 - 1, y2 - 1, X2 - 1);
+								/* Point 4 */
+								t[4] = tc(X1 - 1, y2, X2);
+								s[4] = sc(X1 - 1, y2, X2);
+								/* Point 5 */
+								s[5] = sc(X1, y2, X2);
+
+								d01 = h;
+								d12 = rX2 * sin(qy2m1) * df;
+								d14 = rX2 * dq;
+								d25 = rX2 * dq;
+								d45 = rX2 * sin(qy2) * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+							/* Western Edge */
+							if (X1 < nx - 1 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index + 1] < 1.e9)
+							{
+								/* Point 0 */
+								t[0] = tc(X1 + 1, y2 - 1, X2 - 1);
+								s[0] = sc(X1 + 1, y2 - 1, X2 - 1);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, y2 - 1, X2);
+								s[1] = sc(X1 + 1, y2 - 1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y2 - 1, X2);
+								s[2] = sc(X1, y2 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y2 - 1, X2 + 1);
+								s[3] = sc(X1 + 1, y2 - 1, X2 + 1);
+								/* Point 4 */
+								t[4] = tc(X1 + 1, y2, X2);
+								s[4] = sc(X1 + 1, y2, X2);
+								/* Point 5 */
+								s[5] = sc(X1, y2, X2);
+
+								d01 = h;
+								d12 = rX2 * sin(qy2m1) * df;
+								d14 = rX2 * dq;
+								d25 = rX2 * dq;
+								d45 = rX2 * sin(qy2) * df;
+
+								try
+									= fdsphne(t, s, d01, d12, d14, d25, d45);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Two-D Trials ***/
+						/* South-East */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							s[0] = sc(X1, y2, X2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, y2, X2);
+							s[1] = sc(X1 + 1, y2, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y2 - 1, X2);
+							s[2] = sc(X1, y2 - 1, X2);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, y2 - 1, X2);
+							s[3] = sc(X1 + 1, y2 - 1, X2);
+
+							d01 = rX2 * sinqy2 * df;
+							d02 = rX2 * dq;
+							d13 = rX2 * dq;
+							d23 = rX2 * sin(qy2m1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* South-West */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							s[0] = sc(X1, y2, X2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, y2, X2);
+							s[1] = sc(X1 - 1, y2, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y2 - 1, X2);
+							s[2] = sc(X1, y2 - 1, X2);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, y2 - 1, X2);
+							s[3] = sc(X1 - 1, y2 - 1, X2);
+
+							d01 = rX2 * sinqy2 * df;
+							d02 = rX2 * dq;
+							d13 = rX2 * dq;
+							d23 = rX2 * sin(qy2m1) * df;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* South-Top */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(X1, y2, X2);
+							/* Point 1 */
+							t[1] = tc(X1, y2, X2 - 1);
+							s[1] = sc(X1, y2, X2 - 1);
+							/* Point 2 */
+							t[2] = tc(X1, y2 - 1, X2);
+							s[2] = sc(X1, y2 - 1, X2);
+							/* Point 3 */
+							t[3] = tc(X1, y2 - 1, X2 - 1);
+							s[3] = sc(X1, y2 - 1, X2 - 1);
+
+							d01 = h;
+							d02 = rX2 * dq;
+							d13 = rXm1 * dq;
+							d23 = h;
+
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+								guess = try
+									;
+						}
+						/* South-Bottom */
+						/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  { */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(X1, y2, X2);
+								/* Point 1 */
+								t[1] = tc(X1, y2, X2 + 1);
+								s[1] = sc(X1, y2, X2 + 1);
+								/* Point 2 */
+								t[2] = tc(X1, y2 - 1, X2);
+								s[2] = sc(X1, y2 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1, y2 - 1, X2 + 1);
+								s[3] = sc(X1, y2 - 1, X2 + 1);
+
+								d01 = h;
+								d02 = rX2 * dq;
+								d13 = rXp1 * dq;
+								d23 = h;
+
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+						/* Parallel - East Bottom */
+						/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
+						if (X2 < nz - 1 && X1 < nx - 1)
+						{
+							if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(X1, y2, X2);
+								/* Point 1 */
+								t[1] = tc(X1 + 1, y2, X2);
+								s[1] = sc(X1 + 1, y2, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y2, X2 + 1);
+								s[2] = sc(X1, y2, X2 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y2, X2 + 1);
+								s[3] = sc(X1 + 1, y2, X2 + 1);
+								d01 = rX2 * sinqy2 * df;
+								d02 = h;
+								d13 = h;
+								d23 = rXp1 * sinqy2 * df;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - East Top */
+						if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9 && time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(X1, y2, X2);
+							/* Point 1 */
+							t[1] = tc(X1 + 1, y2, X2);
+							s[1] = sc(X1 + 1, y2, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y2, X2 - 1);
+							s[2] = sc(X1, y2, X2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1 + 1, y2, X2 - 1);
+							s[3] = sc(X1 + 1, y2, X2 - 1);
+							d01 = rX2 * sinqy2 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rXm1 * sinqy2 * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Parallel - West Bottom */
+						/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
+ && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
+						if (X2 < nz - 1 && X1 > 0)
+						{
+							if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9 && time0[index + nxy] < 1.e9)
+							{
+								s[0] = sc(X1, y2, X2);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, y2, X2);
+								s[1] = sc(X1 - 1, y2, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y2, X2 + 1);
+								s[2] = sc(X1, y2, X2 + 1);
+								/* Point 3 */
+								t[3] = tc(X1 - 1, y2, X2 + 1);
+								s[3] = sc(X1 - 1, y2, X2 + 1);
+								d01 = rX2 * sinqy2 * df;
+								d02 = h;
+								d13 = h;
+								d23 = rXp1 * sinqy2 * df;
+								try
+									= fdsph2d(t, s, d01, d02, d13, d23);
+								if (try < guess)
+								{
+									fhead = (guess - try) / (d01 * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Parallel - West Top */
+						if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9 && time0[index - nxy] < 1.e9)
+						{
+							s[0] = sc(X1, y2, X2);
+							/* Point 1 */
+							t[1] = tc(X1 - 1, y2, X2);
+							s[1] = sc(X1 - 1, y2, X2);
+							/* Point 2 */
+							t[2] = tc(X1, y2, X2 - 1);
+							s[2] = sc(X1, y2, X2 - 1);
+							/* Point 3 */
+							t[3] = tc(X1 - 1, y2, X2 - 1);
+							s[3] = sc(X1 - 1, y2, X2 - 1);
+							d01 = rX2 * sinqy2 * df;
+							d02 = h;
+							d13 = h;
+							d23 = rXm1 * sinqy2 * df;
+							try
+								= fdsph2d(t, s, d01, d02, d13, d23);
+							if (try < guess)
+							{
+								fhead = (guess - try) / (d01 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+
+						/*** New Face Trials ***/
+						if (guess > 1.0e9)
+						{
+							if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > z1 + 1 && X2 < z2 - 1)
+							{
+								/* Point 0 */
+								t[0] = tc(X1, y2 - 1, X2 + 1);
+								s[0] = sc(X1, y2 - 1, X2 + 1);
+								/* Point 1 */
+								t[1] = tc(X1 - 1, y2 - 1, X2);
+								s[1] = sc(X1 - 1, y2 - 1, X2);
+								/* Point 2 */
+								t[2] = tc(X1, y2 - 1, X2);
+								s[2] = sc(X1, y2 - 1, X2);
+								/* Point 3 */
+								t[3] = tc(X1 + 1, y2 - 1, X2);
+								s[3] = sc(X1 + 1, y2 - 1, X2);
+								/* Point 4 */
+								t[4] = tc(X1, y2 - 1, X2 - 1);
+								s[4] = sc(X1, y2 - 1, X2 - 1);
+								/* Point 5 */
+								s[5] = sc(X1, y2, X2);
+								d02 = h;
+								d12 = rX2 * sin(qy2m1) * df;
+								d25 = rX2 * dq;
+								try
+									= fdsphnf(t, s, d02, d12, d25);
+								if (try < guess)
+									guess = try
+										;
+							}
+						}
+
+						/*** Edge Trials ***/
+						/* Change in Latitude */
+						try
+							= tc(X1, y2 - 1, X2) + .5 * (sc(X1, y2 - 1, X2) + sc(X1, y2, X2)) * rX2 * dq;
+						if (try < guess)
+							guess = try
+								;
+						/* Change in East Longitude */
+						if (X1 < nx - 1 && time0[index + 1] < 1.e9)
+						{
+							try
+								= tc(X1 + 1, y2, X2) + .5 * (sc(X1, y2, X2) + sc(X1 + 1, y2, X2)) * rX2 * df * sinqy2;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * df * sinqy2 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in West Longitude */
+						if (X1 > 0 && time0[index - 1] < 1.e9)
+						{
+							try
+								= tc(X1 - 1, y2, X2) + .5 * (sc(X1, y2, X2) + sc(X1 - 1, y2, X2)) * rX2 * df * sinqy2;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (rX2 * df * sinqy2 * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						/* Change in depth (increasing) */
+						/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  { */
+						if (X2 < nz - 1)
+						{
+							if (time0[index + nxy] < 1.e9)
+							{
+								try
+									= tc(X1, y2, X2 + 1) + .5 * (sc(X1, y2, X2) + sc(X1, y2, X2 + 1)) * h;
+								if (try < guess)
+								{
+									fhead = (guess - try) / (h * slow0[index]);
+									guess = try
+										;
+								}
+							}
+						}
+						/* Change in depth (decreasing) */
+						if (X2 > 0 && time0[index - nxy] < 1.e9)
+						{
+							try
+								= tc(X1, y2, X2 - 1) + .5 * (sc(X1, y2, X2) + sc(X1, y2, X2 - 1)) * h;
+							if (try < guess)
+							{
+								fhead = (guess - try) / (h * slow0[index]);
+								guess = try
+									;
+							}
+						}
+						if (guess < time0[index])
+						{
+							time0[index] = guess;
+							if (fhead > headtest)
+								headw[4]++;
+						}
+					}
+					if (y2 == ny - 1)
+						dy2 = 0;
+					y2++;
+				}
+				/* End y2 if condition */
+			}
+			/* End growth loop */
+
+			/* UPDATE RADIUS */
+			radius++;
+			if (radius % 10 == 0)
+				fprintf(stderr, "Completed radius = %d\n", radius);
+			if (radius == maxrad)
+				rad0 = 0;
+
+		} /* END BIG LOOP */
+
+		/* TEST IF REVERSE PROPAGATION IS NEEDED */
+
+		if (headw[1] == 0 && headw[2] == 0 && headw[3] == 0 && headw[4] == 0 && headw[5] == 0 && headw[6] == 0)
+			reverse = 0;
+		else
+		{
+			head = 0;
+			if (headw[1] > 0)
+			{
+				fprintf(stderr, "Head waves found on left: %d\n", headw[1]);
+				if (headw[1] > head)
+				{
+					head = headw[1];
+					srcwall = 1;
+				}
+			}
+			if (headw[2] > 0)
+			{
+				fprintf(stderr, "Head waves found on right: %d\n", headw[2]);
+				if (headw[2] > head)
+				{
+					head = headw[2];
+					srcwall = 2;
+				}
+			}
+			if (headw[3] > 0)
+			{
+				fprintf(stderr, "Head waves found on front: %d\n", headw[3]);
+				if (headw[3] > head)
+				{
+					head = headw[3];
+					srcwall = 3;
+				}
+			}
+			if (headw[4] > 0)
+			{
+				fprintf(stderr, "Head waves found on back: %d\n", headw[4]);
+				if (headw[4] > head)
+				{
+					head = headw[4];
+					srcwall = 4;
+				}
+			}
+			if (headw[5] > 0)
+			{
+				fprintf(stderr, "Head waves found on top: %d\n", headw[5]);
+				if (headw[5] > head)
+				{
+					head = headw[5];
+					srcwall = 5;
+				}
+			}
+			if (headw[6] > 0)
+			{
+				fprintf(stderr, "Head waves found on bottom: %d\n", headw[6]);
+				if (headw[6] > head)
+				{
+					head = headw[6];
+					srcwall = 6;
+				}
+			}
+			if (headpref > 0 && headw[headpref] > 0)
+			{
+				fprintf(stderr, "Preference to restart on wall opposite source\n");
+				srcwall = headpref;
+			}
+			/* SET LOCATIONS OF SIDES OF THE SPHERICAL ELEMENT SO THAT THE ELEMENT IS A FACE */
+			dx1 = 1;
+			dx2 = 1;
+			dy1 = 1;
+			dy2 = 1;
+			dz1 = 1;
+			dz2 = 1;
+			rad0 = 1;
+			radius = 1;
+			if (srcwall == 1)
+			{
+				x2 = 1;
+				fprintf(stderr, "RESTART at left side of model\n");
+			}
+			else
+			{
+				x2 = nx;
+				dx2 = 0;
+			}
+			if (srcwall == 2)
+			{
+				x1 = nx - 2;
+				fprintf(stderr, "RESTART at right side of model\n");
+			}
+			else
+			{
+				x1 = -1;
+				dx1 = 0;
+			}
+			if (srcwall == 3)
+			{
+				y2 = 1;
+				fprintf(stderr, "RESTART at front side of model\n");
+			}
+			else
+			{
+				y2 = ny;
+				dy2 = 0;
+			}
+			if (srcwall == 4)
+			{
+				y1 = ny - 2;
+				fprintf(stderr, "RESTART at back side of model\n");
+			}
+			else
+			{
+				y1 = -1;
+				dy1 = 0;
+			}
+			if (srcwall == 5)
+			{
+				z2 = 1;
+				fprintf(stderr, "RESTART at top side of model\n");
+			}
+			else
+			{
+				z2 = nz;
+				dz2 = 0;
+			}
+			if (srcwall == 6)
+			{
+				z1 = nz - 2;
+				fprintf(stderr, "RESTART at bottom side of model\n");
+			}
+			else
+			{
+				z1 = -1;
+				dz1 = 0;
+			}
+			if (reverse == 0)
+				fprintf(stderr,
+						"WARNING:  RESTART CANCELLED by choice of input parameter 'reverse'\n");
 		}
+		reverse--;
 
-		/*** New Edge Trials ***/
-		if (guess > 1.0e9) {
-			/* Eastern edge */
-			if (X1 > 0 && X2 > y1 + 1 && X2 < y2 - 1
-					&& time0[index - 1] < 1.e9) {
-				/* Point 0 */
-				t[0] = tc(X1 - 1, X2 + 1, z1 + 1);
-				s[0] = sc(X1 - 1, X2 + 1, z1 + 1);
-				/* Point 1 */
-				t[1] = tc(X1 - 1, X2, z1 + 1);
-				s[1] = sc(X1 - 1, X2, z1 + 1);
-				/* Point 2 */
-				t[2] = tc(X1, X2, z1 + 1);
-				s[2] = sc(X1, X2, z1 + 1);
-				/* Point 3 */
-				t[3] = tc(X1 - 1, X2 - 1, z1 + 1);
-				s[3] = sc(X1 - 1, X2 - 1, z1 + 1);
-				/* Point 4 */
-				t[4] = tc(X1 - 1, X2, z1);
-				s[4] = sc(X1 - 1, X2, z1);
-				/* Point 5 */
-				s[5] = sc(X1, X2, z1);
+	} /* END BIGGER LOOP */
 
-				d01 = rzp1 * dq;
-				d12 = rzp1 * sinqX2 * df;
-				d14 = h;
-				d25 = h;
-				d45 = rz1 * sinqX2 * df;
-
-			try = fdsphne(t, s, d01, d12, d14, d25, d45);
-			if (try < guess)
-			guess = try;
-		}
-		/* Western Edge */
-		if (X1 < nx - 1 && X2 > y1 + 1 && X2 < y2 - 1
-				&& time0[index + 1] < 1.e9) {
-			/* Point 0 */
-			t[0] = tc(X1 + 1, X2 - 1, z1 + 1);
-			s[0] = sc(X1 + 1, X2 - 1, z1 + 1);
-			/* Point 1 */
-			t[1] = tc(X1 + 1, X2, z1 + 1);
-			s[1] = sc(X1 + 1, X2, z1 + 1);
-			/* Point 2 */
-			t[2] = tc(X1, X2, z1 + 1);
-			s[2] = sc(X1, X2, z1 + 1);
-			/* Point 3 */
-			t[3] = tc(X1 + 1, X2 + 1, z1 + 1);
-			s[3] = sc(X1 + 1, X2 + 1, z1 + 1);
-			/* Point 4 */
-			t[4] = tc(X1 + 1, X2, z1);
-			s[4] = sc(X1 + 1, X2, z1);
-			/* Point 5 */
-			s[5] = sc(X1, X2, z1);
-
-			d01 = rzp1 * dq;
-			d12 = rzp1 * sinqX2 * df;
-			d14 = h;
-			d25 = h;
-			d45 = rz1 * sinqX2 * df;
-
-		try = fdsphne(t, s, d01, d12, d14, d25, d45);
-		if (try < guess)
-		guess = try;
-	}
-	/* Northern Edge */
-	if (X2 < ny - 1 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index + nx] < 1.e9) {
-		/* Point 0 */
-		t[0] = tc(X1 + 1, X2 + 1, z1 + 1);
-		s[0] = sc(X1 + 1, X2 + 1, z1 + 1);
-		/* Point 1 */
-		t[1] = tc(X1, X2 + 1, z1 + 1);
-		s[1] = sc(X1, X2 + 1, z1 + 1);
-		/* Point 2 */
-		t[2] = tc(X1, X2, z1 + 1);
-		s[2] = sc(X1, X2, z1 + 1);
-		/* Point 3 */
-		t[3] = tc(X1 - 1, X2 + 1, z1 + 1);
-		s[3] = sc(X1 - 1, X2 + 1, z1 + 1);
-		/* Point 4 */
-		t[4] = tc(X1, X2 + 1, z1);
-		s[4] = sc(X1, X2 + 1, z1);
-		/* Point 5 */
-		s[5] = sc(X1, X2, z1);
-
-		d01 = rzp1 * sin(qX2p1) * df;
-		d12 = rzp1 * dq;
-		d14 = h;
-		d25 = h;
-		d45 = rz1 * dq;
-
-	try = fdsphne(t, s, d01, d12, d14, d25, d45);
-	if (try < guess)
-	guess = try;
-}
-/* Southern Edge */
-if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nx]) {
-	/* Point 0 */
-	t[0] = tc(X1 - 1, X2 - 1, z1 + 1);
-	s[0] = sc(X1 - 1, X2 - 1, z1 + 1);
-	/* Point 1 */
-	t[1] = tc(X1, X2 - 1, z1 + 1);
-	s[1] = sc(X1, X2 - 1, z1 + 1);
-	/* Point 2 */
-	t[2] = tc(X1, X2, z1 + 1);
-	s[2] = sc(X1, X2, z1 + 1);
-	/* Point 3 */
-	t[3] = tc(X1 + 1, X2 - 1, z1 + 1);
-	s[3] = sc(X1 + 1, X2 - 1, z1 + 1);
-	/* Point 4 */
-	t[4] = tc(X1, X2 - 1, z1);
-	s[4] = sc(X1, X2 - 1, z1);
-	/* Point 5 */
-	s[5] = sc(X1, X2, z1);
-
-	d01 = rzp1 * sin(qX2m1) * df;
-	d12 = rzp1 * dq;
-	d14 = h;
-	d25 = h;
-	d45 = rz1 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Two-D Trials ***/
-/* Vertical-East */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z1);
-s[1] = sc(X1 + 1, X2, z1);
-/* Point 2 */
-t[2] = tc(X1, X2, z1 + 1);
-s[2] = sc(X1, X2, z1 + 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2, z1 + 1);
-s[3] = sc(X1 + 1, X2, z1 + 1);
-
-d01 = rz1 * sinqX2 * df;
-d02 = h;
-d13 = h;
-d23 = rzp1 * sinqX2 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* Vertical-North */
-if (X2 > 0 && time0[index - nx] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1, X2 - 1, z1);
-s[1] = sc(X1, X2 - 1, z1);
-/* Point 2 */
-t[2] = tc(X1, X2, z1 + 1);
-s[2] = sc(X1, X2, z1 + 1);
-/* Point 3 */
-t[3] = tc(X1, X2 - 1, z1 + 1);
-s[3] = sc(X1, X2 - 1, z1 + 1);
-
-d01 = rz1 * dq;
-d02 = h;
-d13 = h;
-d23 = rzp1 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* Vertical-West */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z1);
-s[1] = sc(X1 - 1, X2, z1);
-/* Point 2 */
-t[2] = tc(X1, X2, z1 + 1);
-s[2] = sc(X1, X2, z1 + 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2, z1 + 1);
-s[3] = sc(X1 - 1, X2, z1 + 1);
-
-d01 = rz1 * sinqX2 * df;
-d02 = h;
-d13 = h;
-d23 = rzp1 * sinqX2 * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-
-}
-
-/* Vertical-South */
-if (X2 < ny - 1 && time0[index + nx] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1, X2 + 1, z1);
-s[1] = sc(X1, X2 + 1, z1);
-/* Point 2 */
-t[2] = tc(X1, X2, z1 + 1);
-s[2] = sc(X1, X2, z1 + 1);
-/* Point 3 */
-t[3] = tc(X1, X2 + 1, z1 + 1);
-s[3] = sc(X1, X2 + 1, z1 + 1);
-
-d01 = rz1 * dq;
-d02 = h;
-d13 = h;
-d23 = rzp1 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-
-/* Horizontal - SE */
-if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z1);
-s[1] = sc(X1 + 1, X2, z1);
-/* Point 2 */
-t[2] = tc(X1, X2 + 1, z1);
-s[2] = sc(X1, X2 + 1, z1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2 + 1, z1);
-s[3] = sc(X1 + 1, X2 + 1, z1);
-
-d01 = rz1 * sinqX2 * df;
-d02 = rz1 * dq;
-d13 = rz1 * dq;
-d23 = rz1 * sin(qX2p1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-
-}
-
-/* Horizontal - NE */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z1);
-s[1] = sc(X1 + 1, X2, z1);
-/* Point 2 */
-t[2] = tc(X1, X2 - 1, z1);
-s[2] = sc(X1, X2 - 1, z1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2 - 1, z1);
-s[3] = sc(X1 + 1, X2 - 1, z1);
-
-d01 = rz1 * sinqX2 * df;
-d02 = rz1 * dq;
-d13 = rz1 * dq;
-d23 = rz1 * sin(qX2m1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/* Horizontal - SW */
-if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9
-&& time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z1);
-s[1] = sc(X1 - 1, X2, z1);
-/* Point 2 */
-t[2] = tc(X1, X2 + 1, z1);
-s[2] = sc(X1, X2 + 1, z1);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2 + 1, z1);
-s[3] = sc(X1 - 1, X2 + 1, z1);
-
-d01 = rz1 * sinqX2 * df;
-d02 = rz1 * dq;
-d13 = rz1 * dq;
-d23 = rz1 * sin(qX2p1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/* Horizontal - NW */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9
-&& time0[index - nx] < 1.e9) {
-s[0] = sc(X1, X2, z1);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z1);
-s[1] = sc(X1 - 1, X2, z1);
-/* Point 2 */
-t[2] = tc(X1, X2 - 1, z1);
-s[2] = sc(X1, X2 - 1, z1);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2 - 1, z1);
-s[3] = sc(X1 - 1, X2 - 1, z1);
-
-d01 = rz1 * sinqX2 * df;
-d02 = rz1 * dq;
-d13 = rz1 * dq;
-d23 = rz1 * sin(qX2m1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/*** New Face Trials ***/
-if (guess > 1.0e9) {
-if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > y1 + 1 && X2 < y2 - 1) {
-/* Point 0 */
-t[0] = tc(X1, X2 + 1, z1 + 1);
-s[0] = sc(X1, X2 + 1, z1 + 1);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z1 + 1);
-s[1] = sc(X1 - 1, X2, z1 + 1);
-/* Point 2 */
-t[2] = tc(X1, X2, z1 + 1);
-s[2] = sc(X1, X2, z1 + 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2, z1 + 1);
-s[3] = sc(X1 + 1, X2, z1 + 1);
-/* Point 4 */
-t[4] = tc(X1, X2 - 1, z1 + 1);
-s[4] = sc(X1, X2 - 1, z1 + 1);
-/* Point 5 */
-s[5] = sc(X1, X2, z1);
-d02 = rzp1 * dq;
-d12 = rzp1 * sinqX2 * df;
-d25 = h;
-try = fdsphnf(t, s, d02, d12, d25);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Edge Trials ***/
-/* Change in Depth */
-try = tc(X1,X2,z1+1)+ .5*(sc(X1,X2,z1)+sc(X1,X2,z1+1))*h;
-if (try < guess)
-guess = try;
-/* Change in East Longitude */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-try = tc(X1+1,X2,z1)+ .5*(sc(X1,X2,z1)+sc(X1+1,X2,z1))*rz1*df*sinqX2;
-if (try<guess) {
-fhead=(guess-try)/(rz1*df*sinqX2*slow0[index]); guess=try;}
-}
-/* Change in West Longitude */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-try = tc(X1-1,X2,z1)+ .5*(sc(X1,X2,z1)+sc(X1-1,X2,z1))*rz1*df*sinqX2;
-if (try<guess) {
-fhead=(guess-try)/(rz1*df*sinqX2*slow0[index]); guess=try;}
-}
-/* Change in South Latitude */
-if (X2 < ny - 1 & time0[index + nx] < 1.e9) {
-try = tc(X1,X2+1,z1)+ .5*(sc(X1,X2,z1)+sc(X1,X2+1,z1))*rz1*dq;
-if (try<guess) {
-fhead=(guess-try)/(rz1*dq*slow0[index]); guess=try;}
-}
-/* Change in North Latitude */
-if (X2 > 0 && time0[index - nx] < 1.e9) {
-try = tc(X1,X2-1,z1)+ .5*(sc(X1,X2,z1)+sc(X1,X2-1,z1))*rz1*dq;
-if (try<guess) {
-fhead=(guess-try)/(rz1*dq*slow0[index]); guess=try;}
-}
-if (guess < time0[index]) {
-time0[index] = guess;
-if (fhead > headtest)
-headw[5]++;
-}
-}
-if (z1 == 0)
-dz1 = 0;
-z1--;
-}
-/* End z1 if condition */
-}
-/* End growth loop */
-
-/* BOTTOM SIDE */
-for (igrow = 1; igrow <= kplus; igrow++) {
-if (dz2) {
-ii = 0;
-for (j = y1 + 1; j <= y2 - 1; j++) {
-for (i = x1 + 1; i <= x2 - 1; i++) {
-sort[ii].time = tc(i, j, z2 - 1);
-sort[ii].i1 = i;
-sort[ii].i2 = j;
-ii++;
-}
-}
-qsort((char *) sort, ii, sizeof(struct sorted), compar);
-for (i = 0; i < ii; i++) {
-X1 = sort[i].i1;
-X2 = sort[i].i2;
-index = z2 * nxy + X2 * nx + X1;
-fhead = 0.;
-guess = time0[index];
-
-rz2 = rc(z2);
-rzm1 = rc(z2 - 1);
-qX2 = qc(X2);
-qX2p1 = qc(X2 + 1);
-qX2m1 = qc(X2 - 1);
-fx1 = fc(X1);
-fx1p1 = fc(X1 + 1);
-fx1m1 = fc(X1 - 1);
-
-sinqX2 = sin(qX2);
-
-/*** 3D Trials ***/
-/* NW corner (point 2) */
-if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9) {
-/* Point 4 */
-t[0] = tc(X1 + 1, X2 + 1, z2 - 1);
-s[0] = sc(X1 + 1, X2 + 1, z2 - 1);
-r[0] = rzm1;
-q[0] = qX2p1;
-f[0] = fx1p1;
-g[0] = 1;
-n[0] = 1;
-m[0] = 1;
-/* Point 5 */
-t[1] = tc(X1, X2 + 1, z2 - 1);
-s[1] = sc(X1, X2 + 1, z2 - 1);
-r[1] = rzm1;
-q[1] = qX2p1;
-f[1] = fx1;
-g[1] = 1;
-n[1] = 1;
-m[1] = -1;
-/* Point 6 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-r[2] = rzm1;
-q[2] = qX2;
-f[2] = fx1;
-g[2] = 1;
-n[2] = -1;
-m[2] = -1;
-/* Point 7 */
-t[3] = tc(X1 + 1, X2, z2 - 1);
-s[3] = sc(X1 + 1, X2, z2 - 1);
-r[3] = rzm1;
-q[3] = qX2;
-f[3] = fx1p1;
-g[3] = 1;
-n[3] = -1;
-m[3] = 1;
-/* Point 0 */
-t[4] = tc(X1 + 1, X2 + 1, z2);
-s[4] = sc(X1 + 1, X2 + 1, z2);
-r[4] = rz2;
-q[4] = qX2p1;
-f[4] = fx1p1;
-g[4] = -1;
-n[4] = 1;
-m[4] = 1;
-/* Point 1 */
-t[5] = tc(X1, X2 + 1, z2);
-s[5] = sc(X1, X2 + 1, z2);
-r[5] = rz2;
-q[5] = qX2p1;
-f[5] = fx1;
-g[5] = -1;
-n[5] = 1;
-m[5] = -1;
-/* Point 3 */
-t[6] = tc(X1 + 1, X2, z2);
-s[6] = sc(X1 + 1, X2, z2);
-r[6] = rz2;
-q[6] = qX2;
-f[6] = fx1p1;
-g[6] = -1;
-n[6] = -1;
-m[6] = 1;
-/* Point 2 */
-s[7] = sc(X1, X2, z2);
-r[7] = rz2;
-q[7] = qX2;
-f[7] = fx1;
-g[7] = -1;
-n[7] = -1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-
-}
-
-/* NE corner (point 3) */
-if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9
-&& time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9) {
-/* Point 4 */
-t[0] = tc(X1, X2 + 1, z2 - 1);
-s[0] = sc(X1, X2 + 1, z2 - 1);
-r[0] = rzm1;
-q[0] = qX2p1;
-f[0] = fx1;
-g[0] = 1;
-n[0] = 1;
-m[0] = 1;
-/* Point 5 */
-t[1] = tc(X1 - 1, X2 + 1, z2 - 1);
-s[1] = sc(X1 - 1, X2 + 1, z2 - 1);
-r[1] = rzm1;
-q[1] = qX2p1;
-f[1] = fx1m1;
-g[1] = 1;
-n[1] = 1;
-m[1] = -1;
-/* Point 6 */
-t[2] = tc(X1 - 1, X2, z2 - 1);
-s[2] = sc(X1 - 1, X2, z2 - 1);
-r[2] = rzm1;
-q[2] = qX2;
-f[2] = fx1m1;
-g[2] = 1;
-n[2] = -1;
-m[2] = -1;
-/* Point 7 */
-t[3] = tc(X1, X2, z2 - 1);
-s[3] = sc(X1, X2, z2 - 1);
-r[3] = rzm1;
-q[3] = qX2;
-f[3] = fx1;
-g[3] = 1;
-n[3] = -1;
-m[3] = 1;
-/* Point 0 */
-t[4] = tc(X1, X2 + 1, z2);
-s[4] = sc(X1, X2 + 1, z2);
-r[4] = rz2;
-q[4] = qX2p1;
-f[4] = fx1;
-g[4] = -1;
-n[4] = 1;
-m[4] = 1;
-/* Point 1 */
-t[5] = tc(X1 - 1, X2 + 1, z2);
-s[5] = sc(X1 - 1, X2 + 1, z2);
-r[5] = rz2;
-q[5] = qX2p1;
-f[5] = fx1m1;
-g[5] = -1;
-n[5] = 1;
-m[5] = -1;
-/* Point 2 */
-t[6] = tc(X1 - 1, X2, z2);
-s[6] = sc(X1 - 1, X2, z2);
-r[6] = rz2;
-q[6] = qX2;
-f[6] = fx1m1;
-g[6] = -1;
-n[6] = -1;
-m[6] = -1;
-/* Point 3 */
-s[7] = sc(X1, X2, z2);
-r[7] = rz2;
-q[7] = qX2;
-f[7] = fx1;
-g[7] = -1;
-n[7] = -1;
-m[7] = 1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-
-}
-
-/* SW corner (point 1) */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9) {
-/* Point 4 */
-t[0] = tc(X1 + 1, X2, z2 - 1);
-s[0] = sc(X1 + 1, X2, z2 - 1);
-r[0] = rzm1;
-q[0] = qX2;
-f[0] = fx1p1;
-g[0] = 1;
-n[0] = 1;
-m[0] = 1;
-/* Point 5 */
-t[1] = tc(X1, X2, z2 - 1);
-s[1] = sc(X1, X2, z2 - 1);
-r[1] = rzm1;
-q[1] = qX2;
-f[1] = fx1;
-g[1] = 1;
-n[1] = 1;
-m[1] = -1;
-/* Point 6 */
-t[2] = tc(X1, X2 - 1, z2 - 1);
-s[2] = sc(X1, X2 - 1, z2 - 1);
-r[2] = rzm1;
-q[2] = qX2m1;
-f[2] = fx1;
-g[2] = 1;
-n[2] = -1;
-m[2] = -1;
-/* Point 7 */
-t[3] = tc(X1 + 1, X2 - 1, z2 - 1);
-s[3] = sc(X1 + 1, X2 - 1, z2 - 1);
-r[3] = rzm1;
-q[3] = qX2m1;
-f[3] = fx1p1;
-g[3] = 1;
-n[3] = -1;
-m[3] = 1;
-/* Point 0 */
-t[4] = tc(X1 + 1, X2, z2);
-s[4] = sc(X1 + 1, X2, z2);
-r[4] = rz2;
-q[4] = qX2;
-f[4] = fx1p1;
-g[4] = -1;
-n[4] = 1;
-m[4] = 1;
-/* Point 2 */
-t[5] = tc(X1, X2 - 1, z2);
-s[5] = sc(X1, X2 - 1, z2);
-r[5] = rz2;
-q[5] = qX2m1;
-f[5] = fx1;
-g[5] = -1;
-n[5] = -1;
-m[5] = -1;
-/* Point 3 */
-t[6] = tc(X1 + 1, X2 - 1, z2);
-s[6] = sc(X1 + 1, X2 - 1, z2);
-r[6] = rz2;
-q[6] = qX2m1;
-f[6] = fx1p1;
-g[6] = -1;
-n[6] = -1;
-m[6] = 1;
-/* Point 1 */
-s[7] = sc(X1, X2, z2);
-r[7] = rz2;
-q[7] = qX2;
-f[7] = fx1;
-g[7] = -1;
-n[7] = 1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-
-}
-
-/* SE corner (point 0) */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9
-&& time0[index - nx] < 1.e9) {
-/* Point 4 */
-t[0] = tc(X1, X2, z2 - 1);
-s[0] = sc(X1, X2, z2 - 1);
-r[0] = rzm1;
-q[0] = qX2;
-f[0] = fx1;
-g[0] = 1;
-n[0] = 1;
-m[0] = 1;
-/* Point 5 */
-t[1] = tc(X1 - 1, X2, z2 - 1);
-s[1] = sc(X1 - 1, X2, z2 - 1);
-r[1] = rzm1;
-q[1] = qX2;
-f[1] = fx1m1;
-g[1] = 1;
-n[1] = 1;
-m[1] = -1;
-/* Point 6 */
-t[2] = tc(X1 - 1, X2 - 1, z2 - 1);
-s[2] = sc(X1 - 1, X2 - 1, z2 - 1);
-r[2] = rzm1;
-q[2] = qX2m1;
-f[2] = fx1m1;
-g[2] = 1;
-n[2] = -1;
-m[2] = -1;
-/* Point 7 */
-t[3] = tc(X1, X2 - 1, z2 - 1);
-s[3] = sc(X1, X2 - 1, z2 - 1);
-r[3] = rzm1;
-q[3] = qX2m1;
-f[3] = fx1;
-g[3] = 1;
-n[3] = -1;
-m[3] = 1;
-/* Point 1 */
-t[4] = tc(X1 - 1, X2, z2);
-s[4] = sc(X1 - 1, X2, z2);
-r[4] = rz2;
-q[4] = qX2;
-f[4] = fx1m1;
-g[4] = -1;
-n[4] = 1;
-m[4] = -1;
-/* Point 2 */
-t[5] = tc(X1 - 1, X2 - 1, z2);
-s[5] = sc(X1 - 1, X2 - 1, z2);
-r[5] = rz2;
-q[5] = qX2m1;
-f[5] = fx1m1;
-g[5] = -1;
-n[5] = -1;
-m[5] = -1;
-/* Point 3 */
-t[6] = tc(X1, X2 - 1, z2);
-s[6] = sc(X1, X2 - 1, z2);
-r[6] = rz2;
-q[6] = qX2m1;
-f[6] = fx1;
-g[6] = -1;
-n[6] = -1;
-m[6] = 1;
-/* Point 0 */
-s[7] = sc(X1, X2, z2);
-r[7] = rz2;
-q[7] = qX2;
-f[7] = fx1;
-g[7] = -1;
-n[7] = 1;
-m[7] = 1;
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-
-}
-
-/*** New Edge Trials ***/
-if (guess > 1.0e9) {
-/* Eastern edge */
-if (X1 > 0 && X2 > y1 + 1 && X2 < y2 - 1 && time0[index - 1] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 - 1, X2 - 1, z2 - 1);
-s[0] = sc(X1 - 1, X2 - 1, z2 - 1);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z2 - 1);
-s[1] = sc(X1 - 1, X2, z2 - 1);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2 + 1, z2 - 1);
-s[3] = sc(X1 - 1, X2 + 1, z2 - 1);
-/* Point 4 */
-t[4] = tc(X1 - 1, X2, z2);
-s[4] = sc(X1 - 1, X2, z2);
-/* Point 5 */
-s[5] = sc(X1, X2, z2);
-
-d01 = rzm1 * dq;
-d12 = rzm1 * sinqX2 * df;
-d14 = h;
-d25 = h;
-d45 = rz2 * sinqX2 * df;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-
-}
-/* Western Edge */
-if (X1 < nx - 1 && X2 > y1 + 1 && X2 < y2 - 1 && time0[index + 1] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, X2 + 1, z2 - 1);
-s[0] = sc(X1 + 1, X2 + 1, z2 - 1);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z2 - 1);
-s[1] = sc(X1 + 1, X2, z2 - 1);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2 - 1, z2 - 1);
-s[3] = sc(X1 + 1, X2 - 1, z2 - 1);
-/* Point 4 */
-t[4] = tc(X1 + 1, X2, z2);
-s[4] = sc(X1 + 1, X2, z2);
-/* Point 5 */
-s[5] = sc(X1, X2, z2);
-
-d01 = rzm1 * dq;
-d12 = rzm1 * sinqX2 * df;
-d14 = h;
-d25 = h;
-d45 = rz2 * sinqX2 * df;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-
-}
-/* Northern Edge */
-if (X2 < ny - 1 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index + nx] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 - 1, X2 + 1, z2 - 1);
-s[0] = sc(X1 - 1, X2 + 1, z2 - 1);
-/* Point 1 */
-t[1] = tc(X1, X2 + 1, z2 - 1);
-s[1] = sc(X1, X2 + 1, z2 - 1);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2 + 1, z2 - 1);
-s[3] = sc(X1 + 1, X2 + 1, z2 - 1);
-/* Point 4 */
-t[4] = tc(X1, X2 + 1, z2);
-s[4] = sc(X1, X2 + 1, z2);
-/* Point 5 */
-s[5] = sc(X1, X2, z2);
-
-d01 = rzm1 * sin(qX2p1) * df;
-d12 = rzm1 * dq;
-d14 = h;
-d25 = h;
-d45 = rz2 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-
-}
-/* Southern Edge */
-if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nx] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, X2 - 1, z2 - 1);
-s[0] = sc(X1 + 1, X2 - 1, z2 - 1);
-/* Point 1 */
-t[1] = tc(X1, X2 - 1, z2 - 1);
-s[1] = sc(X1, X2 - 1, z2 - 1);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2 - 1, z2 - 1);
-s[3] = sc(X1 - 1, X2 - 1, z2 - 1);
-/* Point 4 */
-t[4] = tc(X1, X2 - 1, z2);
-s[4] = sc(X1, X2 - 1, z2);
-/* Point 5 */
-s[5] = sc(X1, X2, z2);
-
-d01 = rzm1 * sin(qX2m1) * df;
-d12 = rzm1 * dq;
-d14 = h;
-d25 = h;
-d45 = rz2 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-
-}
-}
-
-/*** Two-D Trials ***/
-/* Vertical-East */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z2);
-s[1] = sc(X1 + 1, X2, z2);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2, z2 - 1);
-s[3] = sc(X1 + 1, X2, z2 - 1);
-
-d01 = rz2 * sinqX2 * df;
-d02 = h;
-d13 = h;
-d23 = rzm1 * sinqX2 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* Vertical-North */
-if (X2 > 0 && time0[index - nx] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1, X2 - 1, z2);
-s[1] = sc(X1, X2 - 1, z2);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1, X2 - 1, z2 - 1);
-s[3] = sc(X1, X2 - 1, z2 - 1);
-
-d01 = rz2 * dq;
-d02 = h;
-d13 = h;
-d23 = rzm1 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* Vertical-West */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z2);
-s[1] = sc(X1 - 1, X2, z2);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2, z2 - 1);
-s[3] = sc(X1 - 1, X2, z2 - 1);
-
-d01 = rz2 * sinqX2 * df;
-d02 = h;
-d13 = h;
-d23 = rzm1 * sinqX2 * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* Vertical-South */
-if (X2 < ny - 1 && time0[index + nx] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1, X2 + 1, z2);
-s[1] = sc(X1, X2 + 1, z2);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1, X2 + 1, z2 - 1);
-s[3] = sc(X1, X2 + 1, z2 - 1);
-
-d01 = rz2 * dq;
-d02 = h;
-d13 = h;
-d23 = rzm1 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* Horizontal - SE */
-if (X2 < ny - 1 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index + nx + 1] < 1.e9 && time0[index + nx] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z2);
-s[1] = sc(X1 + 1, X2, z2);
-/* Point 2 */
-t[2] = tc(X1, X2 + 1, z2);
-s[2] = sc(X1, X2 + 1, z2);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2 + 1, z2);
-s[3] = sc(X1 + 1, X2 + 1, z2);
-d01 = rz2 * sinqX2 * df;
-d02 = rz2 * dq;
-d13 = rz2 * dq;
-d23 = rz2 * sin(qX2p1) * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Horizontal - NE */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nx + 1] < 1.e9 && time0[index - nx] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1 + 1, X2, z2);
-s[1] = sc(X1 + 1, X2, z2);
-/* Point 2 */
-t[2] = tc(X1, X2 - 1, z2);
-s[2] = sc(X1, X2 - 1, z2);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2 - 1, z2);
-s[3] = sc(X1 + 1, X2 - 1, z2);
-d01 = rz2 * sinqX2 * df;
-d02 = rz2 * dq;
-d13 = rz2 * dq;
-d23 = rz2 * sin(qX2m1) * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Horizontal - SW */
-if (X2 < ny - 1 && X1 > 0 && time0[index - 1] < 1.e9
-&& time0[index + nx - 1] < 1.e9 && time0[index + nx] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z2);
-s[1] = sc(X1 - 1, X2, z2);
-/* Point 2 */
-t[2] = tc(X1, X2 + 1, z2);
-s[2] = sc(X1, X2 + 1, z2);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2 + 1, z2);
-s[3] = sc(X1 - 1, X2 + 1, z2);
-d01 = rz2 * sinqX2 * df;
-d02 = rz2 * dq;
-d13 = rz2 * dq;
-d23 = rz2 * sin(qX2p1) * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Horizontal - NW */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nx - 1] < 1.e9
-&& time0[index - nx] < 1.e9) {
-s[0] = sc(X1, X2, z2);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z2);
-s[1] = sc(X1 - 1, X2, z2);
-/* Point 2 */
-t[2] = tc(X1, X2 - 1, z2);
-s[2] = sc(X1, X2 - 1, z2);
-/* Point 3 */
-t[3] = tc(X1 - 1, X2 - 1, z2);
-s[3] = sc(X1 - 1, X2 - 1, z2);
-d01 = rz2 * sinqX2 * df;
-d02 = rz2 * dq;
-d13 = rz2 * dq;
-d23 = rz2 * sin(qX2m1) * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/*** New Face Trials ***/
-if (guess > 1.0e9) {
-if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > y1 + 1 && X2 < y2 - 1) {
-/* Point 0 */
-t[0] = tc(X1, X2 + 1, z2 - 1);
-s[0] = sc(X1, X2 + 1, z2 - 1);
-/* Point 1 */
-t[1] = tc(X1 - 1, X2, z2 - 1);
-s[1] = sc(X1 - 1, X2, z2 - 1);
-/* Point 2 */
-t[2] = tc(X1, X2, z2 - 1);
-s[2] = sc(X1, X2, z2 - 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, X2, z2 - 1);
-s[3] = sc(X1 + 1, X2, z2 - 1);
-/* Point 4 */
-t[4] = tc(X1, X2 - 1, z2 - 1);
-s[4] = sc(X1, X2 - 1, z2 - 1);
-/* Point 5 */
-s[5] = sc(X1, X2, z2);
-d02 = rzm1 * dq;
-d12 = rzm1 * sinqX2 * df;
-d25 = h;
-try = fdsphnf(t, s, d02, d12, d25);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Edge Trials ***/
-/* Change in Depth */
-try = tc(X1,X2,z2-1)+ .5*(sc(X1,X2,z2)+sc(X1,X2,z2-1))*h;
-if (try < guess)
-guess = try;
-/* Change in East Longitude */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-try = tc(X1+1,X2,z2)+ .5*(sc(X1,X2,z2)+sc(X1+1,X2,z2))*rz2*df*sinqX2;
-if (try<guess) {
-fhead=(guess-try)/(rz2*df*sinqX2*slow0[index]); guess=try;}
-}
-/* Change in West Longitude */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-try = tc(X1-1,X2,z2)+ .5*(sc(X1,X2,z2)+sc(X1-1,X2,z2))*rz2*df*sinqX2;
-if (try<guess) {
-fhead=(guess-try)/(rz2*df*sinqX2*slow0[index]); guess=try;}
-}
-/* Change in South Latitude */
-if (X2 < ny - 1 && time0[index + nx] < 1.e9) {
-try = tc(X1,X2+1,z2)+ .5*(sc(X1,X2,z2)+sc(X1,X2+1,z2))*rz2*dq;
-if (try<guess) {
-fhead=(guess-try)/(rz2*dq*slow0[index]); guess=try;}
-}
-/* Change in North Latitude */
-if (X2 > 0 && time0[index - nx] < 1.e9) {
-try = tc(X1,X2-1,z2)+ .5*(sc(X1,X2,z2)+sc(X1,X2-1,z2))*rz2*dq;
-if (try<guess) {
-fhead=(guess-try)/(rz2*dq*slow0[index]); guess=try;}
-}
-if (guess < time0[index]) {
-time0[index] = guess;
-if (fhead > headtest)
-headw[6]++;
-}
-}
-if (z2 == nz - 1)
-dz2 = 0;
-z2++;
-}
-/* End z2 if condition */
-}
-/* End growth loop */
-
-/* EAST (RIGHT) SIDE */
-for (igrow = 1; igrow <= iplus; igrow++) {
-if (dx2) {
-ii = 0;
-for (k = z1 + 1; k <= z2 - 1; k++) {
-for (j = y1 + 1; j <= y2 - 1; j++) {
-sort[ii].time = tc(x2 - 1, j, k);
-sort[ii].i1 = j;
-sort[ii].i2 = k;
-ii++;
-}
-}
-qsort((char *) sort, ii, sizeof(struct sorted), compar);
-
-for (i = 0; i < ii; i++) {
-X1 = sort[i].i1;
-X2 = sort[i].i2;
-index = X2 * nxy + X1 * nx + x2;
-fhead = 0.;
-guess = time0[index];
-
-rX2 = rc(X2);
-rXp1 = rc(X2 + 1);
-rXm1 = rc(X2 - 1);
-qX1 = qc(X1);
-qX1p1 = qc(X1 + 1);
-qX1m1 = qc(X1 - 1);
-fx2 = fc(x2);
-fx2m1 = fc(x2 - 1);
-
-sinqX1 = sin(qX1);
-
-/*** 3D Trials ***/
-/* Top North corner (point 7) */
-/*                       if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
-if (X2 < nz - 1 && X1 < ny - 1) {
-if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9
-&& time0[index + nxy]) {
-/* Point 1 */
-t[0] = tc(x2 - 1, X1 + 1, X2 + 1);
-s[0] = sc(x2 - 1, X1 + 1, X2 + 1);
-r[0] = rXp1;
-q[0] = qX1p1;
-f[0] = fx2m1;
-g[0] = -1;
-n[0] = 1;
-m[0] = -1;
-/* Point 0 */
-t[1] = tc(x2, X1 + 1, X2 + 1);
-s[1] = sc(x2, X1 + 1, X2 + 1);
-r[1] = rXp1;
-q[1] = qX1p1;
-f[1] = fx2;
-g[1] = -1;
-n[1] = 1;
-m[1] = 1;
-/* Point 3 */
-t[2] = tc(x2, X1, X2 + 1);
-s[2] = sc(x2, X1, X2 + 1);
-r[2] = rXp1;
-q[2] = qX1;
-f[2] = fx2;
-g[2] = -1;
-n[2] = -1;
-m[2] = 1;
-/* Point 2 */
-t[3] = tc(x2 - 1, X1, X2 + 1);
-s[3] = sc(x2 - 1, X1, X2 + 1);
-r[3] = rXp1;
-q[3] = qX1;
-f[3] = fx2m1;
-g[3] = -1;
-n[3] = -1;
-m[3] = -1;
-/* Point 5 */
-t[4] = tc(x2 - 1, X1 + 1, X2);
-s[4] = sc(x2 - 1, X1 + 1, X2);
-r[4] = rX2;
-q[4] = qX1p1;
-f[4] = fx2m1;
-g[4] = 1;
-n[4] = 1;
-m[4] = -1;
-/* Point 4 */
-t[5] = tc(x2, X1 + 1, X2);
-s[5] = sc(x2, X1 + 1, X2);
-r[5] = rX2;
-q[5] = qX1p1;
-f[5] = fx2;
-g[5] = 1;
-n[5] = 1;
-m[5] = 1;
-/* Point 6 */
-t[6] = tc(x2 - 1, X1, X2);
-s[6] = sc(x2 - 1, X1, X2);
-r[6] = rX2;
-q[6] = qX1;
-f[6] = fx2m1;
-g[6] = 1;
-n[6] = -1;
-m[6] = -1;
-/* Point 7 */
-s[7] = sc(x2, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx2;
-g[7] = 1;
-n[7] = -1;
-m[7] = 1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-
-}
-
-/* Top South corner (point 4) */
-/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 1 */
-t[0] = tc(x2 - 1, X1, X2 + 1);
-s[0] = sc(x2 - 1, X1, X2 + 1);
-r[0] = rXp1;
-q[0] = qX1;
-f[0] = fx2m1;
-g[0] = -1;
-n[0] = 1;
-m[0] = -1;
-/* Point 0 */
-t[1] = tc(x2, X1, X2 + 1);
-s[1] = sc(x2, X1, X2 + 1);
-r[1] = rXp1;
-q[1] = qX1;
-f[1] = fx2;
-g[1] = -1;
-n[1] = 1;
-m[1] = 1;
-/* Point 3 */
-t[2] = tc(x2, X1 - 1, X2 + 1);
-s[2] = sc(x2, X1 - 1, X2 + 1);
-r[2] = rXp1;
-q[2] = qX1m1;
-f[2] = fx2;
-g[2] = -1;
-n[2] = -1;
-m[2] = 1;
-/* Point 2 */
-t[3] = tc(x2 - 1, X1 - 1, X2 + 1);
-s[3] = sc(x2 - 1, X1 - 1, X2 + 1);
-r[3] = rXp1;
-q[3] = qX1m1;
-f[3] = fx2m1;
-g[3] = -1;
-n[3] = -1;
-m[3] = -1;
-/* Point 5 */
-t[4] = tc(x2 - 1, X1, X2);
-s[4] = sc(x2 - 1, X1, X2);
-r[4] = rX2;
-q[4] = qX1;
-f[4] = fx2m1;
-g[4] = 1;
-n[4] = 1;
-m[4] = -1;
-/* Point 7 */
-t[5] = tc(x2, X1 - 1, X2);
-s[5] = sc(x2, X1 - 1, X2);
-r[5] = rX2;
-q[5] = qX1m1;
-f[5] = fx2;
-g[5] = 1;
-n[5] = -1;
-m[5] = 1;
-/* Point 6 */
-t[6] = tc(x2 - 1, X1 - 1, X2);
-s[6] = sc(x2 - 1, X1 - 1, X2);
-r[6] = rX2;
-q[6] = qX1m1;
-f[6] = fx2m1;
-g[6] = 1;
-n[6] = -1;
-m[6] = -1;
-/* Point 4 */
-s[7] = sc(x2, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx2;
-g[7] = 1;
-n[7] = 1;
-m[7] = 1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-}
-
-/*  Bottom North corner (point 3) */
-if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9
-&& time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-/* Point 1 */
-t[0] = tc(x2 - 1, X1 + 1, X2);
-s[0] = sc(x2 - 1, X1 + 1, X2);
-r[0] = rX2;
-q[0] = qX1p1;
-f[0] = fx2m1;
-g[0] = -1;
-n[0] = 1;
-m[0] = -1;
-/* Point 0 */
-t[1] = tc(x2, X1 + 1, X2);
-s[1] = sc(x2, X1 + 1, X2);
-r[1] = rX2;
-q[1] = qX1p1;
-f[1] = fx2;
-g[1] = -1;
-n[1] = 1;
-m[1] = 1;
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-r[2] = rX2;
-q[2] = qX1;
-f[2] = fx2m1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 5 */
-t[3] = tc(x2 - 1, X1 + 1, X2 - 1);
-s[3] = sc(x2 - 1, X1 + 1, X2 - 1);
-r[3] = rXm1;
-q[3] = qX1p1;
-f[3] = fx2m1;
-g[3] = 1;
-n[3] = 1;
-m[3] = -1;
-/* Point 4 */
-t[4] = tc(x2, X1 + 1, X2 - 1);
-s[4] = sc(x2, X1 + 1, X2 - 1);
-r[4] = rXm1;
-q[4] = qX1p1;
-f[4] = fx2;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 7 */
-t[5] = tc(x2, X1, X2 - 1);
-s[5] = sc(x2, X1, X2 - 1);
-r[5] = rXm1;
-q[5] = qX1;
-f[5] = fx2;
-g[5] = 1;
-n[5] = -1;
-m[5] = 1;
-/* Point 6 */
-t[6] = tc(x2 - 1, X1, X2 - 1);
-s[6] = sc(x2 - 1, X1, X2 - 1);
-r[6] = rXm1;
-q[6] = qX1;
-f[6] = fx2m1;
-g[6] = 1;
-n[6] = -1;
-m[6] = -1;
-/* Point 3 */
-s[7] = sc(x2, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx2;
-g[7] = -1;
-n[7] = -1;
-m[7] = 1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-
-}
-
-/* Bottom South corner (point 0) */
-if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9
-&& time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-/* Point 1 */
-t[0] = tc(x2 - 1, X1, X2);
-s[0] = sc(x2 - 1, X1, X2);
-r[0] = rX2;
-q[0] = qX1;
-f[0] = fx2m1;
-g[0] = -1;
-n[0] = 1;
-m[0] = -1;
-/* Point 3 */
-t[1] = tc(x2, X1 - 1, X2);
-s[1] = sc(x2, X1 - 1, X2);
-r[1] = rX2;
-q[1] = qX1m1;
-f[1] = fx2;
-g[1] = -1;
-n[1] = -1;
-m[1] = 1;
-/* Point 2 */
-t[2] = tc(x2 - 1, X1 - 1, X2);
-s[2] = sc(x2 - 1, X1 - 1, X2);
-r[2] = rX2;
-q[2] = qX1m1;
-f[2] = fx2m1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 5 */
-t[3] = tc(x2 - 1, X1, X2 - 1);
-s[3] = sc(x2 - 1, X1, X2 - 1);
-r[3] = rXm1;
-q[3] = qX1;
-f[3] = fx2m1;
-g[3] = 1;
-n[3] = 1;
-m[3] = -1;
-/* Point 4 */
-t[4] = tc(x2, X1, X2 - 1);
-s[4] = sc(x2, X1, X2 - 1);
-r[4] = rXm1;
-q[4] = qX1;
-f[4] = fx2;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 7 */
-t[5] = tc(x2, X1 - 1, X2 - 1);
-s[5] = sc(x2, X1 - 1, X2 - 1);
-r[5] = rXm1;
-q[5] = qX1m1;
-f[5] = fx2;
-g[5] = 1;
-n[5] = -1;
-m[5] = 1;
-/* Point 6 */
-t[6] = tc(x2 - 1, X1 - 1, X2 - 1);
-s[6] = sc(x2 - 1, X1 - 1, X2 - 1);
-r[6] = rXm1;
-q[6] = qX1m1;
-f[6] = fx2m1;
-g[6] = 1;
-n[6] = -1;
-m[6] = -1;
-/* Point 0 */
-s[7] = sc(x2, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx2;
-g[7] = -1;
-n[7] = 1;
-m[7] = 1;
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-
-}
-
-/*** New Edge Trials ***/
-if (guess > 1.0e9) {
-/* Top edge */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>y1+1 && X1<y2-1 )  {*/
-if (X2 < nz - 1 && X1 > y1 + 1 && X1 < y2 - 1) {
-if (time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x2 - 1, X1 - 1, X2 + 1);
-s[0] = sc(x2 - 1, X1 - 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(x2 - 1, X1, X2 + 1);
-s[1] = sc(x2 - 1, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1 + 1, X2 + 1);
-s[3] = sc(x2 - 1, X1 + 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(x2, X1, X2 + 1);
-s[4] = sc(x2, X1, X2 + 1);
-/* Point 5 */
-s[5] = sc(x2, X1, X2);
-
-d01 = rXp1 * dq;
-d12 = h;
-d14 = rXp1 * sin(qX1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25,
-d45);
-if (try < guess)
-guess = try;
-}
-}
-/* Bottom Edge */
-if (X2 > 0 && X1 > y1 + 1 && X1 < y2 - 1 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x2 - 1, X1 + 1, X2 - 1);
-s[0] = sc(x2 - 1, X1 + 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(x2 - 1, X1, X2 - 1);
-s[1] = sc(x2 - 1, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1 - 1, X2 - 1);
-s[3] = sc(x2 - 1, X1 - 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(x2, X1, X2 - 1);
-s[4] = sc(x2, X1, X2 - 1);
-/* Point 5 */
-s[5] = sc(x2, X1, X2);
-
-d01 = rXm1 * dq;
-d12 = h;
-d14 = rXm1 * sin(qX1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-
-}
-/* Northern Edge */
-if (X1 < ny - 1 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index + nx] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x2 - 1, X1 + 1, X2 + 1);
-s[0] = sc(x2 - 1, X1 + 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(x2 - 1, X1 + 1, X2);
-s[1] = sc(x2 - 1, X1 + 1, X2);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1 + 1, X2 - 1);
-s[3] = sc(x2 - 1, X1 + 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(x2, X1 + 1, X2);
-s[4] = sc(x2, X1 + 1, X2);
-/* Point 5 */
-s[5] = sc(x2, X1, X2);
-
-d01 = h;
-d12 = rX2 * dq;
-d14 = rX2 * sin(qX1p1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = rX2 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Southern Edge */
-if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index - nx] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x2 - 1, X1 - 1, X2 - 1);
-s[0] = sc(x2 - 1, X1 - 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(x2 - 1, X1 - 1, X2);
-s[1] = sc(x2 - 1, X1 - 1, X2);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1 - 1, X2 + 1);
-s[3] = sc(x2 - 1, X1 - 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(x2, X1 - 1, X2);
-s[4] = sc(x2, X1 - 1, X2);
-/* Point 5 */
-s[5] = sc(x2, X1, X2);
-
-d01 = h;
-d12 = rX2 * dq;
-d14 = rX2 * sin(qX1m1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = rX2 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-
-}
-}
-
-/*** Two-D Trials ***/
-/* East-North */
-if (X1 > 0 && time0[index - nx] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1 - 1, X2);
-s[1] = sc(x2, X1 - 1, X2);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1 - 1, X2);
-s[3] = sc(x2 - 1, X1 - 1, X2);
-
-d01 = rX2 * dq;
-d02 = rX2 * sinqX1 * df;
-d13 = rX2 * sin(qX1m1) * df;
-d23 = rX2 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* East-South */
-if (X1 < ny - 1 && time0[index + nx] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1 + 1, X2);
-s[1] = sc(x2, X1 + 1, X2);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1 + 1, X2);
-s[3] = sc(x2 - 1, X1 + 1, X2);
-
-d01 = rX2 * dq;
-d02 = rX2 * sinqX1 * df;
-d13 = rX2 * sin(qX1p1) * df;
-d23 = rX2 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* East-Top */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1, X2 - 1);
-s[1] = sc(x2, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1, X2 - 1);
-s[3] = sc(x2 - 1, X1, X2 - 1);
-
-d01 = h;
-d02 = rX2 * sinqX1 * df;
-d13 = rXm1 * sinqX1 * df;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* East-Bottom */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  {*/
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1, X2 + 1);
-s[1] = sc(x2, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1, X2 + 1);
-s[3] = sc(x2 - 1, X1, X2 + 1);
-
-d01 = h;
-d02 = rX2 * sinqX1 * df;
-d13 = rXp1 * sinqX1 * df;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-}
-/* Parallel - North Bottom */
-/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1, X2 + 1);
-s[1] = sc(x2, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x2, X1 - 1, X2);
-s[2] = sc(x2, X1 - 1, X2);
-/* Point 3 */
-t[3] = tc(x2, X1 - 1, X2 + 1);
-s[3] = sc(x2, X1 - 1, X2 + 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXp1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - North Top */
-if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9
-&& time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1, X2 - 1);
-s[1] = sc(x2, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x2, X1 - 1, X2);
-s[2] = sc(x2, X1 - 1, X2);
-/* Point 3 */
-t[3] = tc(x2, X1 - 1, X2 - 1);
-s[3] = sc(x2, X1 - 1, X2 - 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXm1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Parallel - South Bottom */
-/*if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
-if (X2 < nz - 1 && X1 < ny - 1) {
-if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1, X2 + 1);
-s[1] = sc(x2, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x2, X1 + 1, X2);
-s[2] = sc(x2, X1 + 1, X2);
-/* Point 3 */
-t[3] = tc(x2, X1 + 1, X2 + 1);
-s[3] = sc(x2, X1 + 1, X2 + 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXp1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - South Top */
-if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9
-&& time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-s[0] = sc(x2, X1, X2);
-/* Point 1 */
-t[1] = tc(x2, X1, X2 - 1);
-s[1] = sc(x2, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x2, X1 + 1, X2);
-s[2] = sc(x2, X1 + 1, X2);
-/* Point 3 */
-t[3] = tc(x2, X1 + 1, X2 - 1);
-s[3] = sc(x2, X1 + 1, X2 - 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXm1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/*** New Face Trials ***/
-if (guess > 1.0e9) {
-if (X1 > y1 + 1 && X1 < y2 - 1 && X2 > z1 + 1 && X2 < z2 - 1) {
-/* Point 0 */
-t[0] = tc(x2 - 1, X1 + 1, X2);
-s[0] = sc(x2 - 1, X1 + 1, X2);
-/* Point 1 */
-t[1] = tc(x2 - 1, X1, X2 - 1);
-s[1] = sc(x2 - 1, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x2 - 1, X1, X2);
-s[2] = sc(x2 - 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x2 - 1, X1, X2 + 1);
-s[3] = sc(x2 - 1, X1, X2 + 1);
-/* Point 4 */
-t[4] = tc(x2 - 1, X1 - 1, X2);
-s[4] = sc(x2 - 1, X1 - 1, X2);
-/* Point 5 */
-s[5] = sc(x2, X1, X2);
-d02 = rX2 * dq;
-d12 = h;
-d25 = rX2 * sinqX1 * df;
-try = fdsphnf(t, s, d02, d12, d25);
-if (try < guess)
-guess = try;
-
-}
-}
-
-/*** Edge Trials ***/
-/* Change in Longitude */
-try = tc(x2-1,X1,X2)+ .5*(sc(x2,X1,X2)+sc(x2-1,X1,X2))*rX2*sinqX1*df;
-if (try < guess)
-guess = try;
-/* Change in South Latitude */
-if (X1 < ny - 1 && time0[index + nx] < 1.e9) {
-try = tc(x2,X1+1,X2)+ .5*(sc(x2,X1,X2)+sc(x2,X1+1,X2))*rX2*dq;
-if (try<guess) {
-fhead=(guess-try)/(rX2*dq*slow0[index]); guess=try;}
-}
-/* Change in North Latitude */
-if (X1 > 0 && time0[index - nx] < 1.e9) {
-try = tc(x2,X1-1,X2)+ .5*(sc(x2,X1,X2)+sc(x2,X1-1,X2))*rX2*dq;
-if (try<guess) {
-fhead=(guess-try)/(rX2*dq*slow0[index]); guess=try;}
-}
-/* Change in depth (increasing) */
-/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-try = tc(x2,X1,X2+1)+ .5*(sc(x2,X1,X2)+sc(x2,X1,X2+1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-}
-/* Change in depth (decreasing) */
-/*if ( time0[index-nxy]<1.e9 && X2>0 )  { */
-if (X2 > 0) {
-if (time0[index - nxy] < 1.e9) {
-try = tc(x2,X1,X2-1)+ .5*(sc(x2,X1,X2)+sc(x2,X1,X2-1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-}
-if (guess < time0[index]) {
-time0[index] = guess;
-if (fhead > headtest)
-headw[2]++;
-}
-}
-if (x2 == nx - 1)
-dx2 = 0;
-x2++;
-}
-/* End x2 if condition */
-}
-/* End growth loop */
-
-/* WEST (LEFT) SIDE */
-for (igrow = 1; igrow <= iminus; igrow++) {
-if (dx1) {
-ii = 0;
-for (k = z1 + 1; k <= z2 - 1; k++) {
-for (j = y1 + 1; j <= y2 - 1; j++) {
-sort[ii].time = tc(x1 + 1, j, k);
-sort[ii].i1 = j;
-sort[ii].i2 = k;
-ii++;
-}
-}
-qsort((char *) sort, ii, sizeof(struct sorted), compar);
-for (i = 0; i < ii; i++) {
-X1 = sort[i].i1;
-X2 = sort[i].i2;
-index = X2 * nxy + X1 * nx + x1;
-fhead = 0.;
-guess = time0[index];
-
-rX2 = rc(X2);
-rXp1 = rc(X2 + 1);
-rXm1 = rc(X2 - 1);
-qX1 = qc(X1);
-qX1p1 = qc(X1 + 1);
-qX1m1 = qc(X1 - 1);
-fx1 = fc(x1);
-fx1p1 = fc(x1 + 1);
-fx1m1 = fc(x1 - 1);
-
-sinqX1 = sin(qX1);
-
-/*** 3D Trials ***/
-/* Top North corner (point 6) */
-/*if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
-if (X2 < nz - 1 && X1 < ny - 1) {
-if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 + 1, X2 + 1);
-s[0] = sc(x1 + 1, X1 + 1, X2 + 1);
-r[0] = rXp1;
-q[0] = qX1p1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(x1, X1 + 1, X2 + 1);
-s[1] = sc(x1, X1 + 1, X2 + 1);
-r[1] = rXp1;
-q[1] = qX1p1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 2 */
-t[2] = tc(x1, X1, X2 + 1);
-s[2] = sc(x1, X1, X2 + 1);
-r[2] = rXp1;
-q[2] = qX1;
-f[2] = fx1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 3 */
-t[3] = tc(x1 + 1, X1, X2 + 1);
-s[3] = sc(x1 + 1, X1, X2 + 1);
-r[3] = rXp1;
-q[3] = qX1;
-f[3] = fx1p1;
-g[3] = -1;
-n[3] = -1;
-m[3] = 1;
-/* Point 4 */
-t[4] = tc(x1 + 1, X1 + 1, X2);
-s[4] = sc(x1 + 1, X1 + 1, X2);
-r[4] = rX2;
-q[4] = qX1p1;
-f[4] = fx1p1;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 5 */
-t[5] = tc(x1, X1 + 1, X2);
-s[5] = sc(x1, X1 + 1, X2);
-r[5] = rX2;
-q[5] = qX1p1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = 1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(x1 + 1, X1, X2);
-s[6] = sc(x1 + 1, X1, X2);
-r[6] = rX2;
-q[6] = qX1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 6 */
-s[7] = sc(x1, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx1;
-g[7] = 1;
-n[7] = -1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-
-}
-
-/* Top South corner (point 5) */
-/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1, X2 + 1);
-s[0] = sc(x1 + 1, X1, X2 + 1);
-r[0] = rXp1;
-q[0] = qX1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(x1, X1, X2 + 1);
-s[1] = sc(x1, X1, X2 + 1);
-r[1] = rXp1;
-q[1] = qX1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 2 */
-t[2] = tc(x1, X1 - 1, X2 + 1);
-s[2] = sc(x1, X1 - 1, X2 + 1);
-r[2] = rXp1;
-q[2] = qX1m1;
-f[2] = fx1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 - 1, X2 + 1);
-s[3] = sc(x1 + 1, X1 - 1, X2 + 1);
-r[3] = rXp1;
-q[3] = qX1m1;
-f[3] = fx1p1;
-g[3] = -1;
-n[3] = -1;
-m[3] = 1;
-/* Point 4 */
-t[4] = tc(x1 + 1, X1, X2);
-s[4] = sc(x1 + 1, X1, X2);
-r[4] = rX2;
-q[4] = qX1;
-f[4] = fx1p1;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 6 */
-t[5] = tc(x1, X1 - 1, X2);
-s[5] = sc(x1, X1 - 1, X2);
-r[5] = rX2;
-q[5] = qX1m1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(x1 + 1, X1 - 1, X2);
-s[6] = sc(x1 + 1, X1 - 1, X2);
-r[6] = rX2;
-q[6] = qX1m1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 5 */
-s[7] = sc(x1, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx1;
-g[7] = 1;
-n[7] = 1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-}
-
-/*  Bottom North corner (point 2) */
-if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9
-&& time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 + 1, X2);
-s[0] = sc(x1 + 1, X1 + 1, X2);
-r[0] = rX2;
-q[0] = qX1p1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(x1, X1 + 1, X2);
-s[1] = sc(x1, X1 + 1, X2);
-r[1] = rX2;
-q[1] = qX1p1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 3 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-r[2] = rX2;
-q[2] = qX1;
-f[2] = fx1p1;
-g[2] = -1;
-n[2] = -1;
-m[2] = 1;
-/* Point 4 */
-t[3] = tc(x1 + 1, X1 + 1, X2 - 1);
-s[3] = sc(x1 + 1, X1 + 1, X2 - 1);
-r[3] = rXm1;
-q[3] = qX1p1;
-f[3] = fx1p1;
-g[3] = 1;
-n[3] = 1;
-m[3] = 1;
-/* Point 5 */
-t[4] = tc(x1, X1 + 1, X2 - 1);
-s[4] = sc(x1, X1 + 1, X2 - 1);
-r[4] = rXm1;
-q[4] = qX1p1;
-f[4] = fx1;
-g[4] = 1;
-n[4] = 1;
-m[4] = -1;
-/* Point 6 */
-t[5] = tc(x1, X1, X2 - 1);
-s[5] = sc(x1, X1, X2 - 1);
-r[5] = rXm1;
-q[5] = qX1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(x1 + 1, X1, X2 - 1);
-s[6] = sc(x1 + 1, X1, X2 - 1);
-r[6] = rXm1;
-q[6] = qX1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 2 */
-s[7] = sc(x1, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx1;
-g[7] = -1;
-n[7] = -1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-}
-
-/* Bottom South corner (point 1) */
-if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9
-&& time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1, X2);
-s[0] = sc(x1 + 1, X1, X2);
-r[0] = rX2;
-q[0] = qX1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 2 */
-t[1] = tc(x1, X1 - 1, X2);
-s[1] = sc(x1, X1 - 1, X2);
-r[1] = rX2;
-q[1] = qX1m1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = -1;
-m[1] = -1;
-/* Point 3 */
-t[2] = tc(x1 + 1, X1 - 1, X2);
-s[2] = sc(x1 + 1, X1 - 1, X2);
-r[2] = rX2;
-q[2] = qX1m1;
-f[2] = fx1p1;
-g[2] = -1;
-n[2] = -1;
-m[2] = 1;
-/* Point 4 */
-t[3] = tc(x1 + 1, X1, X2 - 1);
-s[3] = sc(x1 + 1, X1, X2 - 1);
-r[3] = rXm1;
-q[3] = qX1;
-f[3] = fx1p1;
-g[3] = 1;
-n[3] = 1;
-m[3] = 1;
-/* Point 5 */
-t[4] = tc(x1, X1, X2 - 1);
-s[4] = sc(x1, X1, X2 - 1);
-r[4] = rXm1;
-q[4] = qX1;
-f[4] = fx1;
-g[4] = 1;
-n[4] = 1;
-m[4] = -1;
-/* Point 6 */
-t[5] = tc(x1, X1 - 1, X2 - 1);
-s[5] = sc(x1, X1 - 1, X2 - 1);
-r[5] = rXm1;
-q[5] = qX1m1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(x1 + 1, X1 - 1, X2 - 1);
-s[6] = sc(x1 + 1, X1 - 1, X2 - 1);
-r[6] = rXm1;
-q[6] = qX1m1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 1 */
-s[7] = sc(x1, X1, X2);
-r[7] = rX2;
-q[7] = qX1;
-f[7] = fx1;
-g[7] = -1;
-n[7] = 1;
-m[7] = -1;
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-}
-
-/*** New Edge Trials ***/
-if (guess > 1.0e9) {
-/* Top edge */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>y1+1 && X1<y2-1 )  {*/
-if (X2 < nz - 1 && X1 > y1 + 1 && X1 < y2 - 1) {
-if (time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 + 1, X2 + 1);
-s[0] = sc(x1 + 1, X1 + 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(x1 + 1, X1, X2 + 1);
-s[1] = sc(x1 + 1, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 - 1, X2 + 1);
-s[3] = sc(x1 + 1, X1 - 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(x1, X1, X2 + 1);
-s[4] = sc(x1, X1, X2 + 1);
-/* Point 5 */
-s[5] = sc(x1, X1, X2);
-
-d01 = rXp1 * dq;
-d12 = h;
-d14 = rXp1 * sin(qX1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25,
-d45);
-if (try < guess)
-guess = try;
-}
-}
-/* Bottom Edge */
-if (X2 > 0 && X1 > y1 + 1 && X1 < y2 - 1 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 - 1, X2 - 1);
-s[0] = sc(x1 + 1, X1 - 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(x1 + 1, X1, X2 - 1);
-s[1] = sc(x1 + 1, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 + 1, X2 - 1);
-s[3] = sc(x1 + 1, X1 + 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(x1, X1, X2 - 1);
-s[4] = sc(x1, X1, X2 - 1);
-/* Point 5 */
-s[5] = sc(x1, X1, X2);
-
-d01 = rXm1 * dq;
-d12 = h;
-d14 = rXm1 * sin(qX1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Northern Edge */
-if (X1 < ny - 1 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index + nx] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 + 1, X2 - 1);
-s[0] = sc(x1 + 1, X1 + 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(x1 + 1, X1 + 1, X2);
-s[1] = sc(x1 + 1, X1 + 1, X2);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 + 1, X2 + 1);
-s[3] = sc(x1 + 1, X1 + 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(x1, X1 + 1, X2);
-s[4] = sc(x1, X1 + 1, X2);
-/* Point 5 */
-s[5] = sc(x1, X1, X2);
-
-d01 = h;
-d12 = rX2 * dq;
-d14 = rX2 * sin(qX1p1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = rX2 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Southern Edge */
-if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index - nx] < 1.e9) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 - 1, X2 + 1);
-s[0] = sc(x1 + 1, X1 - 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(x1 + 1, X1 - 1, X2);
-s[1] = sc(x1 + 1, X1 - 1, X2);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 - 1, X2 - 1);
-s[3] = sc(x1 + 1, X1 - 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(x1, X1 - 1, X2);
-s[4] = sc(x1, X1 - 1, X2);
-/* Point 5 */
-s[5] = sc(x1, X1, X2);
-
-d01 = h;
-d12 = rX2 * dq;
-d14 = rX2 * sin(qX1m1) * df;
-d25 = rX2 * sin(qX1) * df;
-d45 = rX2 * dq;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Two-D Trials ***/
-/* West-North */
-if (X1 > 0 && time0[index - nx] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1 - 1, X2);
-s[1] = sc(x1, X1 - 1, X2);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 - 1, X2);
-s[3] = sc(x1 + 1, X1 - 1, X2);
-
-d01 = rX2 * dq;
-d02 = rX2 * sinqX1 * df;
-d13 = rX2 * sin(qX1m1) * df;
-d23 = rX2 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* West-South */
-if (X1 < ny - 1 && time0[index + nx] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1 + 1, X2);
-s[1] = sc(x1, X1 + 1, X2);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1 + 1, X2);
-s[3] = sc(x1 + 1, X1 + 1, X2);
-
-d01 = rX2 * dq;
-d02 = rX2 * sinqX1 * df;
-d13 = rX2 * sin(qX1p1) * df;
-d23 = rX2 * dq;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* West-Top */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1, X2 - 1);
-s[1] = sc(x1, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1, X2 - 1);
-s[3] = sc(x1 + 1, X1, X2 - 1);
-
-d01 = h;
-d02 = rX2 * sinqX1 * df;
-d13 = rXm1 * sinqX1 * df;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* West-Bottom */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  { */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1, X2 + 1);
-s[1] = sc(x1, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1, X2 + 1);
-s[3] = sc(x1 + 1, X1, X2 + 1);
-
-d01 = h;
-d02 = rX2 * sinqX1 * df;
-d13 = rXp1 * sinqX1 * df;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-}
-/* Parallel - North Bottom */
-/*if(time0[index-nx] < 1.e9 && time0[index+nxy-nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - nx] < 1.e9 && time0[index + nxy - nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1, X2 + 1);
-s[1] = sc(x1, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x1, X1 - 1, X2);
-s[2] = sc(x1, X1 - 1, X2);
-/* Point 3 */
-t[3] = tc(x1, X1 - 1, X2 + 1);
-s[3] = sc(x1, X1 - 1, X2 + 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXp1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - North Top */
-if (X2 > 0 && X1 > 0 && time0[index - nx] < 1.e9
-&& time0[index - nxy - nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1, X2 - 1);
-s[1] = sc(x1, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x1, X1 - 1, X2);
-s[2] = sc(x1, X1 - 1, X2);
-/* Point 3 */
-t[3] = tc(x1, X1 - 1, X2 - 1);
-s[3] = sc(x1, X1 - 1, X2 - 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXm1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Parallel - South Bottom */
-/*if(time0[index+nx] < 1.e9 && time0[index+nxy+nx] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<ny-1 ) { */
-if (X2 < nz - 1 && X1 < ny - 1) {
-if (time0[index + nx] < 1.e9 && time0[index + nxy + nx] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1, X2 + 1);
-s[1] = sc(x1, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x1, X1 + 1, X2);
-s[2] = sc(x1, X1 + 1, X2);
-/* Point 3 */
-t[3] = tc(x1, X1 + 1, X2 + 1);
-s[3] = sc(x1, X1 + 1, X2 + 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXp1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - South Top */
-if (X2 > 0 && X1 < ny - 1 && time0[index + nx] < 1.e9
-&& time0[index - nxy + nx] < 1.e9 && time0[index - nxy] < 1.e9) {
-s[0] = sc(x1, X1, X2);
-/* Point 1 */
-t[1] = tc(x1, X1, X2 - 1);
-s[1] = sc(x1, X1, X2 - 1);
-/* Point 2 */
-t[2] = tc(x1, X1 + 1, X2);
-s[2] = sc(x1, X1 + 1, X2);
-/* Point 3 */
-t[3] = tc(x1, X1 + 1, X2 - 1);
-s[3] = sc(x1, X1 + 1, X2 - 1);
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXm1 * dq;
-d23 = h;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/*** New Face Trials ***/
-if (guess > 1.0e9) {
-if (X1 > y1 + 1 && X1 < y2 - 1 && X2 > z1 + 1 && X2 < z2 - 1) {
-/* Point 0 */
-t[0] = tc(x1 + 1, X1 + 1, X2);
-s[0] = sc(x1 + 1, X1 + 1, X2);
-/* Point 1 */
-t[1] = tc(x1 + 1, X1, X2 + 1);
-s[1] = sc(x1 + 1, X1, X2 + 1);
-/* Point 2 */
-t[2] = tc(x1 + 1, X1, X2);
-s[2] = sc(x1 + 1, X1, X2);
-/* Point 3 */
-t[3] = tc(x1 + 1, X1, X2 - 1);
-s[3] = sc(x1 + 1, X1, X2 - 1);
-/* Point 4 */
-t[4] = tc(x1 + 1, X1 - 1, X2);
-s[4] = sc(x1 + 1, X1 - 1, X2);
-/* Point 5 */
-s[5] = sc(x1, X1, X2);
-d02 = rX2 * dq;
-d12 = h;
-d25 = rX2 * sinqX1 * df;
-try = fdsphnf(t, s, d02, d12, d25);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Edge Trials ***/
-/* Change in Longitude */
-try = tc(x1+1,X1,X2)+ .5*(sc(x1,X1,X2)+sc(x1+1,X1,X2))*rX2*sinqX1*df;
-if (try < guess)
-guess = try;
-/* Change in South Latitude */
-if (X1 < ny - 1 && time0[index + nx] < 1.e9) {
-try = tc(x1,X1+1,X2)+ .5*(sc(x1,X1,X2)+sc(x1,X1+1,X2))*rX2*dq;
-if (try<guess) {
-fhead=(guess-try)/(rX2*dq*slow0[index]); guess=try;}
-}
-/* Change in North Latitude */
-if (X1 > 0 && time0[index - nx] < 1.e9) {
-try = tc(x1,X1-1,X2)+ .5*(sc(x1,X1,X2)+sc(x1,X1-1,X2))*rX2*dq;
-if (try<guess) {
-fhead=(guess-try)/(rX2*dq*slow0[index]); guess=try;}
-}
-/* Change in depth (increasing) */
-/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  { */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-try = tc(x1,X1,X2+1)+ .5*(sc(x1,X1,X2)+sc(x1,X1,X2+1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-}
-/* Change in depth (decreasing) */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-try = tc(x1,X1,X2-1)+ .5*(sc(x1,X1,X2)+sc(x1,X1,X2-1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-if (guess < time0[index]) {
-time0[index] = guess;
-if (fhead > headtest)
-headw[1]++;
-}
-}
-if (x1 == 0)
-dx1 = 0;
-x1--;
-}
-/* End x1 if condition */
-}
-/* End growth loop */
-
-/* NORTH (FRONT) SIDE */
-for (igrow = 1; igrow <= jminus; igrow++) {
-if (dy1) {
-ii = 0;
-for (k = z1 + 1; k <= z2 - 1; k++) {
-for (i = x1 + 1; i <= x2 - 1; i++) {
-sort[ii].time = tc(i, y1 + 1, k);
-sort[ii].i1 = i;
-sort[ii].i2 = k;
-ii++;
-}
-}
-qsort((char *) sort, ii, sizeof(struct sorted), compar);
-for (i = 0; i < ii; i++) {
-X1 = sort[i].i1;
-X2 = sort[i].i2;
-index = X2 * nxy + y1 * nx + X1;
-fhead = 0.;
-guess = time0[index];
-
-rX2 = rc(X2);
-rXp1 = rc(X2 + 1);
-rXm1 = rc(X2 - 1);
-qy1 = qc(y1);
-qy1p1 = qc(y1 + 1);
-fx1 = fc(X1);
-fx1p1 = fc(X1 + 1);
-fx1m1 = fc(X1 - 1);
-
-sinqy1 = sin(qy1);
-
-/*** 3D Trials ***/
-/* Top West corner (point 6) */
-/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
-if (X2 < nz - 1 && X1 < nx - 1) {
-if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y1 + 1, X2 + 1);
-s[0] = sc(X1 + 1, y1 + 1, X2 + 1);
-r[0] = rXp1;
-q[0] = qy1p1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(X1, y1 + 1, X2 + 1);
-s[1] = sc(X1, y1 + 1, X2 + 1);
-r[1] = rXp1;
-q[1] = qy1p1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 2 */
-t[2] = tc(X1, y1, X2 + 1);
-s[2] = sc(X1, y1, X2 + 1);
-r[2] = rXp1;
-q[2] = qy1;
-f[2] = fx1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 3 */
-t[3] = tc(X1 + 1, y1, X2 + 1);
-s[3] = sc(X1 + 1, y1, X2 + 1);
-r[3] = rXp1;
-q[3] = qy1;
-f[3] = fx1p1;
-g[3] = -1;
-n[3] = -1;
-m[3] = 1;
-/* Point 4 */
-t[4] = tc(X1 + 1, y1 + 1, X2);
-s[4] = sc(X1 + 1, y1 + 1, X2);
-r[4] = rX2;
-q[4] = qy1p1;
-f[4] = fx1p1;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 5 */
-t[5] = tc(X1, y1 + 1, X2);
-s[5] = sc(X1, y1 + 1, X2);
-r[5] = rX2;
-q[5] = qy1p1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = 1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(X1 + 1, y1, X2);
-s[6] = sc(X1 + 1, y1, X2);
-r[6] = rX2;
-q[6] = qy1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 6 */
-s[7] = sc(X1, y1, X2);
-r[7] = rX2;
-q[7] = qy1;
-f[7] = fx1;
-g[7] = 1;
-n[7] = -1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-}
-
-/* Top East corner (point 7) */
-/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1, y1 + 1, X2 + 1);
-s[0] = sc(X1, y1 + 1, X2 + 1);
-r[0] = rXp1;
-q[0] = qy1p1;
-f[0] = fx1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(X1 - 1, y1 + 1, X2 + 1);
-s[1] = sc(X1 - 1, y1 + 1, X2 + 1);
-r[1] = rXp1;
-q[1] = qy1p1;
-f[1] = fx1m1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 2 */
-t[2] = tc(X1 - 1, y1, X2 + 1);
-s[2] = sc(X1 - 1, y1, X2 + 1);
-r[2] = rXp1;
-q[2] = qy1;
-f[2] = fx1m1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 3 */
-t[3] = tc(X1, y1, X2 + 1);
-s[3] = sc(X1, y1, X2 + 1);
-r[3] = rXp1;
-q[3] = qy1;
-f[3] = fx1;
-g[3] = -1;
-n[3] = -1;
-m[3] = 1;
-/* Point 4 */
-t[4] = tc(X1, y1 + 1, X2);
-s[4] = sc(X1, y1 + 1, X2);
-r[4] = rX2;
-q[4] = qy1p1;
-f[4] = fx1;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 5 */
-t[5] = tc(X1 - 1, y1 + 1, X2);
-s[5] = sc(X1 - 1, y1 + 1, X2);
-r[5] = rX2;
-q[5] = qy1p1;
-f[5] = fx1m1;
-g[5] = 1;
-n[5] = 1;
-m[5] = -1;
-/* Point 6 */
-t[6] = tc(X1 - 1, y1, X2);
-s[6] = sc(X1 - 1, y1, X2);
-r[6] = rX2;
-q[6] = qy1;
-f[6] = fx1m1;
-g[6] = 1;
-n[6] = -1;
-m[6] = -1;
-/* Point 7 */
-s[7] = sc(X1, y1, X2);
-r[7] = rX2;
-q[7] = qy1;
-f[7] = fx1;
-g[7] = 1;
-n[7] = -1;
-m[7] = 1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-}
-
-/*  Bottom West corner (point 2) */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y1 + 1, X2);
-s[0] = sc(X1 + 1, y1 + 1, X2);
-r[0] = rX2;
-q[0] = qy1p1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(X1, y1 + 1, X2);
-s[1] = sc(X1, y1 + 1, X2);
-r[1] = rX2;
-q[1] = qy1p1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 3 */
-t[2] = tc(X1 + 1, y1, X2);
-s[2] = sc(X1 + 1, y1, X2);
-r[2] = rX2;
-q[2] = qy1;
-f[2] = fx1p1;
-g[2] = -1;
-n[2] = -1;
-m[2] = 1;
-/* Point 4 */
-t[3] = tc(X1 + 1, y1 + 1, X2 - 1);
-s[3] = sc(X1 + 1, y1 + 1, X2 - 1);
-r[3] = rXm1;
-q[3] = qy1p1;
-f[3] = fx1p1;
-g[3] = 1;
-n[3] = 1;
-m[3] = 1;
-/* Point 5 */
-t[4] = tc(X1, y1 + 1, X2 - 1);
-s[4] = sc(X1, y1 + 1, X2 - 1);
-r[4] = rXm1;
-q[4] = qy1p1;
-f[4] = fx1;
-g[4] = 1;
-n[4] = 1;
-m[4] = -1;
-/* Point 6 */
-t[5] = tc(X1, y1, X2 - 1);
-s[5] = sc(X1, y1, X2 - 1);
-r[5] = rXm1;
-q[5] = qy1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(X1 + 1, y1, X2 - 1);
-s[6] = sc(X1 + 1, y1, X2 - 1);
-r[6] = rXm1;
-q[6] = qy1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 2 */
-s[7] = sc(X1, y1, X2);
-r[7] = rX2;
-q[7] = qy1;
-f[7] = fx1;
-g[7] = -1;
-n[7] = -1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-}
-
-/* Bottom East corner (point 3) */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9
-&& time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1, y1 + 1, X2);
-s[0] = sc(X1, y1 + 1, X2);
-r[0] = rX2;
-q[0] = qy1p1;
-f[0] = fx1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(X1 - 1, y1 + 1, X2);
-s[1] = sc(X1 - 1, y1 + 1, X2);
-r[1] = rX2;
-q[1] = qy1p1;
-f[1] = fx1m1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 2 */
-t[2] = tc(X1 - 1, y1, X2);
-s[2] = sc(X1 - 1, y1, X2);
-r[2] = rX2;
-q[2] = qy1;
-f[2] = fx1m1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 4 */
-t[3] = tc(X1, y1 + 1, X2 - 1);
-s[3] = sc(X1, y1 + 1, X2 - 1);
-r[3] = rXm1;
-q[3] = qy1p1;
-f[3] = fx1;
-g[3] = 1;
-n[3] = 1;
-m[3] = 1;
-/* Point 5 */
-t[4] = tc(X1 - 1, y1 + 1, X2 - 1);
-s[4] = sc(X1 - 1, y1 + 1, X2 - 1);
-r[4] = rXm1;
-q[4] = qy1p1;
-f[4] = fx1m1;
-g[4] = 1;
-n[4] = 1;
-m[4] = -1;
-/* Point 6 */
-t[5] = tc(X1 - 1, y1, X2 - 1);
-s[5] = sc(X1 - 1, y1, X2 - 1);
-r[5] = rXm1;
-q[5] = qy1;
-f[5] = fx1m1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(X1, y1, X2 - 1);
-s[6] = sc(X1, y1, X2 - 1);
-r[6] = rXm1;
-q[6] = qy1;
-f[6] = fx1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 3 */
-s[7] = sc(X1, y1, X2);
-r[7] = rX2;
-q[7] = qy1;
-f[7] = fx1;
-g[7] = -1;
-n[7] = -1;
-m[7] = 1;
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-}
-
-/*** New Edge Trials ***/
-if (guess > 1.0e9) {
-/* Top edge */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>x1+1 && X1<x2-1 )  { */
-if (X2 < nz - 1 && X1 > x1 + 1 && X1 < x2 - 1) {
-if (time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 - 1, y1 + 1, X2 + 1);
-s[0] = sc(X1 - 1, y1 + 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(X1, y1 + 1, X2 + 1);
-s[1] = sc(X1, y1 + 1, X2 + 1);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y1 + 1, X2 + 1);
-s[3] = sc(X1 + 1, y1 + 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(X1, y1, X2 + 1);
-s[4] = sc(X1, y1, X2 + 1);
-/* Point 5 */
-s[5] = sc(X1, y1, X2);
-
-d01 = rXp1 * sin(qy1p1) * df;
-d12 = h;
-d14 = rXp1 * dq;
-d25 = rX2 * dq;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25,
-d45);
-if (try < guess)
-guess = try;
-}
-}
-/* Bottom Edge */
-if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y1 + 1, X2 - 1);
-s[0] = sc(X1 + 1, y1 + 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(X1, y1 + 1, X2 - 1);
-s[1] = sc(X1, y1 + 1, X2 - 1);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y1 + 1, X2 - 1);
-s[3] = sc(X1 - 1, y1 + 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(X1, y1, X2 - 1);
-s[4] = sc(X1, y1, X2 - 1);
-/* Point 5 */
-s[5] = sc(X1, y1, X2);
-
-d01 = rXm1 * sin(qy1p1) * df;
-d12 = h;
-d14 = rXm1 * dq;
-d25 = rX2 * dq;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Eastern Edge */
-if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 & time0[index - 1] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 - 1, y1 + 1, X2 - 1);
-s[0] = sc(X1 - 1, y1 + 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(X1 - 1, y1 + 1, X2);
-s[1] = sc(X1 - 1, y1 + 1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y1 + 1, X2 + 1);
-s[3] = sc(X1 - 1, y1 + 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(X1 - 1, y1, X2);
-s[4] = sc(X1 - 1, y1, X2);
-/* Point 5 */
-s[5] = sc(X1, y1, X2);
-
-d01 = h;
-d12 = rX2 * sin(qy1p1) * df;
-d14 = rX2 * dq;
-d25 = rX2 * dq;
-d45 = rX2 * sin(qy1) * df;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Western Edge */
-if (X1 < nx - 1 && X2 > z1 + 1 && X2 < z2 - 1 & time0[index + 1] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y1 + 1, X2 + 1);
-s[0] = sc(X1 + 1, y1 + 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(X1 + 1, y1 + 1, X2);
-s[1] = sc(X1 + 1, y1 + 1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y1 + 1, X2 - 1);
-s[3] = sc(X1 + 1, y1 + 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(X1 + 1, y1, X2);
-s[4] = sc(X1 + 1, y1, X2);
-/* Point 5 */
-s[5] = sc(X1, y1, X2);
-
-d01 = h;
-d12 = rX2 * sin(qy1p1) * df;
-d14 = rX2 * dq;
-d25 = rX2 * dq;
-d45 = rX2 * sin(qy1) * df;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Two-D Trials ***/
-/* North-East */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1 + 1, y1, X2);
-s[1] = sc(X1 + 1, y1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y1 + 1, X2);
-s[3] = sc(X1 + 1, y1 + 1, X2);
-
-d01 = rX2 * sinqy1 * df;
-d02 = rX2 * dq;
-d13 = rX2 * dq;
-d23 = rX2 * sin(qy1p1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* North-West */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1 - 1, y1, X2);
-s[1] = sc(X1 - 1, y1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y1 + 1, X2);
-s[3] = sc(X1 - 1, y1 + 1, X2);
-
-d01 = rX2 * sinqy1 * df;
-d02 = rX2 * dq;
-d13 = rX2 * dq;
-d23 = rX2 * sin(qy1p1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* North-Top */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1, y1, X2 - 1);
-s[1] = sc(X1, y1, X2 - 1);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1, y1 + 1, X2 - 1);
-s[3] = sc(X1, y1 + 1, X2 - 1);
-
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXm1 * dq;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* North-Bottom */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  { */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1, y1, X2 + 1);
-s[1] = sc(X1, y1, X2 + 1);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1, y1 + 1, X2 + 1);
-s[3] = sc(X1, y1 + 1, X2 + 1);
-
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXp1 * dq;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-}
-/* Parallel - East Bottom */
-/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
-if (X2 < nz - 1 && X1 < nx - 1) {
-if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1 + 1, y1, X2);
-s[1] = sc(X1 + 1, y1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1, X2 + 1);
-s[2] = sc(X1, y1, X2 + 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, y1, X2 + 1);
-s[3] = sc(X1 + 1, y1, X2 + 1);
-
-d01 = rX2 * sinqy1 * df;
-d02 = h;
-d13 = h;
-d23 = rXp1 * sinqy1 * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - East Top */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1 + 1, y1, X2);
-s[1] = sc(X1 + 1, y1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1, X2 - 1);
-s[2] = sc(X1, y1, X2 - 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, y1, X2 - 1);
-s[3] = sc(X1 + 1, y1, X2 - 1);
-
-d01 = rX2 * sinqy1 * df;
-d02 = h;
-d13 = h;
-d23 = rXm1 * sinqy1 * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Parallel - West Bottom */
-/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1 - 1, y1, X2);
-s[1] = sc(X1 - 1, y1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1, X2 + 1);
-s[2] = sc(X1, y1, X2 + 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, y1, X2 + 1);
-s[3] = sc(X1 - 1, y1, X2 + 1);
-d01 = rX2 * sinqy1 * df;
-d02 = h;
-d13 = h;
-d23 = rXp1 * sinqy1 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - West Top */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9
-&& time0[index - nxy] < 1.e9) {
-s[0] = sc(X1, y1, X2);
-/* Point 1 */
-t[1] = tc(X1 - 1, y1, X2);
-s[1] = sc(X1 - 1, y1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1, X2 - 1);
-s[2] = sc(X1, y1, X2 - 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, y1, X2 - 1);
-s[3] = sc(X1 - 1, y1, X2 - 1);
-
-d01 = rX2 * sinqy1 * df;
-d02 = h;
-d13 = h;
-d23 = rXm1 * sinqy1 * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/*** New Face Trials ***/
-if (guess > 1.0e9) {
-if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > z1 + 1 && X2 < z2 - 1) {
-/* Point 0 */
-t[0] = tc(X1, y1 + 1, X2 + 1);
-s[0] = sc(X1, y1 + 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(X1 + 1, y1 + 1, X2);
-s[1] = sc(X1 + 1, y1 + 1, X2);
-/* Point 2 */
-t[2] = tc(X1, y1 + 1, X2);
-s[2] = sc(X1, y1 + 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y1 + 1, X2);
-s[3] = sc(X1 - 1, y1 + 1, X2);
-/* Point 4 */
-t[4] = tc(X1, y1 + 1, X2 - 1);
-s[4] = sc(X1, y1 + 1, X2 - 1);
-/* Point 5 */
-s[5] = sc(X1, y1, X2);
-d02 = h;
-d12 = rX2 * sin(qy1p1) * df;
-d25 = rX2 * dq;
-try = fdsphnf(t, s, d02, d12, d25);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Edge Trials ***/
-/* Change in Latitude */
-try = tc(X1,y1+1,X2)+ .5*(sc(X1,y1+1,X2)+sc(X1,y1,X2))*rX2*dq;
-if (try < guess)
-guess = try;
-/* Change in East Longitude */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-try = tc(X1+1,y1,X2)+ .5*(sc(X1,y1,X2)+sc(X1+1,y1,X2))*rX2*df*sinqy1;
-if (try<guess) {
-fhead=(guess-try)/(rX2*df*sinqy1*slow0[index]); guess=try;}
-}
-/* Change in West Longitude */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-try = tc(X1-1,y1,X2)+ .5*(sc(X1,y1,X2)+sc(X1-1,y1,X2))*rX2*df*sinqy1;
-if (try<guess) {
-fhead=(guess-try)/(rX2*df*sinqy1*slow0[index]); guess=try;}
-}
-/* Change in depth (increasing) */
-/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  { */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-try = tc(X1,y1,X2+1)+ .5*(sc(X1,y1,X2)+sc(X1,y1,X2+1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-}
-/* Change in depth (decreasing) */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-try = tc(X1,y1,X2-1)+ .5*(sc(X1,y1,X2)+sc(X1,y1,X2-1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-if (guess < time0[index]) {
-time0[index] = guess;
-if (fhead > headtest)
-headw[3]++;
-}
-}
-if (y1 == 0)
-dy1 = 0;
-y1--;
-}
-/* End y1 if condition */
-}
-/* End growth loop */
-
-/* SOUTH (BACK) SIDE */
-for (igrow = 1; igrow <= jplus; igrow++) {
-if (dy2) {
-ii = 0;
-for (k = z1 + 1; k <= z2 - 1; k++) {
-for (i = x1 + 1; i <= x2 - 1; i++) {
-sort[ii].time = tc(i, y2 - 1, k);
-sort[ii].i1 = i;
-sort[ii].i2 = k;
-ii++;
-}
-}
-qsort((char *) sort, ii, sizeof(struct sorted), compar);
-for (i = 0; i < ii; i++) {
-X1 = sort[i].i1;
-X2 = sort[i].i2;
-index = X2 * nxy + y2 * nx + X1;
-fhead = 0.;
-guess = time0[index];
-
-rX2 = rc(X2);
-rXp1 = rc(X2 + 1);
-rXm1 = rc(X2 - 1);
-qy2 = qc(y2);
-qy2m1 = qc(y2 - 1);
-fx1 = fc(X1);
-fx1p1 = fc(X1 + 1);
-fx1m1 = fc(X1 - 1);
-
-sinqy2 = sin(qy2);
-
-/*** 3D Trials ***/
-/* Top West corner (point 5) */
-/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
-if (X2 < nz - 1 && X1 < nx - 1) {
-if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y2, X2 + 1);
-s[0] = sc(X1 + 1, y2, X2 + 1);
-r[0] = rXp1;
-q[0] = qy2;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = 1;
-m[0] = 1;
-/* Point 1 */
-t[1] = tc(X1, y2, X2 + 1);
-s[1] = sc(X1, y2, X2 + 1);
-r[1] = rXp1;
-q[1] = qy2;
-f[1] = fx1;
-g[1] = -1;
-n[1] = 1;
-m[1] = -1;
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2 + 1);
-s[2] = sc(X1, y2 - 1, X2 + 1);
-r[2] = rXp1;
-q[2] = qy2m1;
-f[2] = fx1;
-g[2] = -1;
-n[2] = -1;
-m[2] = -1;
-/* Point 3 */
-t[3] = tc(X1 + 1, y2 - 1, X2 + 1);
-s[3] = sc(X1 + 1, y2 - 1, X2 + 1);
-r[3] = rXp1;
-q[3] = qy2m1;
-f[3] = fx1p1;
-g[3] = -1;
-n[3] = -1;
-m[3] = 1;
-/* Point 4 */
-t[4] = tc(X1 + 1, y2, X2);
-s[4] = sc(X1 + 1, y2, X2);
-r[4] = rX2;
-q[4] = qy2;
-f[4] = fx1p1;
-g[4] = 1;
-n[4] = 1;
-m[4] = 1;
-/* Point 6 */
-t[5] = tc(X1, y2 - 1, X2);
-s[5] = sc(X1, y2 - 1, X2);
-r[5] = rX2;
-q[5] = qy2m1;
-f[5] = fx1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 7 */
-t[6] = tc(X1 + 1, y2 - 1, X2);
-s[6] = sc(X1 + 1, y2 - 1, X2);
-r[6] = rX2;
-q[6] = qy2m1;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = -1;
-m[6] = 1;
-/* Point 5 */
-s[7] = sc(X1, y2, X2);
-r[7] = rX2;
-q[7] = qy2;
-f[7] = fx1;
-g[7] = 1;
-n[7] = 1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-}
-
-/* Top East corner (point 4) */
-/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-/* Point 3 */
-t[0] = tc(X1, y2 - 1, X2 + 1);
-s[0] = sc(X1, y2 - 1, X2 + 1);
-r[0] = rXp1;
-q[0] = qy2m1;
-f[0] = fx1;
-g[0] = -1;
-n[0] = -1;
-m[0] = 1;
-/* Point 2 */
-t[1] = tc(X1 - 1, y2 - 1, X2 + 1);
-s[1] = sc(X1 - 1, y2 - 1, X2 + 1);
-r[1] = rXp1;
-q[1] = qy2m1;
-f[1] = fx1m1;
-g[1] = -1;
-n[1] = -1;
-m[1] = -1;
-/* Point 1 */
-t[2] = tc(X1 - 1, y2, X2 + 1);
-s[2] = sc(X1 - 1, y2, X2 + 1);
-r[2] = rXp1;
-q[2] = qy2;
-f[2] = fx1m1;
-g[2] = -1;
-n[2] = 1;
-m[2] = -1;
-/* Point 0 */
-t[3] = tc(X1, y2, X2 + 1);
-s[3] = sc(X1, y2, X2 + 1);
-r[3] = rXp1;
-q[3] = qy2;
-f[3] = fx1;
-g[3] = -1;
-n[3] = 1;
-m[3] = 1;
-/* Point 7 */
-t[4] = tc(X1, y2 - 1, X2);
-s[4] = sc(X1, y2 - 1, X2);
-r[4] = rX2;
-q[4] = qy2m1;
-f[4] = fx1;
-g[4] = 1;
-n[4] = -1;
-m[4] = 1;
-/* Point 6 */
-t[5] = tc(X1 - 1, y2 - 1, X2);
-s[5] = sc(X1 - 1, y2 - 1, X2);
-r[5] = rX2;
-q[5] = qy2m1;
-f[5] = fx1m1;
-g[5] = 1;
-n[5] = -1;
-m[5] = -1;
-/* Point 5 */
-t[6] = tc(X1 - 1, y2, X2);
-s[6] = sc(X1 - 1, y2, X2);
-r[6] = rX2;
-q[6] = qy2;
-f[6] = fx1m1;
-g[6] = 1;
-n[6] = 1;
-m[6] = -1;
-/* Point 4 */
-s[7] = sc(X1, y2, X2);
-r[7] = rX2;
-q[7] = qy2;
-f[7] = fx1;
-g[7] = 1;
-n[7] = 1;
-m[7] = 1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq,
-df);
-if (try < guess)
-guess = try;
-}
-}
-
-/*  Bottom West corner (point 1) */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9) {
-/* Point 3 */
-t[0] = tc(X1 + 1, y2 - 1, X2);
-s[0] = sc(X1 + 1, y2 - 1, X2);
-r[0] = rX2;
-q[0] = qy2m1;
-f[0] = fx1p1;
-g[0] = -1;
-n[0] = -1;
-m[0] = 1;
-/* Point 2 */
-t[1] = tc(X1, y2 - 1, X2);
-s[1] = sc(X1, y2 - 1, X2);
-r[1] = rX2;
-q[1] = qy2m1;
-f[1] = fx1;
-g[1] = -1;
-n[1] = -1;
-m[1] = -1;
-/* Point 0 */
-t[2] = tc(X1 + 1, y2, X2);
-s[2] = sc(X1 + 1, y2, X2);
-r[2] = rX2;
-q[2] = qy2;
-f[2] = fx1p1;
-g[2] = -1;
-n[2] = 1;
-m[2] = 1;
-/* Point 7 */
-t[3] = tc(X1 + 1, y2 - 1, X2 - 1);
-s[3] = sc(X1 + 1, y2 - 1, X2 - 1);
-r[3] = rXm1;
-q[3] = qy2m1;
-f[3] = fx1p1;
-g[3] = 1;
-n[3] = -1;
-m[3] = 1;
-/* Point 6 */
-t[4] = tc(X1, y2 - 1, X2 - 1);
-s[4] = sc(X1, y2 - 1, X2 - 1);
-r[4] = rXm1;
-q[4] = qy2m1;
-f[4] = fx1;
-g[4] = 1;
-n[4] = -1;
-m[4] = -1;
-/* Point 5 */
-t[5] = tc(X1, y2, X2 - 1);
-s[5] = sc(X1, y2, X2 - 1);
-r[5] = rXm1;
-q[5] = qy2;
-f[5] = fx1;
-g[5] = 1;
-n[5] = 1;
-m[5] = -1;
-/* Point 4 */
-t[6] = tc(X1 + 1, y2, X2 - 1);
-s[6] = sc(X1 + 1, y2, X2 - 1);
-r[6] = rXm1;
-q[6] = qy2;
-f[6] = fx1p1;
-g[6] = 1;
-n[6] = 1;
-m[6] = 1;
-/* Point 1 */
-s[7] = sc(X1, y2, X2);
-r[7] = rX2;
-q[7] = qy2;
-f[7] = fx1;
-g[7] = -1;
-n[7] = 1;
-m[7] = -1;
-
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-}
-
-/* Bottom East corner (point 0) */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9
-&& time0[index - nxy] < 1.e9) {
-/* Point 3 */
-t[0] = tc(X1, y2 - 1, X2);
-s[0] = sc(X1, y2 - 1, X2);
-r[0] = rX2;
-q[0] = qy2m1;
-f[0] = fx1;
-g[0] = -1;
-n[0] = -1;
-m[0] = 1;
-/* Point 2 */
-t[1] = tc(X1 - 1, y2 - 1, X2);
-s[1] = sc(X1 - 1, y2 - 1, X2);
-r[1] = rX2;
-q[1] = qy2m1;
-f[1] = fx1m1;
-g[1] = -1;
-n[1] = -1;
-m[1] = -1;
-/* Point 1 */
-t[2] = tc(X1 - 1, y2, X2);
-s[2] = sc(X1 - 1, y2, X2);
-r[2] = rX2;
-q[2] = qy2;
-f[2] = fx1m1;
-g[2] = -1;
-n[2] = 1;
-m[2] = -1;
-/* Point 7 */
-t[3] = tc(X1, y2 - 1, X2 - 1);
-s[3] = sc(X1, y2 - 1, X2 - 1);
-r[3] = rXm1;
-q[3] = qy2m1;
-f[3] = fx1;
-g[3] = 1;
-n[3] = -1;
-m[3] = 1;
-/* Point 6 */
-t[4] = tc(X1 - 1, y2 - 1, X2 - 1);
-s[4] = sc(X1 - 1, y2 - 1, X2 - 1);
-r[4] = rXm1;
-q[4] = qy2m1;
-f[4] = fx1m1;
-g[4] = 1;
-n[4] = -1;
-m[4] = -1;
-/* Point 5 */
-t[5] = tc(X1 - 1, y2, X2 - 1);
-s[5] = sc(X1 - 1, y2, X2 - 1);
-r[5] = rXm1;
-q[5] = qy2;
-f[5] = fx1m1;
-g[5] = 1;
-n[5] = 1;
-m[5] = -1;
-/* Point 4 */
-t[6] = tc(X1, y2, X2 - 1);
-s[6] = sc(X1, y2, X2 - 1);
-r[6] = rXm1;
-q[6] = qy2;
-f[6] = fx1;
-g[6] = 1;
-n[6] = 1;
-m[6] = 1;
-/* Point 0 */
-s[7] = sc(X1, y2, X2);
-r[7] = rX2;
-q[7] = qy2;
-f[7] = fx1;
-g[7] = -1;
-n[7] = 1;
-m[7] = 1;
-try = fdsph3d(t, s, r, q, f, g, n, m, h, dq, df);
-if (try < guess)
-guess = try;
-}
-
-/*** New Edge Trials ***/
-if (guess > 1.0e9) {
-/* Top edge */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 && X1>x1+1 && X1<x2-1 )  { */
-if (X2 < nz - 1 && X1 > x1 + 1 && X1 < x2 - 1) {
-if (time0[index + nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y2 - 1, X2 + 1);
-s[0] = sc(X1 + 1, y2 - 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(X1, y2 - 1, X2 + 1);
-s[1] = sc(X1, y2 - 1, X2 + 1);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y2 - 1, X2 + 1);
-s[3] = sc(X1 - 1, y2 - 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(X1, y2, X2 + 1);
-s[4] = sc(X1, y2, X2 + 1);
-/* Point 5 */
-s[5] = sc(X1, y2, X2);
-
-d01 = rXp1 * sin(qy2m1) * df;
-d12 = h;
-d14 = rXp1 * dq;
-d25 = rX2 * dq;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25,
-d45);
-if (try < guess)
-guess = try;
-}
-}
-/* Bottom Edge */
-if (X2 > 0 && X1 > x1 + 1 && X1 < x2 - 1 && time0[index - nxy] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 - 1, y2 - 1, X2 - 1);
-s[0] = sc(X1 - 1, y2 - 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(X1, y2 - 1, X2 - 1);
-s[1] = sc(X1, y2 - 1, X2 - 1);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y2 - 1, X2 - 1);
-s[3] = sc(X1 + 1, y2 - 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(X1, y2, X2 - 1);
-s[4] = sc(X1, y2, X2 - 1);
-/* Point 5 */
-s[5] = sc(X1, y2, X2);
-
-d01 = rXm1 * sin(qy2m1) * df;
-d12 = h;
-d14 = rXm1 * dq;
-d25 = rX2 * dq;
-d45 = h;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Eastern Edge */
-if (X1 > 0 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index - 1] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 - 1, y2 - 1, X2 + 1);
-s[0] = sc(X1 - 1, y2 - 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(X1 - 1, y2 - 1, X2);
-s[1] = sc(X1 - 1, y2 - 1, X2);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y2 - 1, X2 - 1);
-s[3] = sc(X1 - 1, y2 - 1, X2 - 1);
-/* Point 4 */
-t[4] = tc(X1 - 1, y2, X2);
-s[4] = sc(X1 - 1, y2, X2);
-/* Point 5 */
-s[5] = sc(X1, y2, X2);
-
-d01 = h;
-d12 = rX2 * sin(qy2m1) * df;
-d14 = rX2 * dq;
-d25 = rX2 * dq;
-d45 = rX2 * sin(qy2) * df;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-/* Western Edge */
-if (X1 < nx - 1 && X2 > z1 + 1 && X2 < z2 - 1 && time0[index + 1] < 1.e9) {
-/* Point 0 */
-t[0] = tc(X1 + 1, y2 - 1, X2 - 1);
-s[0] = sc(X1 + 1, y2 - 1, X2 - 1);
-/* Point 1 */
-t[1] = tc(X1 + 1, y2 - 1, X2);
-s[1] = sc(X1 + 1, y2 - 1, X2);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y2 - 1, X2 + 1);
-s[3] = sc(X1 + 1, y2 - 1, X2 + 1);
-/* Point 4 */
-t[4] = tc(X1 + 1, y2, X2);
-s[4] = sc(X1 + 1, y2, X2);
-/* Point 5 */
-s[5] = sc(X1, y2, X2);
-
-d01 = h;
-d12 = rX2 * sin(qy2m1) * df;
-d14 = rX2 * dq;
-d25 = rX2 * dq;
-d45 = rX2 * sin(qy2) * df;
-
-try = fdsphne(t, s, d01, d12, d14, d25, d45);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Two-D Trials ***/
-/* South-East */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1 + 1, y2, X2);
-s[1] = sc(X1 + 1, y2, X2);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y2 - 1, X2);
-s[3] = sc(X1 + 1, y2 - 1, X2);
-
-d01 = rX2 * sinqy2 * df;
-d02 = rX2 * dq;
-d13 = rX2 * dq;
-d23 = rX2 * sin(qy2m1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* South-West */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1 - 1, y2, X2);
-s[1] = sc(X1 - 1, y2, X2);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 - 1, y2 - 1, X2);
-s[3] = sc(X1 - 1, y2 - 1, X2);
-
-d01 = rX2 * sinqy2 * df;
-d02 = rX2 * dq;
-d13 = rX2 * dq;
-d23 = rX2 * sin(qy2m1) * df;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* South-Top */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1, y2, X2 - 1);
-s[1] = sc(X1, y2, X2 - 1);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1, y2 - 1, X2 - 1);
-s[3] = sc(X1, y2 - 1, X2 - 1);
-
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXm1 * dq;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-/* South-Bottom */
-/*if(time0[index+nxy] < 1.e9 && X2<nz-1 )  { */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1, y2, X2 + 1);
-s[1] = sc(X1, y2, X2 + 1);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1, y2 - 1, X2 + 1);
-s[3] = sc(X1, y2 - 1, X2 + 1);
-
-d01 = h;
-d02 = rX2 * dq;
-d13 = rXp1 * dq;
-d23 = h;
-
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess)
-guess = try;
-}
-}
-/* Parallel - East Bottom */
-/*if(time0[index+1] < 1.e9 && time0[index+nxy+1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1<nx-1 ) { */
-if (X2 < nz - 1 && X1 < nx - 1) {
-if (time0[index + 1] < 1.e9 && time0[index + nxy + 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1 + 1, y2, X2);
-s[1] = sc(X1 + 1, y2, X2);
-/* Point 2 */
-t[2] = tc(X1, y2, X2 + 1);
-s[2] = sc(X1, y2, X2 + 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, y2, X2 + 1);
-s[3] = sc(X1 + 1, y2, X2 + 1);
-d01 = rX2 * sinqy2 * df;
-d02 = h;
-d13 = h;
-d23 = rXp1 * sinqy2 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - East Top */
-if (X2 > 0 && X1 < nx - 1 && time0[index + 1] < 1.e9
-&& time0[index - nxy + 1] < 1.e9 && time0[index - nxy] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1 + 1, y2, X2);
-s[1] = sc(X1 + 1, y2, X2);
-/* Point 2 */
-t[2] = tc(X1, y2, X2 - 1);
-s[2] = sc(X1, y2, X2 - 1);
-/* Point 3 */
-t[3] = tc(X1 + 1, y2, X2 - 1);
-s[3] = sc(X1 + 1, y2, X2 - 1);
-d01 = rX2 * sinqy2 * df;
-d02 = h;
-d13 = h;
-d23 = rXm1 * sinqy2 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-/* Parallel - West Bottom */
-/*if(time0[index-1] < 1.e9 && time0[index+nxy-1] < 1.e9
- && time0[index+nxy] < 1.e9 && X2<nz-1  && X1>0 ) { */
-if (X2 < nz - 1 && X1 > 0) {
-if (time0[index - 1] < 1.e9 && time0[index + nxy - 1] < 1.e9
-&& time0[index + nxy] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1 - 1, y2, X2);
-s[1] = sc(X1 - 1, y2, X2);
-/* Point 2 */
-t[2] = tc(X1, y2, X2 + 1);
-s[2] = sc(X1, y2, X2 + 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, y2, X2 + 1);
-s[3] = sc(X1 - 1, y2, X2 + 1);
-d01 = rX2 * sinqy2 * df;
-d02 = h;
-d13 = h;
-d23 = rXp1 * sinqy2 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try)
-/ (d01 * slow0[index]);
-guess = try;
-}
-}
-}
-/* Parallel - West Top */
-if (X2 > 0 && X1 > 0 && time0[index - 1] < 1.e9 && time0[index - nxy - 1] < 1.e9
-&& time0[index - nxy] < 1.e9) {
-s[0] = sc(X1, y2, X2);
-/* Point 1 */
-t[1] = tc(X1 - 1, y2, X2);
-s[1] = sc(X1 - 1, y2, X2);
-/* Point 2 */
-t[2] = tc(X1, y2, X2 - 1);
-s[2] = sc(X1, y2, X2 - 1);
-/* Point 3 */
-t[3] = tc(X1 - 1, y2, X2 - 1);
-s[3] = sc(X1 - 1, y2, X2 - 1);
-d01 = rX2 * sinqy2 * df;
-d02 = h;
-d13 = h;
-d23 = rXm1 * sinqy2 * df;
-try = fdsph2d(t, s, d01, d02, d13, d23);
-if (try < guess) {
-fhead = (guess - try) / (d01 * slow0[index]);
-guess = try;
-}
-}
-
-/*** New Face Trials ***/
-if (guess > 1.0e9) {
-if (X1 > x1 + 1 && X1 < x2 - 1 && X2 > z1 + 1 && X2 < z2 - 1) {
-/* Point 0 */
-t[0] = tc(X1, y2 - 1, X2 + 1);
-s[0] = sc(X1, y2 - 1, X2 + 1);
-/* Point 1 */
-t[1] = tc(X1 - 1, y2 - 1, X2);
-s[1] = sc(X1 - 1, y2 - 1, X2);
-/* Point 2 */
-t[2] = tc(X1, y2 - 1, X2);
-s[2] = sc(X1, y2 - 1, X2);
-/* Point 3 */
-t[3] = tc(X1 + 1, y2 - 1, X2);
-s[3] = sc(X1 + 1, y2 - 1, X2);
-/* Point 4 */
-t[4] = tc(X1, y2 - 1, X2 - 1);
-s[4] = sc(X1, y2 - 1, X2 - 1);
-/* Point 5 */
-s[5] = sc(X1, y2, X2);
-d02 = h;
-d12 = rX2 * sin(qy2m1) * df;
-d25 = rX2 * dq;
-try = fdsphnf(t, s, d02, d12, d25);
-if (try < guess)
-guess = try;
-}
-}
-
-/*** Edge Trials ***/
-/* Change in Latitude */
-try = tc(X1,y2-1,X2)+ .5*(sc(X1,y2-1,X2)+sc(X1,y2,X2))*rX2*dq;
-if (try < guess)
-guess = try;
-/* Change in East Longitude */
-if (X1 < nx - 1 && time0[index + 1] < 1.e9) {
-try = tc(X1+1,y2,X2)+ .5*(sc(X1,y2,X2)+sc(X1+1,y2,X2))*rX2*df*sinqy2;
-if (try<guess) {
-fhead=(guess-try)/(rX2*df*sinqy2*slow0[index]); guess=try;}
-}
-/* Change in West Longitude */
-if (X1 > 0 && time0[index - 1] < 1.e9) {
-try = tc(X1-1,y2,X2)+ .5*(sc(X1,y2,X2)+sc(X1-1,y2,X2))*rX2*df*sinqy2;
-if (try<guess) {
-fhead=(guess-try)/(rX2*df*sinqy2*slow0[index]); guess=try;}
-}
-/* Change in depth (increasing) */
-/*if ( time0[index+nxy]<1.e9 && X2<nz-1 )  { */
-if (X2 < nz - 1) {
-if (time0[index + nxy] < 1.e9) {
-try = tc(X1,y2,X2+1)+ .5*(sc(X1,y2,X2)+sc(X1,y2,X2+1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-}
-/* Change in depth (decreasing) */
-if (X2 > 0 && time0[index - nxy] < 1.e9) {
-try = tc(X1,y2,X2-1)+ .5*(sc(X1,y2,X2)+sc(X1,y2,X2-1))*h;
-if (try<guess) {
-fhead=(guess-try)/(h*slow0[index]); guess=try;}
-}
-if (guess < time0[index]) {
-time0[index] = guess;
-if (fhead > headtest)
-headw[4]++;
-}
-}
-if (y2 == ny - 1)
-dy2 = 0;
-y2++;
-}
-/* End y2 if condition */
-}
-/* End growth loop */
-
-/* UPDATE RADIUS */
-radius++;
-if (radius % 10 == 0)
-fprintf(stderr, "Completed radius = %d\n", radius);
-if (radius == maxrad)
-rad0 = 0;
-
-} /* END BIG LOOP */
-
-/* TEST IF REVERSE PROPAGATION IS NEEDED */
-
-if (headw[1] == 0 && headw[2] == 0 && headw[3] == 0 && headw[4] == 0
-&& headw[5] == 0 && headw[6] == 0)
-reverse = 0;
-else {
-head = 0;
-if (headw[1] > 0) {
-fprintf(stderr, "Head waves found on left: %d\n", headw[1]);
-if (headw[1] > head) {
-head = headw[1];
-srcwall = 1;
-}
-}
-if (headw[2] > 0) {
-fprintf(stderr, "Head waves found on right: %d\n", headw[2]);
-if (headw[2] > head) {
-head = headw[2];
-srcwall = 2;
-}
-}
-if (headw[3] > 0) {
-fprintf(stderr, "Head waves found on front: %d\n", headw[3]);
-if (headw[3] > head) {
-head = headw[3];
-srcwall = 3;
-}
-}
-if (headw[4] > 0) {
-fprintf(stderr, "Head waves found on back: %d\n", headw[4]);
-if (headw[4] > head) {
-head = headw[4];
-srcwall = 4;
-}
-}
-if (headw[5] > 0) {
-fprintf(stderr, "Head waves found on top: %d\n", headw[5]);
-if (headw[5] > head) {
-head = headw[5];
-srcwall = 5;
-}
-}
-if (headw[6] > 0) {
-fprintf(stderr, "Head waves found on bottom: %d\n", headw[6]);
-if (headw[6] > head) {
-head = headw[6];
-srcwall = 6;
-}
-}
-if (headpref > 0 && headw[headpref] > 0) {
-fprintf(stderr, "Preference to restart on wall opposite source\n");
-srcwall = headpref;
-}
-/* SET LOCATIONS OF SIDES OF THE SPHERICAL ELEMENT SO THAT THE ELEMENT IS A FACE */
-dx1 = 1;
-dx2 = 1;
-dy1 = 1;
-dy2 = 1;
-dz1 = 1;
-dz2 = 1;
-rad0 = 1;
-radius = 1;
-if (srcwall == 1) {
-x2 = 1;
-fprintf(stderr, "RESTART at left side of model\n");
-} else {
-x2 = nx;
-dx2 = 0;
-}
-if (srcwall == 2) {
-x1 = nx - 2;
-fprintf(stderr, "RESTART at right side of model\n");
-} else {
-x1 = -1;
-dx1 = 0;
-}
-if (srcwall == 3) {
-y2 = 1;
-fprintf(stderr, "RESTART at front side of model\n");
-} else {
-y2 = ny;
-dy2 = 0;
-}
-if (srcwall == 4) {
-y1 = ny - 2;
-fprintf(stderr, "RESTART at back side of model\n");
-} else {
-y1 = -1;
-dy1 = 0;
-}
-if (srcwall == 5) {
-z2 = 1;
-fprintf(stderr, "RESTART at top side of model\n");
-} else {
-z2 = nz;
-dz2 = 0;
-}
-if (srcwall == 6) {
-z1 = nz - 2;
-fprintf(stderr, "RESTART at bottom side of model\n");
-} else {
-z1 = -1;
-dz1 = 0;
-}
-if (reverse == 0)
-fprintf(stderr,
-"WARNING:  RESTART CANCELLED by choice of input parameter 'reverse'\n");
-}
-reverse--;
-
-} /* END BIGGER LOOP */
-
-/* Debugging step - compare with constant velocity model */
-/*
+	/* Debugging step - compare with constant velocity model */
+	/*
  ii = 0;
  for (k = 0; k < nz; k++) {
  rz1 =   rc(k);
@@ -5702,24 +6311,28 @@ reverse--;
  }
  }
  */
-/* End of debugging step */
+	/* End of debugging step */
 
-/* parse the time file if required */
-nxp = nx;
-nyp = ny;
-nzp = nz;
-if (parse > 1) {
-nzp = 0;
-ii = 0;
-for (k = 0; k < nz; k += parse) {
-nzp++;
-rz1 = rc(k);
-for (j = 0; j < ny; j += parse) {
-qX2 = qc(j);
-for (i = 0; i < nx; i += parse) {
-time0[ii] = time0[i + j * nx + k * nxy];
-/* Testing */
-/*
+	/* parse the time file if required */
+	nxp = nx;
+	nyp = ny;
+	nzp = nz;
+	if (parse > 1)
+	{
+		nzp = 0;
+		ii = 0;
+		for (k = 0; k < nz; k += parse)
+		{
+			nzp++;
+			rz1 = rc(k);
+			for (j = 0; j < ny; j += parse)
+			{
+				qX2 = qc(j);
+				for (i = 0; i < nx; i += parse)
+				{
+					time0[ii] = time0[i + j * nx + k * nxy];
+					/* Testing */
+					/*
  fx1 =   fc(i);
  x2p = rz1*cos(qX2);
  y2p = rz1*sin(qX2)*cos(fx1);
@@ -5731,98 +6344,101 @@ time0[ii] = time0[i + j * nx + k * nxy];
  k, j, i, ii, fc(i), qc(j), rc(k), timec, time0[ii], fabs(100*(time0[ii] - timec)/timec));
  }
  */
-/* End Testing*/
-ii++;
-}
-}
-}
-nxp = 0;
-nyp = 0;
-for (j = 0; j < ny; j += parse)
-nyp++;
-for (i = 0; i < nx; i += parse)
-nxp++;
-nxyz = ii;
-}
+					/* End Testing*/
+					ii++;
+				}
+			}
+		}
+		nxp = 0;
+		nyp = 0;
+		for (j = 0; j < ny; j += parse)
+			nyp++;
+		for (i = 0; i < nx; i += parse)
+			nxp++;
+		nxyz = ii;
+	}
 
-/* OUTPUT COMPLETED WAVEFRONT */
-strncpy(headout.header, headin.header, 120);
-headout.clat = headin.clat;
-headout.clon = headin.clon;
-headout.cz = headin.cz;
-headout.az = headin.az;
-headout.x0 = headin.x0;
-headout.y0 = headin.y0;
-headout.z0 = headin.z0;
-headout.dx = headin.dx * parse;
-headout.dy = headin.dy * parse;
-headout.dz = headin.dz * parse;
-headout.nx = nxp;
-headout.ny = nyp;
-headout.nz = nzp;
-/* Reassign the quantity */
-strcpy(&headout.header[12], "P");
-strcpy(&headout.header[13], "T");
-strcpy(&headout.header[14], "I");
-strcpy(&headout.header[15], "M");
+	/* OUTPUT COMPLETED WAVEFRONT */
+	strncpy(headout.header, headin.header, 120);
+	headout.clat = headin.clat;
+	headout.clon = headin.clon;
+	headout.cz = headin.cz;
+	headout.az = headin.az;
+	headout.x0 = headin.x0;
+	headout.y0 = headin.y0;
+	headout.z0 = headin.z0;
+	headout.dx = headin.dx * parse;
+	headout.dy = headin.dy * parse;
+	headout.dz = headin.dz * parse;
+	headout.nx = nxp;
+	headout.ny = nyp;
+	headout.nz = nzp;
+	/* Reassign the quantity */
+	strcpy(&headout.header[12], "P");
+	strcpy(&headout.header[13], "T");
+	strcpy(&headout.header[14], "I");
+	strcpy(&headout.header[15], "M");
 
-for (i = 16; i < 120; i++) {
-strcpy(&headout.header[i], &headin.header[i]);
-}
-headout.fxs = fxss;
-headout.fys = fyss;
-headout.fzs = fzss;
-fprintf(stderr, " Float Header fxs, fys, fzs = %f %f %f \n", headout.fxs,
-headout.fys, headout.fzs);
+	for (i = 16; i < 120; i++)
+	{
+		strcpy(&headout.header[i], &headin.header[i]);
+	}
+	headout.fxs = fxss;
+	headout.fys = fyss;
+	headout.fzs = fzss;
+	fprintf(stderr, " Float Header fxs, fys, fzs = %f %f %f \n", headout.fxs,
+			headout.fys, headout.fzs);
 
-/* Swap back to proper byte order if required */
-if (swab == 2 || swab == 3) {
-fprintf(stdout, "Swapping bytes on output header and times ..\n");
-FIX_FLOAT(headout.az);
-FIX_INT(headout.nx);
-FIX_INT(headout.ny);
-FIX_INT(headout.nz);
-FixDouble(&headout.clat);
-FixDouble(&headout.clon);
-FixDouble(&headout.cz);
-FixDouble(&headout.x0);
-FixDouble(&headout.y0);
-FixDouble(&headout.z0);
-FixDouble(&headout.dx);
-FixDouble(&headout.dy);
-FixDouble(&headout.dz);
-FixDouble(&headout.fxs);
-FixDouble(&headout.fys);
-FixDouble(&headout.fzs);
-for (i = 0; i < nxyz; i++)
-FIX_FLOAT(time0[i]);
-fprintf(stdout, ".. Done\n");
-}
-fprintf(stdout, "fxss =  %g\n", headout.fxs);
-fprintf(stdout, "fyss =  %g\n", headout.fys);
-fprintf(stdout, "fzss =  %g\n", headout.fzs);
+	/* Swap back to proper byte order if required */
+	if (swab == 2 || swab == 3)
+	{
+		fprintf(stdout, "Swapping bytes on output header and times ..\n");
+		FIX_FLOAT(headout.az);
+		FIX_INT(headout.nx);
+		FIX_INT(headout.ny);
+		FIX_INT(headout.nz);
+		FixDouble(&headout.clat);
+		FixDouble(&headout.clon);
+		FixDouble(&headout.cz);
+		FixDouble(&headout.x0);
+		FixDouble(&headout.y0);
+		FixDouble(&headout.z0);
+		FixDouble(&headout.dx);
+		FixDouble(&headout.dy);
+		FixDouble(&headout.dz);
+		FixDouble(&headout.fxs);
+		FixDouble(&headout.fys);
+		FixDouble(&headout.fzs);
+		for (i = 0; i < nxyz; i++)
+			FIX_FLOAT(time0[i]);
+		fprintf(stdout, ".. Done\n");
+	}
+	fprintf(stdout, "fxss =  %g\n", headout.fxs);
+	fprintf(stdout, "fyss =  %g\n", headout.fys);
+	fprintf(stdout, "fzss =  %g\n", headout.fzs);
 
-write(tfint, &headout, 232);
-write(tfint, time0, nxyz * 4);
-fprintf(stderr, "wavefront done \n");
-close(tfint);
-return 0;
+	write(tfint, &headout, 232);
+	write(tfint, time0, nxyz * 4);
+	fprintf(stderr, "wavefront done \n");
+	close(tfint);
+	return 0;
 }
 /* -------------------------------------------------------------------------- */
-compar(a, b)
-struct sorted *a, *b; {
-if (a->time > b->time)
-return (1);
-if (b->time > a->time)
-return (-1);
-else
-return (0);
+compar(a, b) struct sorted *a, *b;
+{
+	if (a->time > b->time)
+		return (1);
+	if (b->time > a->time)
+		return (-1);
+	else
+		return (0);
 }
 
 /* 3D TRANSMISSION STENCIL */
 double fdsph3d(t, s, r, q, f, g, n, m, h, dq, df)
 
-double t[], s[], r[], q[], f[];
+	double t[],
+	s[], r[], q[], f[];
 double h, dq, df;
 int g[], n[], m[];
 
@@ -5839,160 +6455,174 @@ int g[], n[], m[];
  df  longitude step
  */
 {
-double sqrt();
+	double sqrt();
 
-double x, slo;
-double hsq, dqsq, dfsq, dfsinq7, df2sinq7, dfsinqi, df2sinqi;
-double a, b, c, c2;
-double rad, x1, x2;
+	double x, slo;
+	double hsq, dqsq, dfsq, dfsinq7, df2sinq7, dfsinqi, df2sinqi;
+	double a, b, c, c2;
+	double rad, x1, x2;
 
-int i, j;
-int notx1, notx2;
+	int i, j;
+	int notx1, notx2;
 
-slo = 0.;
-for (i = 0; i < 8; i++) {
-slo += s[i];
-}
-slo = .125 * slo;
+	slo = 0.;
+	for (i = 0; i < 8; i++)
+	{
+		slo += s[i];
+	}
+	slo = .125 * slo;
 
-hsq = h * h;
-dqsq = dq * dq;
-dfsq = df * df;
-dfsinq7 = df * sin(q[7]);
-df2sinq7 = df * dfsinq7;
+	hsq = h * h;
+	dqsq = dq * dq;
+	dfsq = df * df;
+	dfsinq7 = df * sin(q[7]);
+	df2sinq7 = df * dfsinq7;
 
-a = 1.0 / hsq + (1.0 / dqsq + 1. / (dfsinq7 * dfsinq7)) / (r[7] * r[7]);
-b = 0;
-for (i = 0; i < 7; i++) {
-b += t[i]
-* (g[7] * g[i] / hsq
-+ (n[7] * n[i] / dqsq
-+ m[7] * m[i] / (df2sinq7 * sin(q[i])))
-/ (r[7] * r[i]));
-}
-b = 2.0 * b;
-c = 0.;
-for (i = 0; i < 7; i++) {
-dfsinqi = df * sin(q[i]);
-c +=
-t[i] * t[i]
-* (1. / hsq
-+ (1. / dqsq + 1. / (dfsinqi * dfsinqi))
-/ (r[i] * r[i]));
-}
-for (i = 0; i < 6; i++) {
-c2 = 0.;
-df2sinqi = dfsq * sin(q[i]);
-for (j = i + 1; j < 7; j++) {
-c2 += t[j]
-* (g[i] * g[j] / hsq
-+ (n[i] * n[j] / dqsq
-+ m[i] * m[j] / (df2sinqi * sin(q[j])))
-/ (r[i] * r[j]));
-}
-c += 2.0 * c2 * t[i];
-}
-c = c - 16.0 * slo * slo;
+	a = 1.0 / hsq + (1.0 / dqsq + 1. / (dfsinq7 * dfsinq7)) / (r[7] * r[7]);
+	b = 0;
+	for (i = 0; i < 7; i++)
+	{
+		b += t[i] * (g[7] * g[i] / hsq + (n[7] * n[i] / dqsq + m[7] * m[i] / (df2sinq7 * sin(q[i]))) / (r[7] * r[i]));
+	}
+	b = 2.0 * b;
+	c = 0.;
+	for (i = 0; i < 7; i++)
+	{
+		dfsinqi = df * sin(q[i]);
+		c +=
+			t[i] * t[i] * (1. / hsq + (1. / dqsq + 1. / (dfsinqi * dfsinqi)) / (r[i] * r[i]));
+	}
+	for (i = 0; i < 6; i++)
+	{
+		c2 = 0.;
+		df2sinqi = dfsq * sin(q[i]);
+		for (j = i + 1; j < 7; j++)
+		{
+			c2 += t[j] * (g[i] * g[j] / hsq + (n[i] * n[j] / dqsq + m[i] * m[j] / (df2sinqi * sin(q[j]))) / (r[i] * r[j]));
+		}
+		c += 2.0 * c2 * t[i];
+	}
+	c = c - 16.0 * slo * slo;
 
-rad = b * b - 4.0 * a * c;
-notx1 = 0;
-notx2 = 0;
-if (rad >= 0.) {
-x1 = (-b + sqrt(rad)) / (2.0 * a);
-if ((x1 < t[0]) || (x1 < t[1]) || (x1 < t[2]) || (x1 < t[3])
-|| (x1 < t[4]) || (x1 < t[5]) || (x1 < t[6]))
-notx1 = 1;
-x2 = (-b - sqrt(rad)) / (2.0 * a);
-if ((x2 < t[0]) || (x2 < t[1]) || (x2 < t[2]) || (x2 < t[3])
-|| (x2 < t[4]) || (x2 < t[5]) || (x2 < t[6]))
-notx2 = 1;
+	rad = b * b - 4.0 * a * c;
+	notx1 = 0;
+	notx2 = 0;
+	if (rad >= 0.)
+	{
+		x1 = (-b + sqrt(rad)) / (2.0 * a);
+		if ((x1 < t[0]) || (x1 < t[1]) || (x1 < t[2]) || (x1 < t[3]) || (x1 < t[4]) || (x1 < t[5]) || (x1 < t[6]))
+			notx1 = 1;
+		x2 = (-b - sqrt(rad)) / (2.0 * a);
+		if ((x2 < t[0]) || (x2 < t[1]) || (x2 < t[2]) || (x2 < t[3]) || (x2 < t[4]) || (x2 < t[5]) || (x2 < t[6]))
+			notx2 = 1;
 
-if (notx1) {
-if (notx2) {
-x = 1.e11; /* ACAUSAL; ABORT */
-} else {
-x = x2;
-}
-} else {
-if (notx2) {
-x = x1;
-} else {
-x = x2;
-if (x1 < x2)
-x = x1;
-}
-}
-} else {
-x = 1.e11; /* SQRT IMAGINARY; ABORT */
-}
+		if (notx1)
+		{
+			if (notx2)
+			{
+				x = 1.e11; /* ACAUSAL; ABORT */
+			}
+			else
+			{
+				x = x2;
+			}
+		}
+		else
+		{
+			if (notx2)
+			{
+				x = x1;
+			}
+			else
+			{
+				x = x2;
+				if (x1 < x2)
+					x = x1;
+			}
+		}
+	}
+	else
+	{
+		x = 1.e11; /* SQRT IMAGINARY; ABORT */
+	}
 
-return (x);
+	return (x);
 }
 
 /* 3D STENCIL FOR NEW EDGE */
 double fdsphne(t, s, d01, d12, d14, d25, d45)
 
-double t[], s[];
+	double t[],
+	s[];
 double d01, d12, d14, d25, d45;
 
 /*  Given times at points 0-4, find time at point 5 using the
  edge stencil */
 {
-double x, slo;
-double d1, d2, dt1, dt2, dt3, d1sq;
-double a, b, c;
-double x1, x2, rad;
+	double x, slo;
+	double d1, d2, dt1, dt2, dt3, d1sq;
+	double a, b, c;
+	double x1, x2, rad;
 
-double sqrt();
+	double sqrt();
 
-int notx1, notx2;
+	int notx1, notx2;
 
-slo = .25 * (s[1] + s[2] + s[4] + s[5]);
+	slo = .25 * (s[1] + s[2] + s[4] + s[5]);
 
-dt1 = (t[4] - t[1]) / d14 - t[2] / d25;
-dt2 = (t[2] - t[1]) / d12 - t[4] / d45;
-dt3 = (t[0] - t[3]) / d01;
+	dt1 = (t[4] - t[1]) / d14 - t[2] / d25;
+	dt2 = (t[2] - t[1]) / d12 - t[4] / d45;
+	dt3 = (t[0] - t[3]) / d01;
 
-a = 1. / (d25 * d25) + 1. / (d45 * d45);
-b = 2 * (dt1 / d25 + dt2 / d45);
-c = dt1 * dt1 + dt2 * dt2 + dt3 * dt3 - 4 * slo * slo;
+	a = 1. / (d25 * d25) + 1. / (d45 * d45);
+	b = 2 * (dt1 / d25 + dt2 / d45);
+	c = dt1 * dt1 + dt2 * dt2 + dt3 * dt3 - 4 * slo * slo;
 
-rad = b * b - 4.0 * a * c;
-notx1 = 0;
-notx2 = 0;
-if (rad >= 0.) {
-x1 = (-b + sqrt(rad)) / (2 * a);
-if ((x1 < t[0]) || (x1 < t[1]) || (x1 < t[2]) || (x1 < t[3])
-|| (x1 < t[4]))
-notx1 = 1;
-x2 = (-b - sqrt(rad)) / (2 * a);
-if ((x2 < t[0]) || (x2 < t[1]) || (x2 < t[2]) || (x2 < t[3])
-|| (x2 < t[4]))
-notx2 = 1;
-if (notx1) {
-if (notx2) {
-x = 1.e11; /* ACAUSAL; ABORT */
-} else {
-x = x2;
-}
-} else {
-if (notx2) {
-x = x1;
-} else {
-x = x1;
-if (x2 < x1)
-x = x2;
-}
-}
-} else {
-x = 1.e11; /* SQRT IMAGINARY; ABORT */
-}
-return (x);
+	rad = b * b - 4.0 * a * c;
+	notx1 = 0;
+	notx2 = 0;
+	if (rad >= 0.)
+	{
+		x1 = (-b + sqrt(rad)) / (2 * a);
+		if ((x1 < t[0]) || (x1 < t[1]) || (x1 < t[2]) || (x1 < t[3]) || (x1 < t[4]))
+			notx1 = 1;
+		x2 = (-b - sqrt(rad)) / (2 * a);
+		if ((x2 < t[0]) || (x2 < t[1]) || (x2 < t[2]) || (x2 < t[3]) || (x2 < t[4]))
+			notx2 = 1;
+		if (notx1)
+		{
+			if (notx2)
+			{
+				x = 1.e11; /* ACAUSAL; ABORT */
+			}
+			else
+			{
+				x = x2;
+			}
+		}
+		else
+		{
+			if (notx2)
+			{
+				x = x1;
+			}
+			else
+			{
+				x = x1;
+				if (x2 < x1)
+					x = x2;
+			}
+		}
+	}
+	else
+	{
+		x = 1.e11; /* SQRT IMAGINARY; ABORT */
+	}
+	return (x);
 }
 
 /* 2D TRANSMISSION STENCIL (FOR HEAD WAVES ON FACES OF GRID CELLS) */
-double fdsph2d(t, s, d01, d02, d13, d23)
-double t[], s[];
+double fdsph2d(t, s, d01, d02, d13, d23) double t[], s[];
 double d01, d02, d13, d23;
 /* s[0] at newpoint; s[1],t[1] & s[2],t[2] adjacent; s[3],t[3] diagonal
  d01	distance between points 0 and 1
@@ -6000,68 +6630,77 @@ double d01, d02, d13, d23;
  d13	distance between points 1 and 3
  */
 {
-double x, slo;
-double d01sq, d02sq;
-double t1mt3, t2mt3;
-double t1t3t2, t2t3t1;
-double a, b, c;
-double x1, x2, rad;
+	double x, slo;
+	double d01sq, d02sq;
+	double t1mt3, t2mt3;
+	double t1t3t2, t2t3t1;
+	double a, b, c;
+	double x1, x2, rad;
 
-int notx1, notx2;
+	int notx1, notx2;
 
-double sqrt();
+	double sqrt();
 
-slo = .25 * (s[0] + s[1] + s[2] + s[3]);
+	slo = .25 * (s[0] + s[1] + s[2] + s[3]);
 
-d01sq = d01 * d01;
-d02sq = d02 * d02;
-t1mt3 = t[1] - t[3];
-t2mt3 = t[2] - t[3];
-t1t3t2 = t1mt3 / d13 - t[2] / d02;
-t2t3t1 = t2mt3 / d23 - t[1] / d01;
+	d01sq = d01 * d01;
+	d02sq = d02 * d02;
+	t1mt3 = t[1] - t[3];
+	t2mt3 = t[2] - t[3];
+	t1t3t2 = t1mt3 / d13 - t[2] / d02;
+	t2t3t1 = t2mt3 / d23 - t[1] / d01;
 
-a = (1.0 / d01sq + 1. / d02sq);
-b = 2.0 * (t1t3t2 / d02 + t2t3t1 / d01);
-c = t1t3t2 * t1t3t2 + t2t3t1 * t2t3t1 - 4 * slo * slo;
+	a = (1.0 / d01sq + 1. / d02sq);
+	b = 2.0 * (t1t3t2 / d02 + t2t3t1 / d01);
+	c = t1t3t2 * t1t3t2 + t2t3t1 * t2t3t1 - 4 * slo * slo;
 
-rad = b * b - 4.0 * a * c;
+	rad = b * b - 4.0 * a * c;
 
-notx1 = 0;
-notx2 = 0;
-if (rad >= 0.) {
-x1 = (-b + sqrt(rad)) / (2 * a);
-if ((x1 < t[1]) || (x1 < t[2]) || (x1 < t[3]) || (x1 < t[4])
-|| (x1 < t[0]))
-notx1 = 1;
-x2 = (-b - sqrt(rad)) / (2 * a);
-if ((x2 < t[1]) || (x2 < t[2]) || (x2 < t[3]) || (x2 < t[4])
-|| (x2 < t[0]))
-notx2 = 1;
-if (notx1) {
-if (notx2) {
-x = 1.e11; /* ACAUSAL; ABORT */
-} else {
-x = x2;
-}
-} else {
-if (notx2) {
-x = x1;
-} else {
-x = x1;
-if (x2 < x1)
-x = x2;
-}
-}
-} else {
-x = 1.e11; /* SQRT IMAGINARY; ABORT */
-}
+	notx1 = 0;
+	notx2 = 0;
+	if (rad >= 0.)
+	{
+		x1 = (-b + sqrt(rad)) / (2 * a);
+		if ((x1 < t[1]) || (x1 < t[2]) || (x1 < t[3]) || (x1 < t[4]) || (x1 < t[0]))
+			notx1 = 1;
+		x2 = (-b - sqrt(rad)) / (2 * a);
+		if ((x2 < t[1]) || (x2 < t[2]) || (x2 < t[3]) || (x2 < t[4]) || (x2 < t[0]))
+			notx2 = 1;
+		if (notx1)
+		{
+			if (notx2)
+			{
+				x = 1.e11; /* ACAUSAL; ABORT */
+			}
+			else
+			{
+				x = x2;
+			}
+		}
+		else
+		{
+			if (notx2)
+			{
+				x = x1;
+			}
+			else
+			{
+				x = x1;
+				if (x2 < x1)
+					x = x2;
+			}
+		}
+	}
+	else
+	{
+		x = 1.e11; /* SQRT IMAGINARY; ABORT */
+	}
 
-return (x);
+	return (x);
 }
 
 /* 3D STENCIL FOR NEW FACE */
-double fdsphnf(t, s, d02, d12, d25)
-double t[], s[];
+double fdsphnf(t, s, d02, d12, d25) double t[], s[];
 double d02, d12, d25;
 /* s5 at newpoint (t5 or x); s2,t2 adjacent on old face
  t0,t4 beside t2 on old face and opposite each other;
@@ -6080,24 +6719,26 @@ double d02, d12, d25;
 
  */
 {
-double x, slo;
-double t4t0, t1t3;
-double sqrt();
+	double x, slo;
+	double t4t0, t1t3;
+	double sqrt();
 
-slo = .5 * (s[5] + s[2]);
+	slo = .5 * (s[5] + s[2]);
 
-t4t0 = (t[4] - t[0]) / d02;
-t1t3 = (t[1] - t[3]) / d12;
-x = slo * slo - 0.25 * (t4t0 * t4t0 + t1t3 * t1t3);
+	t4t0 = (t[4] - t[0]) / d02;
+	t1t3 = (t[1] - t[3]) / d12;
+	x = slo * slo - 0.25 * (t4t0 * t4t0 + t1t3 * t1t3);
 
-if (x >= 0.) {
-x = t[2] + d25 * sqrt(x);
-if ((x < t[0]) || (x < t[1]) || (x < t[3]) || (x < t[4])) /* ACAUSAL; ABORT */
-x = 1.e11;
-} else
-x = 1.e11; /* SQRT IMAGINARY; ABORT */
+	if (x >= 0.)
+	{
+		x = t[2] + d25 * sqrt(x);
+		if ((x < t[0]) || (x < t[1]) || (x < t[3]) || (x < t[4])) /* ACAUSAL; ABORT */
+			x = 1.e11;
+	}
+	else
+		x = 1.e11; /* SQRT IMAGINARY; ABORT */
 
-return (x);
+	return (x);
 }
 
 /* ====================================================================
@@ -6128,671 +6769,722 @@ return (x);
  * To get the environment processing stuff add the flag
  *-DENVIRONMENT to each of the cc's above.
  */
-#include	<stdio.h>
+#include <stdio.h>
 
-#define MAXLINE		1024	/* max length of line in par file */
-#define MAXNAME		64	/* max length of name */
-#define MAXVALUE	1024	/* max length of value */
-#define MAXFILENAME	64	/* max length of par file name */
-#define MAXVECTOR	10	/* max # of elements for unspecified vectors */
-#define GETPAR_ERROR	100	/* exit status for getpar error */
-#define GETPAR_STOP	101	/* exit status for STOP or mstpar */
-#define MAXPARLEVEL	4	/* max recurrsion level for par files */
+#define MAXLINE 1024	 /* max length of line in par file */
+#define MAXNAME 64		 /* max length of name */
+#define MAXVALUE 1024	/* max length of value */
+#define MAXFILENAME 64   /* max length of par file name */
+#define MAXVECTOR 10	 /* max # of elements for unspecified vectors */
+#define GETPAR_ERROR 100 /* exit status for getpar error */
+#define GETPAR_STOP 101  /* exit status for STOP or mstpar */
+#define MAXPARLEVEL 4	/* max recurrsion level for par files */
 
 #ifdef FORTRAN
-#define GETPAR	getpar_
-#define MSTPAR	mstpar_
-#define ENDPAR	endpar_
+#define GETPAR getpar_
+#define MSTPAR mstpar_
+#define ENDPAR endpar_
 #else
-#define GETPAR	getpar
-#define MSTPAR	mstpar
-#define ENDPAR	endpar
+#define GETPAR getpar
+#define MSTPAR mstpar
+#define ENDPAR endpar
 #endif
 
-#define INIT	 1	/* bits for FLAGS (ext_par.argflags) */
-#define STOP	 2
-#define LIST	 4
-#define END_PAR	 8
-#define VERBOSE	16
+#define INIT 1 /* bits for FLAGS (ext_par.argflags) */
+#define STOP 2
+#define LIST 4
+#define END_PAR 8
+#define VERBOSE 16
 
-#define LISTINC		32	/* increment size for arglist */
-#define BUFINC		1024	/* increment size for argbuf */
+#define LISTINC 32  /* increment size for arglist */
+#define BUFINC 1024 /* increment size for argbuf */
 
 struct arglist /* structure of list set up by setpar */
 {
-char *argname;
-char *argval;
-int hash;
+	char *argname;
+	char *argval;
+	int hash;
 };
 
 /* abbreviations: */
-#define AL 		struct arglist
-#define PROGNAME	ext_par.progname
-#define FLAGS		ext_par.argflags
-#define ARGLIST		ext_par.arglist
-#define ARGHEAD		ext_par.arghead
-#define ARGBUF		ext_par.argbuf
-#define NLIST		ext_par.nlist
-#define NBUF		ext_par.nbuf
-#define LISTMAX		ext_par.listmax
-#define BUFMAX		ext_par.bufmax
-#define LISTFILE	ext_par.listout
+#define AL struct arglist
+#define PROGNAME ext_par.progname
+#define FLAGS ext_par.argflags
+#define ARGLIST ext_par.arglist
+#define ARGHEAD ext_par.arghead
+#define ARGBUF ext_par.argbuf
+#define NLIST ext_par.nlist
+#define NBUF ext_par.nbuf
+#define LISTMAX ext_par.listmax
+#define BUFMAX ext_par.bufmax
+#define LISTFILE ext_par.listout
 
 #ifdef FORTRAN
 setpar_()
 #else
 setpar(ac, av)
-/* set up arglist & process INPUT command */
-int ac;char **av;
+	/* set up arglist & process INPUT command */
+	int ac;
+char **av;
 #endif
 {
-register char *pl, *pn, *pv;
-char t, name[MAXNAME], value[MAXVALUE];
-FILE *file, *gp_create_dump();
-int i, addflags, nevlist, testav, testae;
-struct arglist *alptr;
+	register char *pl, *pn, *pv;
+	char t, name[MAXNAME], value[MAXVALUE];
+	FILE *file, *gp_create_dump();
+	int i, addflags, nevlist, testav, testae;
+	struct arglist *alptr;
 #ifdef FORTRAN
-int ac; char **av;
-extern int xargc; extern char **xargv;
-ac= xargc; av= xargv;
+	int ac;
+	char **av;
+	extern int xargc;
+	extern char **xargv;
+	ac = xargc;
+	av = xargv;
 #endif
 
-PROGNAME = *av;
-FLAGS = INIT;
-LISTFILE = stderr;
+	PROGNAME = *av;
+	FLAGS = INIT;
+	LISTFILE = stderr;
 
-ARGLIST = NULL;
-ARGBUF = NULL;
-NLIST = NBUF = LISTMAX = BUFMAX = 0;
+	ARGLIST = NULL;
+	ARGBUF = NULL;
+	NLIST = NBUF = LISTMAX = BUFMAX = 0;
 #ifdef ENVIRONMENT
-gp_do_environment(ac,av);
+	gp_do_environment(ac, av);
 #endif
-nevlist = NLIST;
+	nevlist = NLIST;
 
-while (--ac > 0) {
-av++;
-pl = *av;
-while (*pl == ' ' || *pl == '\t')
-pl++;
-/* get name */
-pn = name;
-while (*pl != '=' && *pl != '\0')
-*pn++ = *pl++;
-*pn++ = '\0';
-/* get value */
-if (*pl == '=')
-pl++;
-pv = value;
-if (*pl == '"' || *pl == '\'') {
-t = *pl++;
-while (*pl != '\0') {
-if (*pl == t) {
-if (pl[-1] != '\\')
-break;
-pv[-1] = t;
-pl++;
-} else
-*pv++ = *pl++;
-}
-} else
-while (*pl)
-*pv++ = *pl++;
-*pv = '\0';
-if (name[0] == '-')
-gp_add_entry("SWITCH", &name[1]);
-else
-gp_add_entry(name, value);
-if (strcmp("par", name) == 0) /* par file */
-gp_do_par_file(value, 1);
-}
+	while (--ac > 0)
+	{
+		av++;
+		pl = *av;
+		while (*pl == ' ' || *pl == '\t')
+			pl++;
+		/* get name */
+		pn = name;
+		while (*pl != '=' && *pl != '\0')
+			*pn++ = *pl++;
+		*pn++ = '\0';
+		/* get value */
+		if (*pl == '=')
+			pl++;
+		pv = value;
+		if (*pl == '"' || *pl == '\'')
+		{
+			t = *pl++;
+			while (*pl != '\0')
+			{
+				if (*pl == t)
+				{
+					if (pl[-1] != '\\')
+						break;
+					pv[-1] = t;
+					pl++;
+				}
+				else
+					*pv++ = *pl++;
+			}
+		}
+		else
+			while (*pl)
+				*pv++ = *pl++;
+		*pv = '\0';
+		if (name[0] == '-')
+			gp_add_entry("SWITCH", &name[1]);
+		else
+			gp_add_entry(name, value);
+		if (strcmp("par", name) == 0) /* par file */
+			gp_do_par_file(value, 1);
+	}
 
-/* do not internally call getpar before this point because
+	/* do not internally call getpar before this point because
  ARGHEAD is not set. The search will have no stopping point */
-ARGHEAD = ARGLIST;
+	ARGHEAD = ARGLIST;
 #ifdef ENVIRONMENT
-*value= '\0';
-if(GETPAR("NOENV","s",value)) ARGHEAD= ARGLIST+ nevlist;
+	*value = '\0';
+	if (GETPAR("NOENV", "s", value))
+		ARGHEAD = ARGLIST + nevlist;
 #endif
-addflags = 0;
-*value = '\0';
-if (GETPAR("STOP", "s", value))
-addflags |= STOP;
-*value = '\0';
-if (GETPAR("VERBOSE", "s", value))
-addflags |= VERBOSE;
-*value = '\0';
-if (GETPAR("LIST", "s", value)) {
-addflags |= LIST;
-LISTFILE = gp_create_dump(value, "list");
-}
-*value = '\0';
-if (GETPAR("INPUT", "s", value)) {
-file = gp_create_dump(value, "list input");
-fprintf(file, "%s: getpar input listing\n", PROGNAME);
-for (i = 0, alptr = ARGLIST; i < NLIST; i++, alptr++) {
-fprintf(file, "%3d: %16s = %s\n", i, alptr->argname, alptr->argval);
-}
-gp_close_dump(file);
-}
-FLAGS |= addflags;
+	addflags = 0;
+	*value = '\0';
+	if (GETPAR("STOP", "s", value))
+		addflags |= STOP;
+	*value = '\0';
+	if (GETPAR("VERBOSE", "s", value))
+		addflags |= VERBOSE;
+	*value = '\0';
+	if (GETPAR("LIST", "s", value))
+	{
+		addflags |= LIST;
+		LISTFILE = gp_create_dump(value, "list");
+	}
+	*value = '\0';
+	if (GETPAR("INPUT", "s", value))
+	{
+		file = gp_create_dump(value, "list input");
+		fprintf(file, "%s: getpar input listing\n", PROGNAME);
+		for (i = 0, alptr = ARGLIST; i < NLIST; i++, alptr++)
+		{
+			fprintf(file, "%3d: %16s = %s\n", i, alptr->argname, alptr->argval);
+		}
+		gp_close_dump(file);
+	}
+	FLAGS |= addflags;
 }
 
 gp_add_entry(name, value)
-/* add an entry to arglist, expanding memory */
-register char *name, *value; /* if necessary */
+	/* add an entry to arglist, expanding memory */
+	register char *name,
+	*value; /* if necessary */
 {
-struct arglist *alptr;
-int len;
-register char *ptr;
+	struct arglist *alptr;
+	int len;
+	register char *ptr;
 
-/* check arglist memory */
-if (NLIST >= LISTMAX) {
-LISTMAX += LISTINC;
-if (ARGLIST == NULL)
-ARGLIST = (AL *) malloc(LISTMAX * sizeof(AL));
-else
-ARGLIST = (AL *) realloc(ARGLIST, LISTMAX * sizeof(AL));
-}
-/* check argbuf memory */
-len = strlen(name) + strlen(value) + 2; /* +2 for terminating nulls */
-if (NBUF + len >= BUFMAX) {
-BUFMAX += BUFINC;
-if (ARGBUF == NULL)
-ARGBUF = (char *) malloc(BUFMAX);
-else
-ARGBUF = (char *) realloc(ARGBUF, BUFMAX);
-}
-if (ARGBUF == NULL || ARGLIST == NULL)
-gp_getpar_err("setpar", "cannot allocate memory");
+	/* check arglist memory */
+	if (NLIST >= LISTMAX)
+	{
+		LISTMAX += LISTINC;
+		if (ARGLIST == NULL)
+			ARGLIST = (AL *)malloc(LISTMAX * sizeof(AL));
+		else
+			ARGLIST = (AL *)realloc(ARGLIST, LISTMAX * sizeof(AL));
+	}
+	/* check argbuf memory */
+	len = strlen(name) + strlen(value) + 2; /* +2 for terminating nulls */
+	if (NBUF + len >= BUFMAX)
+	{
+		BUFMAX += BUFINC;
+		if (ARGBUF == NULL)
+			ARGBUF = (char *)malloc(BUFMAX);
+		else
+			ARGBUF = (char *)realloc(ARGBUF, BUFMAX);
+	}
+	if (ARGBUF == NULL || ARGLIST == NULL)
+		gp_getpar_err("setpar", "cannot allocate memory");
 
-/* add name */
-alptr = ARGLIST + NLIST;
-alptr->hash = gp_compute_hash(name);
-ptr = alptr->argname = ARGBUF + NBUF;
-do
-*ptr++ = *name;
-while (*name++);
+	/* add name */
+	alptr = ARGLIST + NLIST;
+	alptr->hash = gp_compute_hash(name);
+	ptr = alptr->argname = ARGBUF + NBUF;
+	do
+		*ptr++ = *name;
+	while (*name++);
 
-/* add value */
-NBUF += len;
-alptr->argval = ptr;
-do
-*ptr++ = *value;
-while (*value++);
-NLIST++;
+	/* add value */
+	NBUF += len;
+	alptr->argval = ptr;
+	do
+		*ptr++ = *value;
+	while (*value++);
+	NLIST++;
 }
 #ifdef ENVIRONMENT
-gp_do_environment(ac,av)
-int ac; char **av;
+gp_do_environment(ac, av) int ac;
+char **av;
 {
-char **ae;
-register char *pl, *pn, *pv;
-char name[MAXNAME], value[MAXVALUE], t;
+	char **ae;
+	register char *pl, *pn, *pv;
+	char name[MAXNAME], value[MAXVALUE], t;
 
-/* The environ pointer ae, is assumed to have a specific relation
+	/* The environ pointer ae, is assumed to have a specific relation
  to the arg pointer av. This may not be portable. */
-ae= av +(ac+1);
-if(ae == NULL) return;
+	ae = av + (ac + 1);
+	if (ae == NULL)
+		return;
 
-while(*ae != NULL)
-{
-pl= *ae++;
-while(*pl == ' ' || *pl == '\t') pl++;
-/* get name */
-pn= name;
-while(*pl != '=' && *pl != '\0') *pn++ = *pl++;
-*pn = '\0';
-if(strcmp("NOENV",pn) == 0) return;
+	while (*ae != NULL)
+	{
+		pl = *ae++;
+		while (*pl == ' ' || *pl == '\t')
+			pl++;
+		/* get name */
+		pn = name;
+		while (*pl != '=' && *pl != '\0')
+			*pn++ = *pl++;
+		*pn = '\0';
+		if (strcmp("NOENV", pn) == 0)
+			return;
 
-/* get value */
-if(*pl == '=') pl++;
-pv= value;
-if(*pl == '"' || *pl == '\'')
-{
-t= *pl++;
-while(*pl != '\0')
-{
-if(*pl == t)
-{
-if(pl[-1] != '\\') break;
-pv[-1]= t;
-pl++;
-}
-else *pv++ = *pl++;
-}
-}
-else while(*pl) *pv++ = *pl++;
-*pv= '\0';
-gp_add_entry(name,value);
-}
+		/* get value */
+		if (*pl == '=')
+			pl++;
+		pv = value;
+		if (*pl == '"' || *pl == '\'')
+		{
+			t = *pl++;
+			while (*pl != '\0')
+			{
+				if (*pl == t)
+				{
+					if (pl[-1] != '\\')
+						break;
+					pv[-1] = t;
+					pl++;
+				}
+				else
+					*pv++ = *pl++;
+			}
+		}
+		else
+			while (*pl)
+				*pv++ = *pl++;
+		*pv = '\0';
+		gp_add_entry(name, value);
+	}
 }
 #endif
 
-ENDPAR () /* free arglist & argbuf memory, & process STOP command */
+ENDPAR() /* free arglist & argbuf memory, & process STOP command */
 {
-if (ARGLIST != NULL)
-free(ARGLIST);
-if (ARGBUF != NULL)
-free(ARGBUF);
-ARGBUF = NULL;
-ARGLIST = NULL;
-if (FLAGS & STOP) {
-fprintf(stderr, "%s[endpar]: stop due to STOP in input\n",
-PROGNAME);
-exit(GETPAR_STOP);
-}
-FLAGS = END_PAR; /* this stops further getpar calls */
+	if (ARGLIST != NULL)
+		free(ARGLIST);
+	if (ARGBUF != NULL)
+		free(ARGBUF);
+	ARGBUF = NULL;
+	ARGLIST = NULL;
+	if (FLAGS & STOP)
+	{
+		fprintf(stderr, "%s[endpar]: stop due to STOP in input\n",
+				PROGNAME);
+		exit(GETPAR_STOP);
+	}
+	FLAGS = END_PAR; /* this stops further getpar calls */
 }
 
 #ifdef FORTRAN
-mstpar_(name,type,val,dum1,dum2)
-int dum1, dum2; /* dum1 & dum2 are extra args that fortran puts in */
+mstpar_(name, type, val, dum1, dum2) int dum1, dum2; /* dum1 & dum2 are extra args that fortran puts in */
 #else
 mstpar(name, type, val)
 #endif
-char *name, *type;int *val;
+char *name, *type;
+int *val;
 {
-int cnt;
-char *typemess;
+	int cnt;
+	char *typemess;
 
-if ((cnt = GETPAR(name, type, val)) > 0)
-return (cnt);
+	if ((cnt = GETPAR(name, type, val)) > 0)
+		return (cnt);
 
-/* The following line corrects a common input error */
-if (type[1] == 'v') {
-type[1] = type[0];
-type[0] = 'v';
-}
+	/* The following line corrects a common input error */
+	if (type[1] == 'v')
+	{
+		type[1] = type[0];
+		type[0] = 'v';
+	}
 
-switch (*type) {
-case 'd':
-typemess = "an int";
-break;
-case 'f':
-typemess = "a float";
-break;
-case 'F':
-typemess = "a double";
-break;
-case 's':
-typemess = "a string";
-break;
-case 'b':
-typemess = "a boolean";
-break;
-case 'v':
-switch (type[1]) {
-case 'd':
-typemess = "an integer vector";
-break;
-case 'f':
-typemess = "a float vector";
-break;
-case 'F':
-typemess = "a double vector";
-break;
-default:
-typemess = "unknow vectorn (error)";
-break;
-}
-break;
-default:
-typemess = "unknown (error)";
-break;
-}
-gp_getpar_err("mstpar", "must specify value for '%s', expecting %s", name,
-typemess);
+	switch (*type)
+	{
+	case 'd':
+		typemess = "an int";
+		break;
+	case 'f':
+		typemess = "a float";
+		break;
+	case 'F':
+		typemess = "a double";
+		break;
+	case 's':
+		typemess = "a string";
+		break;
+	case 'b':
+		typemess = "a boolean";
+		break;
+	case 'v':
+		switch (type[1])
+		{
+		case 'd':
+			typemess = "an integer vector";
+			break;
+		case 'f':
+			typemess = "a float vector";
+			break;
+		case 'F':
+			typemess = "a double vector";
+			break;
+		default:
+			typemess = "unknow vectorn (error)";
+			break;
+		}
+		break;
+	default:
+		typemess = "unknown (error)";
+		break;
+	}
+	gp_getpar_err("mstpar", "must specify value for '%s', expecting %s", name,
+				  typemess);
 }
 
 #ifdef FORTRAN
-getpar_(name,type,val,dum1,dum2)
-int dum1, dum2; /* dum1 & dum2 are extra args that fortran puts in */
+getpar_(name, type, val, dum1, dum2) int dum1, dum2; /* dum1 & dum2 are extra args that fortran puts in */
 #else
 getpar(name, type, val)
 #endif
-char *name, *type;int *val;
+char *name, *type;
+int *val;
 {
-register char *sptr;
-register struct arglist *alptr;
-register int i;
-double atof(), *dbl;
-float *flt;
-int h, hno, hyes, found;
-char line[MAXLINE], *str, *noname;
+	register char *sptr;
+	register struct arglist *alptr;
+	register int i;
+	double atof(), *dbl;
+	float *flt;
+	int h, hno, hyes, found;
+	char line[MAXLINE], *str, *noname;
 
-if (FLAGS & END_PAR)
-gp_getpar_err("getpar", "called after endpar");
-if ((FLAGS & INIT) == 0)
-gp_getpar_err("getpar", "not initialized with setpar");
-if (FLAGS & VERBOSE)
-fprintf(stderr, "getpar: looking for %s\n", name);
+	if (FLAGS & END_PAR)
+		gp_getpar_err("getpar", "called after endpar");
+	if ((FLAGS & INIT) == 0)
+		gp_getpar_err("getpar", "not initialized with setpar");
+	if (FLAGS & VERBOSE)
+		fprintf(stderr, "getpar: looking for %s\n", name);
 
-/* The following line corrects a common input error */
-if (type[1] == 'v') {
-type[1] = type[0];
-type[0] = 'v';
-}
+	/* The following line corrects a common input error */
+	if (type[1] == 'v')
+	{
+		type[1] = type[0];
+		type[0] = 'v';
+	}
 
-if (*type == 'b')
-goto boolean;
+	if (*type == 'b')
+		goto boolean;
 
-h = gp_compute_hash(name);
-found = 0;
-/* search list backwards, stopping at first find */
-for (alptr = ARGLIST + (NLIST - 1); alptr >= ARGHEAD; alptr--) {
-if (alptr->hash != h)
-continue;
-if (strcmp(alptr->argname, name) != 0)
-continue;
-str = alptr->argval;
-switch (*type) {
-case 'd':
-*val = atoi(str);
-found = 1;
-break;
-case 'f':
-flt = (float *) val;
-*flt = atof(str);
-found = 1;
-break;
-case 'F':
-dbl = (double *) val;
-*dbl = atof(str);
-found = 1;
-break;
-case 's':
-sptr = (char *) val;
-while (*str)
-*sptr++ = *str++;
-*sptr = '\0';
-found = 1;
-break;
-case 'v':
-found = gp_getvector(str, type, val);
-break;
-default:
-gp_getpar_err("getpar", "unknown conversion type %s", type);
-break;
+	h = gp_compute_hash(name);
+	found = 0;
+	/* search list backwards, stopping at first find */
+	for (alptr = ARGLIST + (NLIST - 1); alptr >= ARGHEAD; alptr--)
+	{
+		if (alptr->hash != h)
+			continue;
+		if (strcmp(alptr->argname, name) != 0)
+			continue;
+		str = alptr->argval;
+		switch (*type)
+		{
+		case 'd':
+			*val = atoi(str);
+			found = 1;
+			break;
+		case 'f':
+			flt = (float *)val;
+			*flt = atof(str);
+			found = 1;
+			break;
+		case 'F':
+			dbl = (double *)val;
+			*dbl = atof(str);
+			found = 1;
+			break;
+		case 's':
+			sptr = (char *)val;
+			while (*str)
+				*sptr++ = *str++;
+			*sptr = '\0';
+			found = 1;
+			break;
+		case 'v':
+			found = gp_getvector(str, type, val);
+			break;
+		default:
+			gp_getpar_err("getpar", "unknown conversion type %s", type);
+			break;
+		}
+		break;
+	}
+	goto list;
+boolean:
+	noname = line;
+	sprintf(noname, "no%s", name);
+	hno = gp_compute_hash(noname);
+	hyes = gp_compute_hash(name);
+	found = 0;
+	/* search list backwards, stopping at first find */
+	for (alptr = ARGLIST + (NLIST - 1); alptr >= ARGHEAD; alptr--)
+	{
+		if (alptr->hash != hno && alptr->hash != hyes)
+			continue;
+		if (strcmp(alptr->argname, name) == 0)
+		{
+			if (alptr->argval[0] == '\0')
+				*val = 1;
+			else
+				*val = atol(alptr->argval);
+			found++;
+			break;
+		}
+		if (strcmp(alptr->argname, noname) == 0)
+		{
+			*val = 0;
+			found++;
+			break;
+		}
+	}
+list:
+	if (FLAGS & LIST)
+	{
+		switch (*type)
+		{
+		case 'd':
+			sprintf(line, "(int) = %d", *val);
+			break;
+		case 'f':
+			flt = (float *)val;
+			sprintf(line, "(flt) = %14.6e", *flt);
+			break;
+		case 'F':
+			dbl = (double *)val;
+			sprintf(line, "(dbl) = %14.6e", *dbl);
+			break;
+		case 's':
+			sprintf(line, "(str) = %s", val);
+			break;
+		case 'b':
+			sprintf(line, "(boo) = %d", *val);
+			break;
+		case 'v':
+			switch (type[1])
+			{
+			/* should list these out */
+			case 'd':
+				sprintf(line, "(int vec)");
+				break;
+			case 'f':
+				sprintf(line, "(flt vec)");
+				break;
+			case 'F':
+				sprintf(line, "(dbl vec)");
+				break;
+			default:
+				sprintf(line, " vec type error");
+				break;
+			}
+			break;
+		default:
+			sprintf(line, " type error");
+			break;
+		}
+		fprintf(LISTFILE, "%16s (%s) %s \n", name, (found ? "set" : "def"),
+				line);
+	}
+	return (found);
 }
-break;
-}
-goto list;
-boolean: noname = line;
-sprintf(noname, "no%s", name);
-hno = gp_compute_hash(noname);
-hyes = gp_compute_hash(name);
-found = 0;
-/* search list backwards, stopping at first find */
-for (alptr = ARGLIST + (NLIST - 1); alptr >= ARGHEAD; alptr--) {
-if (alptr->hash != hno && alptr->hash != hyes)
-continue;
-if (strcmp(alptr->argname, name) == 0) {
-if (alptr->argval[0] == '\0')
-*val = 1;
-else
-*val = atol(alptr->argval);
-found++;
-break;
-}
-if (strcmp(alptr->argname, noname) == 0) {
-*val = 0;
-found++;
-break;
-}
-}
-list: if (FLAGS & LIST) {
-switch (*type) {
-case 'd':
-sprintf(line, "(int) = %d", *val);
-break;
-case 'f':
-flt = (float *) val;
-sprintf(line, "(flt) = %14.6e", *flt);
-break;
-case 'F':
-dbl = (double *) val;
-sprintf(line, "(dbl) = %14.6e", *dbl);
-break;
-case 's':
-sprintf(line, "(str) = %s", val);
-break;
-case 'b':
-sprintf(line, "(boo) = %d", *val);
-break;
-case 'v':
-switch (type[1]) {
-/* should list these out */
-case 'd':
-sprintf(line, "(int vec)");
-break;
-case 'f':
-sprintf(line, "(flt vec)");
-break;
-case 'F':
-sprintf(line, "(dbl vec)");
-break;
-default:
-sprintf(line, " vec type error");
-break;
-}
-break;
-default:
-sprintf(line, " type error");
-break;
-}
-fprintf(LISTFILE, "%16s (%s) %s \n", name, (found ? "set" : "def"),
-line);
-}
-return (found);
-}
-FILE *gp_create_dump(fname, filetype)
-char *fname;
+FILE *gp_create_dump(fname, filetype) char *fname;
 char *filetype;
 {
-FILE *temp;
+	FILE *temp;
 
-if (*fname == '\0')
-return (stderr);
-if (strcmp(fname, "stderr") == 0)
-return (stderr);
-if (strcmp(fname, "stdout") == 0)
-return (stdout);
-if ((temp = fopen(fname, "w")) != NULL)
-return (temp);
-fprintf(stderr, "%s[setpar]: cannot create %s file %s\n",
-PROGNAME, filetype, fname);
-return (stderr);
+	if (*fname == '\0')
+		return (stderr);
+	if (strcmp(fname, "stderr") == 0)
+		return (stderr);
+	if (strcmp(fname, "stdout") == 0)
+		return (stdout);
+	if ((temp = fopen(fname, "w")) != NULL)
+		return (temp);
+	fprintf(stderr, "%s[setpar]: cannot create %s file %s\n",
+			PROGNAME, filetype, fname);
+	return (stderr);
 }
 
-gp_close_dump (file)
-FILE *file;
+gp_close_dump(file)
+	FILE *file;
 {
-if (file == stderr || file == stdout)
-return;
-fclose(file);
+	if (file == stderr || file == stdout)
+		return;
+	fclose(file);
 }
 
-gp_compute_hash (s)
-register char *s;
+gp_compute_hash(s) register char *s;
 {
-register int h;
-h = s[0];
-if (s[1])
-h |= (s[1]) << 8;
-else
-return (h);
-if (s[2])
-h |= (s[2]) << 16;
-else
-return (h);
-if (s[3])
-h |= (s[3]) << 24;
-return (h);
+	register int h;
+	h = s[0];
+	if (s[1])
+		h |= (s[1]) << 8;
+	else
+		return (h);
+	if (s[2])
+		h |= (s[2]) << 16;
+	else
+		return (h);
+	if (s[3])
+		h |= (s[3]) << 24;
+	return (h);
 }
 
-gp_do_par_file(fname, level)
-char *fname;int level;
+gp_do_par_file(fname, level) char *fname;
+int level;
 {
-register char *pl, *pn, *pv;
-char t1, t2, line[MAXLINE], name[MAXNAME], value[MAXVALUE];
-FILE *file, *fopen();
+	register char *pl, *pn, *pv;
+	char t1, t2, line[MAXLINE], name[MAXNAME], value[MAXVALUE];
+	FILE *file, *fopen();
 
-if (level > MAXPARLEVEL)
-gp_getpar_err("setpar", "%d (too many) recursive par file", level);
+	if (level > MAXPARLEVEL)
+		gp_getpar_err("setpar", "%d (too many) recursive par file", level);
 
-if ((file = fopen(fname, "r")) == NULL)
-gp_getpar_err("setpar", "cannot open par file %s", fname);
+	if ((file = fopen(fname, "r")) == NULL)
+		gp_getpar_err("setpar", "cannot open par file %s", fname);
 
-while (fgets(line, MAXLINE, file) != NULL) {
-pl = line;
-/* loop over entries on each line */
-loop: while (*pl == ' ' || *pl == '\t')
-pl++;
-if (*pl == '\0' || *pl == '\n')
-continue;
-if (*pl == '#')
-continue; /* comments on rest of line */
+	while (fgets(line, MAXLINE, file) != NULL)
+	{
+		pl = line;
+	/* loop over entries on each line */
+	loop:
+		while (*pl == ' ' || *pl == '\t')
+			pl++;
+		if (*pl == '\0' || *pl == '\n')
+			continue;
+		if (*pl == '#')
+			continue; /* comments on rest of line */
 
-/* get name */
-pn = name;
-while (*pl != '=' && *pl != '\0' && *pl != ' ' && *pl != '\t')
-*pn++ = *pl++;
-*pn = '\0';
-if (*pl == '=')
-pl++;
+		/* get name */
+		pn = name;
+		while (*pl != '=' && *pl != '\0' && *pl != ' ' && *pl != '\t')
+			*pn++ = *pl++;
+		*pn = '\0';
+		if (*pl == '=')
+			pl++;
 
-/* get value */
-*value = '\0';
-pv = value;
-if (*pl == '"' || *pl == '\'') {
-t1 = t2 = *pl++;
-} else {
-t1 = ' ';
-t2 = '\t';
+		/* get value */
+		*value = '\0';
+		pv = value;
+		if (*pl == '"' || *pl == '\'')
+		{
+			t1 = t2 = *pl++;
+		}
+		else
+		{
+			t1 = ' ';
+			t2 = '\t';
+		}
+		while (*pl != t1 && *pl != t2 && *pl != '\0' && *pl != '\n')
+			*pv++ = *pl++;
+		*pv = '\0';
+		if (*pl == '"' || *pl == '\'')
+			pl++;
+		gp_add_entry(name, value);
+		if (strcmp("par", name) == 0)
+			gp_do_par_file(value, level + 1);
+		goto loop;
+	}
+	fclose(file);
 }
-while (*pl != t1 && *pl != t2 && *pl != '\0' && *pl != '\n')
-*pv++ = *pl++;
-*pv = '\0';
-if (*pl == '"' || *pl == '\'')
-pl++;
-gp_add_entry(name, value);
-if (strcmp("par", name) == 0)
-gp_do_par_file(value, level + 1);
-goto loop;
-}
-fclose(file);
-}
 
-gp_getpar_err(subname, mess, a1, a2, a3, a4)
-char *subname, *mess;int a1, a2, a3, a4;
+gp_getpar_err(subname, mess, a1, a2, a3, a4) char *subname, *mess;
+int a1, a2, a3, a4;
 {
-fprintf(stderr, "\n***** ERROR in %s[%s] *****\n\t",
-(PROGNAME == NULL ? "(unknown)" : PROGNAME), subname);
-fprintf(stderr, mess, a1, a2, a3, a4);
-fprintf(stderr, "\n");
-exit(GETPAR_ERROR);
+	fprintf(stderr, "\n***** ERROR in %s[%s] *****\n\t",
+			(PROGNAME == NULL ? "(unknown)" : PROGNAME), subname);
+	fprintf(stderr, mess, a1, a2, a3, a4);
+	fprintf(stderr, "\n");
+	exit(GETPAR_ERROR);
 }
-gp_getvector(list, type, val)
-char *list, *type;int *val;
+gp_getvector(list, type, val) char *list, *type;
+int *val;
 {
-register char *p;
-register int index, cnt;
-char *valptr;
-int limit;
-int ival, *iptr;
-float fval, *fptr;
-double dval, *dptr, atof();
+	register char *p;
+	register int index, cnt;
+	char *valptr;
+	int limit;
+	int ival, *iptr;
+	float fval, *fptr;
+	double dval, *dptr, atof();
 
-limit = MAXVECTOR;
-if (type[2] == '(' || type[2] == '[')
-limit = atol(&type[3]);
-if (limit <= 0)
-gp_getpar_err("getpar", "bad limit=%d specified", limit);
-index = 0;
-p = list;
-while (*p != '\0' && index < limit) {
-cnt = 1;
-backup: /* return to here if we find a repetition factor */
-while (*p == ' ' || *p == '\t')
-p++;
-if (*p == '\0')
-return (index);
-valptr = p;
-while (*p != ',' && *p != '*' && *p != 'x' && *p != 'X' && *p != '\0')
-p++;
-if (*p == '*' || *p == 'x' || *p == 'X') {
-cnt = atol(valptr);
-if (cnt <= 0)
-gp_getpar_err("getpar", "bad repetition factor=%d specified",
-cnt);
-if (index + cnt > limit)
-cnt = limit - index;
-p++;
-goto backup;
-}
-switch (type[1]) {
-case 'd':
-iptr = (int *) val;
-ival = atol(valptr);
-while (cnt--)
-iptr[index++] = ival;
-break;
-case 'f':
-fptr = (float *) val;
-fval = atof(valptr);
-while (cnt--)
-fptr[index++] = fval;
-break;
-case 'F':
-dptr = (double *) val;
-dval = atof(valptr);
-while (cnt--)
-dptr[index++] = dval;
-break;
-default:
-gp_getpar_err("getpar", "bad vector type=%c specified", type[1]);
-break;
-}
-if (*p != '\0')
-p++;
-}
-return (index);
+	limit = MAXVECTOR;
+	if (type[2] == '(' || type[2] == '[')
+		limit = atol(&type[3]);
+	if (limit <= 0)
+		gp_getpar_err("getpar", "bad limit=%d specified", limit);
+	index = 0;
+	p = list;
+	while (*p != '\0' && index < limit)
+	{
+		cnt = 1;
+	backup: /* return to here if we find a repetition factor */
+		while (*p == ' ' || *p == '\t')
+			p++;
+		if (*p == '\0')
+			return (index);
+		valptr = p;
+		while (*p != ',' && *p != '*' && *p != 'x' && *p != 'X' && *p != '\0')
+			p++;
+		if (*p == '*' || *p == 'x' || *p == 'X')
+		{
+			cnt = atol(valptr);
+			if (cnt <= 0)
+				gp_getpar_err("getpar", "bad repetition factor=%d specified",
+							  cnt);
+			if (index + cnt > limit)
+				cnt = limit - index;
+			p++;
+			goto backup;
+		}
+		switch (type[1])
+		{
+		case 'd':
+			iptr = (int *)val;
+			ival = atol(valptr);
+			while (cnt--)
+				iptr[index++] = ival;
+			break;
+		case 'f':
+			fptr = (float *)val;
+			fval = atof(valptr);
+			while (cnt--)
+				fptr[index++] = fval;
+			break;
+		case 'F':
+			dptr = (double *)val;
+			dval = atof(valptr);
+			while (cnt--)
+				dptr[index++] = dval;
+			break;
+		default:
+			gp_getpar_err("getpar", "bad vector type=%c specified", type[1]);
+			break;
+		}
+		if (*p != '\0')
+			p++;
+	}
+	return (index);
 }
 
 /* Routine to determine if the machine is big or little endian */
-int endian() {
-int *T;
+int endian()
+{
+	int *T;
 
-T = (int *) "\01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-if (*T == 1) {
-printf("This machine is little-endian.\n");
-return (1);
-} else {
-printf("This machine is big-endian.\n");
-return (0);
-}
-
+	T = (int *)"\01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+	if (*T == 1)
+	{
+		printf("This machine is little-endian.\n");
+		return (1);
+	}
+	else
+	{
+		printf("This machine is big-endian.\n");
+		return (0);
+	}
 }
 
 /*
  Swap bytes for a double precision number
  */
-int FixDouble(double *n) {
-unsigned char *cptr, tmp;
+int FixDouble(double *n)
+{
+	unsigned char *cptr, tmp;
 
-cptr = (unsigned char *) n;
-tmp = cptr[0];
-cptr[0] = cptr[7];
-cptr[7] = tmp;
-tmp = cptr[1];
-cptr[1] = cptr[6];
-cptr[6] = tmp;
-tmp = cptr[2];
-cptr[2] = cptr[5];
-cptr[5] = tmp;
-tmp = cptr[3];
-cptr[3] = cptr[4];
-cptr[4] = tmp;
+	cptr = (unsigned char *)n;
+	tmp = cptr[0];
+	cptr[0] = cptr[7];
+	cptr[7] = tmp;
+	tmp = cptr[1];
+	cptr[1] = cptr[6];
+	cptr[6] = tmp;
+	tmp = cptr[2];
+	cptr[2] = cptr[5];
+	cptr[5] = tmp;
+	tmp = cptr[3];
+	cptr[3] = cptr[4];
+	cptr[4] = tmp;
 
-return (1);
+	return (1);
 }
