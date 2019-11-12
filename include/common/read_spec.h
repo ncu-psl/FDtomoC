@@ -46,17 +46,22 @@ int limitu, mavx, mavy, mavz;
 int nsmooth, ipscflg, ido1d;
 float dvperc, pertscl;
 
-//files
+//must files
 char oldvfil[MAXSTRLEN + 1], onedfil[MAXSTRLEN + 1]; // make1d
 char tgrdfil[MAXSTRLEN + 1], finevel[MAXSTRLEN + 1]; // c2f
 char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
              fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1]; //sphfdloc
 char stafile[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
-            dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
-			dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];  //sphrayderv
+    dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
+	dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1];  //sphrayderv
 char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1]; //runlsqr			
 char fmodfil[MAXSTRLEN + 1]; //makenewmod
 char parlist[MAXSTRLEN + 1];
+
+//optional files parameter
+char telefil[MAXSTRLEN],  pbasfil[MAXSTRLEN], sbasfil[MAXSTRLEN], shotfil[MAXSTRLEN],
+		elipfil[MAXSTRLEN], raystat[MAXSTRLEN],  dotfile[MAXSTRLEN], 
+		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN], specfile[MAXSTRLEN];
 }SPEC;
 
 void read_variables(char *spec_file, SPEC *spec);
