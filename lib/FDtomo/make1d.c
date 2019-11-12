@@ -72,8 +72,7 @@ c		    change so that dx = df and dy = df.
 #include "common/geographic_method.h"
 #include "common/string_process.h"
 #include "common/shared_variables.h"
-#include "common/read_spec.h"
-
+#include "FDtomo/make1d.h"
 #define MAX1D 1000
 #define MAXSTRLEN 132
 
@@ -93,7 +92,7 @@ float vp[MAX1D][2], z[MAX1D];
 double z0r;
 double y00;
 
-float vsave[nxyzcm2];
+//float vsave[nxyzcm2];
 
 char VERSION[10] = "2017.1122\0";
 double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
@@ -116,15 +115,14 @@ char hdr[nhbyte + 1];
 int lenhead = nhbyte * 4;
 
 FILE *fp_log;
-FILE *fp_cor;
 FILE *fp_one;
 
 float flatvel(float, float);
 float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
-
-int make1d(SPEC spec) {
+make1d_data return_data;
+make1d_data make1d(SPEC spec) {
 	
 	//initialize variable
 	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
@@ -412,7 +410,7 @@ int make1d(SPEC spec) {
 	goto a21;
 	
 //----generate the model
-	a2: fp_cor = fopen(spec.oldvfil, "wb");
+	a2: 
 	for (int n = 0; n <= 1; n++) {
 		int noff = nxyzc * n;
 		fprintf(fp_log, " \n");
@@ -457,23 +455,25 @@ int make1d(SPEC spec) {
 			for (j = 0; j < nyc; j++) {
 				int joff = koff + nxc * j;
 				for (i = 0; i < nxc; i++) {
-					vsave[joff + i] = vfl;
+					return_data.vsave[joff + i] = vfl;
 				}
 			}
 		}
 	}
 
 	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_cor);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_cor);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
-	fwrite(vsave, sizeof(vsave[0]), nxyzc2, fp_cor);
+
+	
+	memcpy(return_data.hdr, hdr, strlen(hdr)+1);
+	memcpy(return_data.igridx, igridx, sizeof(spec.igridx));
+	memcpy(return_data.igridy, igridy, sizeof(spec.igridy));
+	memcpy(return_data.igridz, igridz, sizeof(spec.igridz));
+	//memcpy(return_data.vsave, vsave, sizeof(vsave));
+
 
 	fclose(fp_log);
-	fclose(fp_cor);
 	fclose(fp_one);
-	return 0;
+	return return_data;
 }
 
 float flatvel(float v, float z) {

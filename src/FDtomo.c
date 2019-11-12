@@ -36,8 +36,8 @@ int main(int argc, char *argv[]){
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
 	make1d(spec);
-	c2f(spec);
-	sphfd(argc, argv, spec);
+	//c2f(spec);
+	//sphfd(argc, argv, spec);
 
 	sphfdloc(spec);
 	//sphrayderv(argv[1]);
