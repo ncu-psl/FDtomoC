@@ -31,16 +31,18 @@ int main(int argc, char *argv[]){
 	spec.ittnum = 1;
 	spec.total_earthquakes = 0;
 
+	//sphrayderv initialization
+
 
 	read_variables(argv[1], &spec);
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
-	make1d(spec);
-	//c2f(spec);
-	//sphfd(argc, argv, spec);
+	//make1d(spec);
+	c2f(spec);
+	sphfd(argc, argv, spec);
 
 	sphfdloc(spec);
-	//sphrayderv(argv[1]);
+	sphrayderv(spec);
 	//runlsqr(argv[1]);
 	//makenewmod(argv[1]);
 	return 0;
