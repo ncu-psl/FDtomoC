@@ -76,10 +76,6 @@
 #define rearth 6371.0
 #define VERSION "2018.0429"
 
-
-char spec_file[MAXSTRLEN + 1];
-char aline[MAXSTRLEN + 1];
-char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
 float t[maxsta][nxyzm];
 char str_fhd[160000][100], str_data[160000][10000];
 char str_sum[160000][20000], str_out[160000][10000];
@@ -87,10 +83,33 @@ char str_sum[160000][20000], str_out[160000][10000];
 void find_time(double, double, double, double *, int, int *);
 void read_station_set(int *, int *, int *, int *, int *, double *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
-int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1]);
+int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
+int sphfdloc(SPEC spec) {
+	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
+	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
+	
+	h = spec.h; x0 = spec.x0; y = spec.y; 
+	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
+	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
 
-int sphfdloc(char *file_parameter) {
-	char pval[MAXSTRLEN + 1];
+	int iread = spec.iread, ivs = spec.ivs, nthres = spec.nthres, kmin = spec.kmin, 
+		ndiv = spec.ndiv, ndiv2 = spec.ndiv2, ittnum = spec.ittnum, total_earthquakes = spec.total_earthquakes;
+
+	double vpvs = spec.vpvs, resthres = spec.resthres, resthrep = spec.resthrep, stdmax = spec.stdmax;
+
+	char timedir[60 + 1], eqkdir[60 + 1];
+	strcpy(timedir, spec.timedir);
+	strcpy(eqkdir, spec.eqkdir);
+
+	char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
+		fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
+	strcpy(leqsfil, spec.leqsfil);
+	strcpy(fsumfil, spec.fsumfil);
+	strcpy(outlfil, spec.outlfil);
+	strcpy(fhedfil, spec.fhedfil);
+	strcpy(fdatfil, spec.fdatfil);
+
+	
 	int len, ierr;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
@@ -166,7 +185,7 @@ int sphfdloc(char *file_parameter) {
 	fprintf(fp_log, "Sphfdloc VERSION: %s\n", VERSION);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec_file);
+			spec.spec_file);
 	fprintf(fp_log, "  \n");
 	{
 		char tmp[MAXSTRLEN];
@@ -294,7 +313,7 @@ int sphfdloc(char *file_parameter) {
 		total_earthquakes = earthquake_file_delimiter(leqsfil, eqkdir);
 	}
 	char timefiles[maxsta][MAXSTRLEN + 1];
-	int timefile_counts = read_timefiles(iread, nxyz, timefiles);
+	int timefile_counts = read_timefiles(iread, nxyz, timefiles, timedir);
 	if (timefile_counts < 0) {
 		printf("file can not open\n");
 		assert(0);
@@ -1136,7 +1155,7 @@ void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
 	}
 }
 
-int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1]) {
+int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], char *timedir) {
 	DIR *d = opendir(timedir);
 	if (!d) {
 		printf("opendir error: %s\n", timedir);
