@@ -41,8 +41,7 @@
 #include "common/parameter.h"
 #include "common/parseprogs.h"
 #include "common/string_process.h"
-#include "common/read_spec.h"
-
+#include "FDtomo/c2f.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132
@@ -57,7 +56,7 @@
 #define nhbyte 58 * 4
 
 double gx[nxcm], gy[nxcm], gz[nxcm];
-float vp[nxyzcm2];
+float *vp;
 
 float vsave[nxyzm2];
 
@@ -83,7 +82,7 @@ int nxyc, nxyzc, nxyzc2;
 
 void find_vel(double, double, double, double *, int, int, int, int);
 
-int c2f(SPEC spec) {
+int c2f(SPEC spec, make1d_data *MAKE1D) {
 	//initialize variable
 	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
 	    ny = spec.ny, nz = spec.nz;
@@ -274,16 +273,9 @@ int c2f(SPEC spec) {
 // c1234	    format(2i4, ' Q ', 2f12.2)
 // c	  enddo
 // c	enddo
-
-	char *cfile = spec.oldvfil;
-	FILE *fp_cor = fopen(cfile, "rb");
-	if (!fp_cor) {
-		printf("(Error in c2f.c)read file error.\n");
-		assert(0);
-	}
-	fread(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
 	
-	char *offset = hdr;
+	
+	char *offset = MAKE1D->hdr;
 	sscanf(offset, "%4s", head);
 	offset += strlen(head);
 	sscanf(offset, "%4s", type);
@@ -307,12 +299,8 @@ int c2f(SPEC spec) {
 		fprintf(fp_log,
 				"File does not contain valid header...attempting headerless read \n");
 		len_rec = 4 * nxyzc2;
-		rewind(fp_cor);
-		if (!fp_cor) {
-			printf("(Error in c2f.c)read file error.\n");
-			assert(0);
-		}
-		fread(vp, sizeof(vp[0]), nxyzc2, fp_cor);
+
+		vp = MAKE1D->vsave;
 //c---set trial header values
 		strcpy(head, "HEAD");
 		strcpy(syst, "CART");
@@ -351,10 +339,11 @@ int c2f(SPEC spec) {
 		int len_grd = 4 * (nxc + nyc + nzc - 3);
 		len_rec = len_head + len_grd + 4 * nxyzc2;
 
-		fread(igridx, sizeof(igridx[0]), nxc - 1, fp_cor);
-		fread(igridy, sizeof(igridy[0]), nyc - 1, fp_cor);
-		fread(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
-		fread(vp, sizeof(vp[0]), nxyzc2, fp_cor);
+
+		igridx = MAKE1D->igridx;
+		igridy = MAKE1D->igridy;
+		igridz = MAKE1D->igridz;
+		vp = MAKE1D->vsave;
 	}
 	printf(".. Done \n");
 
@@ -466,7 +455,6 @@ int c2f(SPEC spec) {
 
 	a65: 
 	fclose(fp_log);
-	fclose(fp_cor);
 	fclose(fp_tgd);
 	fclose(fp_fnw);
 	fclose(fp_fnp);

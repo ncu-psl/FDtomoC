@@ -11,8 +11,8 @@ int main(int argc, char *argv[]){
 	read_variables(argv[1], &spec);
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
-	make1d(spec);
-	//c2f(spec);
+	make1d_data *MAKE1D = make1d(spec);
+	c2f(spec, MAKE1D);
 	//sphfd(argc, argv, spec);
 
 	//sphfdloc(argv[1]);

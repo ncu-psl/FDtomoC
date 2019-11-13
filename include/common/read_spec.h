@@ -1,5 +1,5 @@
-#ifndef READ_SEPC
-#define READ_SPEC
+#ifndef READ_SPEC_H
+#define READ_SPEC_H
 #include "parseprogs.h"
 #include "common/shared_variables.h"
 #include "common/gridspec.h"

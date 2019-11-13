@@ -10,6 +10,6 @@ typedef struct{
     float vsave[nxyzcm2];
 
 }make1d_data;
-make1d_data make1d(SPEC);
+make1d_data *make1d(SPEC);
 
 #endif
