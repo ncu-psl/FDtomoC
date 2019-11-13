@@ -310,6 +310,24 @@ void read_files(char *spec_file, SPEC *file_identifier){
 		}
 		sscanf(pval, "%s", file_list[i]);
 	}
+
+	char *files_optional[MUSTF] = { "telefil\0",  "pbasfil\0", "sbasfil\0", "shotfil\0","elipfil\0", "raystat\0",  
+									"dotfile\0", "headfil\0", "entfile\0", "stcfile\0" //sphrayderv
+	};
+	char *file_opt_list[MUSTF] = { file_identifier->telefil, file_identifier->pbasfil, file_identifier->sbasfil, file_identifier->shotfil, file_identifier->elipfil,
+									file_identifier->raystat, file_identifier->dotfile, file_identifier->headfil, file_identifier->entfile, file_identifier->stcfile
+
+	};
+
+	for (int i = 0; i < 10; i++) {
+		get_vars(fp_spc, files_optional[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			printf("Error trying to read filename %s", files[i]);
+			assert(0);
+		}
+		sscanf(pval, "%s", file_opt_list[i]);
+	}
+
 }
 
 void read_grid(char *spec_file, SPEC *spec){	

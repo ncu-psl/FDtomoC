@@ -95,7 +95,6 @@
 int kn = 0, iph = 0, kbl = 0;
 int je = 0, ke = 0;
 
-double h, dq, df;
 double dsec, tarr, dpot;
 double stx, sty;
 float xlat, xlon;
@@ -138,7 +137,7 @@ int nhit[nxyzm2], mhit[nxyzm2];
 int inbk[maxobs];
 int jsave[maxkbl];
 int istn[maxobs];
-int nx, ny, nz, i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
+int i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
 
 char logfile[80];
 
@@ -155,77 +154,63 @@ int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
 int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
 
-int sphrayderv(char *file_parameter) {
-	VERSION[10] = "2004.0923";
-	char aline[MAXSTRLEN], varname[MAXSTRLEN], pval[MAXSTRLEN], parval[MAXSTRLEN],	
-		telefil[MAXSTRLEN],  pbasfil[MAXSTRLEN], sbasfil[MAXSTRLEN], shotfil[MAXSTRLEN],
+int sphrayderv(SPEC spec) {
+	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
+	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
+	
+	h = spec.h; x0 = spec.x0; y = spec.y; 
+	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
+	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
+
+	int iread = spec.iread, ivs = spec.ivs, ivpvs = spec.ivpvs, idmean = spec.idmean,
+		iray = spec.iray, iraystat = spec.iraystat, idatout = spec.idatout, nomat = spec.nomat,
+		istacor = spec.istacor, idoshot = spec.idoshot, idotel = spec.idotel, kmin = spec.kmin, 
+		kmax = spec.kmax, ittnum = spec.ittnum;
+	
+	float vpvsscale = spec.vpvsscale, resflag = spec.resflag, clat = spec.clat, clon = spec.clon;
+	double vpvs = spec.vpvs; 
+
+	char VERSION[10] = "2004.0923";
+	char timedir[60 + 1];
+
+	char stafile[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
+    	dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
+		dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1]; 
+
+	strcpy(timedir, spec.timedir);
+	strcpy(stafile, spec.stafile);
+	strcpy(oldvfil, spec.oldvfil);
+	strcpy(locdfil, spec.locdfil);
+	strcpy(telrerr, spec.telrerr);
+	strcpy(dtdsfil, spec.dtdsfil);
+	strcpy(resfile, spec.resfile);
+	strcpy(hitfile, spec.hitfile);
+	strcpy(dtdhfil, spec.dtdhfil);
+	strcpy(bookfil, spec.bookfil);
+	strcpy(sclefil, spec.sclefil);
+
+	char aline[MAXSTRLEN];	
+	char telefil[MAXSTRLEN],  pbasfil[MAXSTRLEN], sbasfil[MAXSTRLEN], shotfil[MAXSTRLEN],
 		elipfil[MAXSTRLEN], raystat[MAXSTRLEN],  dotfile[MAXSTRLEN], 
-		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN], specfile[MAXSTRLEN];
+		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN];
 	int ido1d = 0;
+	
+	strcpy(aline, "spec.aline");
+	strcpy(telefil, spec.telefil);
+	strcpy(pbasfil, spec.pbasfil);
+	strcpy(sbasfil, spec.sbasfil);
+	strcpy(shotfil, spec.shotfil);
+	strcpy(elipfil, spec.elipfil);
+	strcpy(raystat, spec.raystat);
+	strcpy(dotfile, spec.dotfile);
+	strcpy(headfil, spec.headfil);
+	strcpy(entfile, spec.entfile);
+	strcpy(stcfile, spec.stcfile);
 
 	double xn, yn, zn;
-	sscanf(file_parameter, "%s", specfile);
-	specfile[MAXSTRLEN - 1] = '\0';
-	FILE* fp_spc = fopen(specfile, "r");
-	if (!fp_spc) {
-		printf("error on opening spec-file (%s)\n", specfile);
-		assert(0);
-	}
 	int len = 0, ierr = 0;
 
 int ib = 0, ie = 0, lenv = 0, nvl = 0;
-	get_vars(fp_spc, "shotfil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", shotfil);
-	get_vars(fp_spc, "telefil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", telefil);
-
-	get_vars(fp_spc, "pbasfil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", pbasfil);
-
-	get_vars(fp_spc, "sbasfil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", sbasfil);
-
-	get_vars(fp_spc, "elipfil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", elipfil);
-
-	get_vars(fp_spc, "raystat ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", raystat);
-
-	get_vars(fp_spc, "dotfile ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", dotfile);
-
-	get_vars(fp_spc, "headfil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", headfil);
-
-	get_vars(fp_spc, "entfile ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", entfile);
-
-	get_vars(fp_spc, "stcfile ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", stcfile);
-
-	get_vars(fp_spc, "total_earthquakes ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%d", &total_earthquakes);
-
-	get_vars(fp_spc, "eqkdir ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", eqkdir);
-	if (eqkdir[strlen(eqkdir) - 1] != '/') {
-		eqkdir[strlen(eqkdir)] = '/';
-		eqkdir[strlen(eqkdir) + 1] = '\0';
-	}
-
-	//-----end of optional parameters
 
 	nx = 1;
 	ny = 1;
@@ -310,7 +295,7 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, " Sphrayderv VERSION: %s\n", VERSION);
 	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n", specfile);
+	fprintf(fp_log, " Current parameter specification file: %-40s\n", spec.specfile);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, "  Iteration counter: %18d\n", ittnum);
 	fprintf(fp_log, "  \n");
