@@ -11,8 +11,8 @@ int main(int argc, char *argv[]){
 	spec.isph = 0;
 
 	//sphfdloc initialization 
-	sscanf("./ttimes\0", "%s", spec.timedir);
-	sscanf("./eqkdir/\0", "%s", spec.eqkdir);
+	strcpy(spec.timedir, "./ttimes\0");
+	strcpy(spec.eqkdir, "./eqkdir/\0");
 	spec.iread = 0;
 	spec.ivs = 1;
 	spec.vpvs = 1.78;
@@ -42,8 +42,8 @@ int main(int argc, char *argv[]){
 	sphfd(argc, argv, spec);
 	sphfdloc(spec);
 	sphrayderv(spec);
-	//runlsqr(argv[1]);
-	//makenewmod(argv[1]);
+	runlsqr(spec);
+	makenewmod(spec);
 	return 0;
 
 }

@@ -123,35 +123,29 @@ float du[nxyzcm2], ds[nxyzcm2], vo[nxyzcm2], vn[nxyzcm2];
 float vd[maxmbl];
 int jndx[maxmbl];
 
-int makenewmod(char *file_parameter) {
-	char spec_file[MAXSTRLEN + 1];
-	char pval[MAXSTRLEN + 1];
+int makenewmod(SPEC spec) {
+	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
+	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
-	char varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+	char nmodfil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], fmodfil[MAXSTRLEN + 1];
 	float azh;
 	double clath, clonh, czh;
 	double axo, ayo, azo, dx, dy, dz;
 
+	int istacor = spec.istacor, limitu = spec.limitu, ivpvs = spec.ivpvs, mavx = spec.mavx, mavy = spec.mavy, mavz = spec.mavz,
+	 	nsmooth = spec.nsmooth, ipscflg = spec.ipscflg, ido1d = spec.ido1d, ittnum = spec.ittnum;
+
+	float dvperc = spec.dvperc, pertscl = spec.pertscl;
+	strcpy(nmodfil, spec.nmodfil);
+	strcpy(oldvfil, spec.oldvfil);
+	strcpy(fmodfil, spec.fmodfil);
+
 	int nxh, nyh, nzh;
-	sscanf(file_parameter, "%s", spec_file);
-
-	spec_file[MAXSTRLEN] = '\0';
-	FILE *fp_spc = fopen(spec_file, "r");
-	if (!fp_spc) {
-		printf("error on opening spec-file (%s)\n", spec_file);
-		assert(0);
-	}
-
 	int len, ierr;
 	char stafile[MAXSTRLEN + 1], nstafil[MAXSTRLEN + 1];
-	// Optional files
-	get_vars(fp_spc, "stafile ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", stafile);
-	get_vars(fp_spc, "nstafil ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%s", nstafil);
-	// end of optional parameters
+	strcpy(stafile, spec.stafile);
+	strcpy(nstafil, spec.nstafil);
+	
 
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
@@ -173,7 +167,7 @@ int makenewmod(char *file_parameter) {
 	fprintf(fp_log, "Sphfdloc VERSION: %s\n", VERSION);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec_file);
+			spec.spec_file);
 	fprintf(fp_log, "  \n");
 	{
 		char tmp[MAXSTRLEN];
@@ -435,30 +429,15 @@ int makenewmod(char *file_parameter) {
 		strcpy(syst, "CART");
 		strcpy(quant, "BMOD");
 		strcpy(flatten, "NOFL");
-		get_vars(fp_spc, "clat ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &clath);
-		get_vars(fp_spc, "clon ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &clonh);
-		get_vars(fp_spc, "cz ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &czh);
-		get_vars(fp_spc, "azmod ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%f", &azh);
-		get_vars(fp_spc, "h ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &h);
-		get_vars(fp_spc, "x0 ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &axo);
-		get_vars(fp_spc, "y0 ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &ayo);
-		get_vars(fp_spc, "z0 ", pval, &len, &ierr);
-		if (ierr == 0)
-			sscanf(pval, "%lf", &azo);
+		clath = spec.clat;
+		clonh = spec.clon;
+		czh = spec.cz;
+		azh = spec.azmod;
+		h = spec.h;
+		axo = spec.x0;
+		ayo = spec.y[0];
+		azo = spec.z0;
+		
 		dx = h;
 		dy = h;
 		dz = h;
@@ -468,61 +447,10 @@ int makenewmod(char *file_parameter) {
 
 // c-----Grid specs
 		int ib = 0, ie = 0, lenv = 0, nvl = 0;
-		rewind(fp_spc);
-		a11: get_line(fp_spc, aline, &ierr);
-		if (ierr == 1)
-			goto a12;
-		if (ierr != 0)
-			goto a11;
-		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-		if (strncmp(varname, "igridx", lenv) != 0)
-			goto a11;
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridx[0]);
-		int k;
-		for (k = 1; k < nxc; k++) {
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridx[k]);
-		}
-		a12: rewind(fp_spc);
-		a13: get_line(fp_spc, aline, &ierr);
-		if (ierr == 1)
-			goto a14;
-		if (ierr != 0)
-			goto a13;
-		ib = 0;
-		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-		if (strncmp(varname, "igridy", lenv) != 0)
-			goto a13;
-		ib = ie;
-		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &igridy[0]);
-		for (k = 1; k < nyc; k++) {
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridy[k]);
-		}
-		a14: rewind(fp_spc);
-
-		a15: get_line(fp_spc, aline, &ierr);
-		if (ierr != 1) {
-			if (ierr != 0)
-				goto a15;
-			ib = 0;
-			get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
-			if (strncmp(varname, "igridz", lenv) != 0)
-				goto a15;
-			ib = ie;
-			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &igridz[0]);
-			for (k = 1; k < nzc; k++) {
-				ib = ie;
-				get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-				sscanf(parval, "%d", &igridz[k]);
-			}
-		}
+		igridx = spec.igridx;
+		igridy = spec.igridy;
+		igridz = spec.igridz;
+		
 	} else {
 		if (strcmp(type, "CORS") != 0) {
 			printf("  WARNING: input mesh does not appear to be COARSE: %s\n",
@@ -987,13 +915,8 @@ int makenewmod(char *file_parameter) {
 
 // c---compute a 1D average for the elements that were hit
 	FILE *fp_1dm=fopen("new1d.mod", "w");
-	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &z0);
-	get_vars(fp_spc, "h ", pval, &len, &ierr);
-	if (ierr == 0)
-		sscanf(pval, "%lf", &h);
-	fclose(fp_spc);
+	z0 = spec.z0;
+	h = spec.h;
 
 	double gz[nzcm];
 	gz[0]=z0;

@@ -59,9 +59,13 @@ char fmodfil[MAXSTRLEN + 1]; //makenewmod
 char parlist[MAXSTRLEN + 1];
 
 //optional files parameter
+//sphrayderv
 char telefil[MAXSTRLEN],  pbasfil[MAXSTRLEN], sbasfil[MAXSTRLEN], shotfil[MAXSTRLEN],
 		elipfil[MAXSTRLEN], raystat[MAXSTRLEN],  dotfile[MAXSTRLEN], 
 		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN], specfile[MAXSTRLEN];
+// makenewmod
+char nstafil[MAXSTRLEN + 1];
+
 }SPEC;
 
 void read_variables(char *spec_file, SPEC *spec);

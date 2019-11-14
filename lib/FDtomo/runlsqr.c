@@ -100,13 +100,24 @@ float a[SIZEOFA];
 char logfile[80 + 1];
 float one = 1.0f;
 
-int runlsqr(char *file_parameter) {
-	char spec_file[MAXSTRLEN + 1];
-	char pval[MAXSTRLEN + 1];
-	sscanf(file_parameter, "%s", spec_file);
-	spec_file[MAXSTRLEN] = '\0';
+int runlsqr(SPEC spec) {
+	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
+	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
+	
+	h = spec.h; x0 = spec.x0; y = spec.y; 
+	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
+	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
 
-	FILE *fp_spc = fopen(spec_file, "r");
+	float damper = spec.damper;
+	int intlims = spec.intlims, ittnum = spec.ittnum;
+	char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
+		fresfil[MAXSTRLEN + 1];
+	char VERSION[10] = "2018.0114\0";
+	
+	strcpy(dtdsfil, spec.dtdsfil);
+	strcpy(resfile, spec.resfile);
+	strcpy(nmodfil, spec.nmodfil);
+	strcpy(fresfil, spec.fresfil);
 
 	int i, len, ierr;
 
@@ -124,7 +135,7 @@ int runlsqr(char *file_parameter) {
 	fprintf(fp_log, " VERSION: %s\n", VERSION);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec_file);
+			spec.spec_file);
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, " iteration counter: %d \n", ittnum);
 	fprintf(fp_log, "  \n");
