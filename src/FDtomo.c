@@ -1,4 +1,5 @@
 #include "FDtomo/make1d.h"
+#include "FDtomo/c2f.h"
 #include "common/shared_variables.h"
 
 #include <stdio.h>
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]){
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
 	make1d_data *MAKE1D = make1d(spec);
-	c2f(spec, MAKE1D);
+	C2F_DATA *C2F = c2f(spec, MAKE1D);
 	sphfd(argc, argv, spec);
 	sphfdloc(spec);
 	sphrayderv(spec);

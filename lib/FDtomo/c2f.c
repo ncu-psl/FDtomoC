@@ -82,7 +82,13 @@ int nxyc, nxyzc, nxyzc2;
 
 void find_vel(double, double, double, double *, int, int, int, int);
 
-int c2f(SPEC spec, make1d_data *MAKE1D) {
+C2F_DATA *c2f(SPEC spec, make1d_data *MAKE1D) {
+	C2F_DATA *c2f_data = (C2F_DATA *)malloc(sizeof(C2F_DATA));
+	c2f_data->vpfile = (VELFILE *)malloc(sizeof(VELFILE));
+	c2f_data->vsfile = (VELFILE *)malloc(sizeof(VELFILE));
+
+
+
 	//initialize variable
 	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
 	    ny = spec.ny, nz = spec.nz;
@@ -439,8 +445,8 @@ int c2f(SPEC spec, make1d_data *MAKE1D) {
 	printf("Writing out file 2... \n");
 	hdr_appender(hdr, nhbyte, head, type, syst, "VPMD", flatten, hcomm);
 
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fnp);
-	fwrite(vsave, sizeof(vsave[0]), nxyz, fp_fnp);
+	memcpy(c2f_data->vpfile->hdr, hdr, strlen(hdr)+1);
+	memcpy(c2f_data->vpfile->vsave, vsave, sizeof(vsave[0])*nxyz);
 
 	FILE *fp_fns = fopen(vsfile, "wb");
 	if (!fp_fns) {
@@ -450,8 +456,8 @@ int c2f(SPEC spec, make1d_data *MAKE1D) {
 	printf("Writing out file 3... \n");
 	hdr_appender(hdr, nhbyte, head, type, syst, "VSMD", flatten, hcomm);
 
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fns);
-	fwrite(vsave + nxyz, sizeof(vsave[0]), nxyz2 - nxyz, fp_fns);
+	memcpy(c2f_data->vsfile->hdr, hdr, strlen(hdr)+1);
+	memcpy(c2f_data->vsfile->vsave, vsave + nxyz, sizeof(vsave[0]) * (nxyz2 - nxyz));
 
 	a65: 
 	fclose(fp_log);
@@ -459,7 +465,7 @@ int c2f(SPEC spec, make1d_data *MAKE1D) {
 	fclose(fp_fnw);
 	fclose(fp_fnp);
 	fclose(fp_fns);
-	return 0;
+	return c2f_data;
 }
 
 void find_vel(double x, double y, double z, double *v, int iph, int nxc, int nyc, int nzc) {
