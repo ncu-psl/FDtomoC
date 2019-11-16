@@ -141,7 +141,7 @@
 #include "common/geographic_method.h"
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
-
+#include "FDtomo/sphfd.h"
 #include "sphfd/vhead.h"
 #define MAXSTRLEN 132
 #define MAXNUMPAR 2000
@@ -625,7 +625,23 @@ int sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 		assert(0);
 	}
 	/* READ IN VELOCITY FILE */
-	read(vfint, &headin, 232);
+	//read(vfint, &headin, 232);
+	if (!strcmp(velfile, "VP.mod"))
+	{
+		strcpy(headin.header, C2F->vpfile->hdr);
+	}
+	else if(!strcmp(velfile, "VS.mod"))
+	{
+		strcpy(headin.header, C2F->vsfile->hdr);
+	} 
+	else
+	{
+		printf("ERROR WHEN READING IN VELOCITY FILE");
+		assert(0);
+	}
+	
+	
+
 	if (!strncmp(headin.header, "HEAD", 4))
 	{
 		fprintf(stdout, "File Header Identified\n");
@@ -682,7 +698,20 @@ int sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 		}
 	}
 
-	read(vfint, slow0, nxyz * 4);
+	//read(vfint, slow0, nxyz * 4);
+	if (!strcmp(velfile, "VP.mod"))
+	{
+		memcpy(slow0, C2F->vpfile->vsave, 4 * nxyz);
+	}
+	else if(!strcmp(velfile, "VS.mod"))
+	{
+		memcpy(slow0, C2F->vsfile->vsave, 4 * nxyz);
+	}
+	else
+	{
+		printf("ERROR WHEN READING IN VELOCITY FILE");
+		assert(0);
+	}
 	close(vfint);
 	/* swap bytes on input if necessary */
 	/*        if ((litend && swab==1) || swab==2) { */
