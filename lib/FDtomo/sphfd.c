@@ -195,13 +195,13 @@ int compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
 double rcent;
 static double z0r;
-int sphfd_exec(int, char **, char *, C2F_DATA *);
+SPHFD_DATA *sphfd_exec(int, char **, char *, C2F_DATA *);
 int endian();
 int litend;
 
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-int sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
+SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 {
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[MAXSTRLEN + 1];
@@ -231,20 +231,23 @@ int sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 	}
 	fclose(fp_parlist);
 
-#pragma omp parallel for
+	SPHFD_DATA **SPHFD_LIST = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA *) * num_parfiles);
+//#pragma omp parallel for
 
 	for (int i = 0; i < num_parfiles; i++)
 	{
+		SPHFD_LIST[i] = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA *));
 		char *fake_av[2];
 		fake_av[0] = sphfd_argv;
 		fake_av[1] = parfiles[i];
-		sphfd_exec(2, fake_av, spec.timedir, C2F);
+		SPHFD_LIST[i] = sphfd_exec(2, fake_av, spec.timedir, C2F);
 	}
 	return 0;
 }
 
-int sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
+SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 {
+	SPHFD_DATA *SPHFD = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA));
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
 	 VARIABLE BELOW, THEN THE VARIABLE IS REQUIRED;  IF A getpar
@@ -6425,11 +6428,13 @@ int sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	fprintf(stdout, "fyss =  %g\n", headout.fys);
 	fprintf(stdout, "fzss =  %g\n", headout.fzs);
 
-	write(tfint, &headout, 232);
-	write(tfint, time0, nxyz * 4);
+	SPHFD->time0 = (float *)malloc(sizeof(float *));
+	memcpy(SPHFD->hdr, &headout, strlen(SPHFD->hdr)+1);
+	//memcpy(SPHFD->time0, time0, nxyz * 4);
+	SPHFD->time0 = time0;
 	fprintf(stderr, "wavefront done \n");
 	close(tfint);
-	return 0;
+	return SPHFD;
 }
 /* -------------------------------------------------------------------------- */
 compar(a, b) struct sorted *a, *b;
