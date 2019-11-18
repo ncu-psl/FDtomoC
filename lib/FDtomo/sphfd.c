@@ -236,7 +236,6 @@ SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 
 	for (int i = 0; i < num_parfiles; i++)
 	{
-		SPHFD_LIST[i] = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA *));
 		char *fake_av[2];
 		fake_av[0] = sphfd_argv;
 		fake_av[1] = parfiles[i];
@@ -248,6 +247,7 @@ SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 {
 	SPHFD_DATA *SPHFD = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA));
+	
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
 	 VARIABLE BELOW, THEN THE VARIABLE IS REQUIRED;  IF A getpar
@@ -6428,9 +6428,7 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	fprintf(stdout, "fyss =  %g\n", headout.fys);
 	fprintf(stdout, "fzss =  %g\n", headout.fzs);
 
-	SPHFD->time0 = (float *)malloc(sizeof(float *));
-	memcpy(SPHFD->hdr, &headout, strlen(SPHFD->hdr)+1);
-	//memcpy(SPHFD->time0, time0, nxyz * 4);
+	memcpy(SPHFD->hdr, &headout, 232);
 	SPHFD->time0 = time0;
 	fprintf(stderr, "wavefront done \n");
 	close(tfint);
