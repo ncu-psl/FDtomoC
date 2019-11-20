@@ -198,6 +198,7 @@ static double z0r;
 SPHFD_DATA *sphfd_exec(int, char **, char *, C2F_DATA *);
 int endian();
 int litend;
+int num_parfiles = 0;
 
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
@@ -205,7 +206,7 @@ SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 {
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[MAXSTRLEN + 1];
-	int num_parfiles = 0;
+	
 	char sphfd_argv[] = "./sphfd\0";
 	FILE *fp_parlist;
 	fp_parlist = fopen(spec.parlist, "r");
@@ -232,7 +233,7 @@ SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 	fclose(fp_parlist);
 
 	SPHFD_DATA **SPHFD_LIST = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA *) * num_parfiles);
-//#pragma omp parallel for
+#pragma omp parallel for
 
 	for (int i = 0; i < num_parfiles; i++)
 	{
@@ -241,7 +242,7 @@ SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 		fake_av[1] = parfiles[i];
 		SPHFD_LIST[i] = sphfd_exec(2, fake_av, spec.timedir, C2F);
 	}
-	return 0;
+	return SPHFD_LIST;
 }
 
 SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
@@ -526,11 +527,10 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 		mstpar("boxfile", "s", boxfile);
 	}
 
-	char ttmp[160];
-	mstpar("timefile", "s", ttmp);
+	mstpar("timefile", "s", SPHFD->timefile);
 	strcpy(timefile, output_path);
 	strcat(timefile, "/");
-	strcat(timefile, ttmp);
+	strcat(timefile, SPHFD->timefile);
 	mstpar("velfile", "s", velfile);
 	endpar();
 

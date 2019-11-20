@@ -57,6 +57,7 @@
 #include "common/earthquake_file_delimiter.h"
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
+#include "FDtomo/sphfdloc.h"
 
 
 #define MAX1D 1000
@@ -84,7 +85,7 @@ void find_time(double, double, double, double *, int, int *);
 void read_station_set(int *, int *, int *, int *, int *, double *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
-int sphfdloc(SPEC spec) {
+int sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -313,7 +314,7 @@ int sphfdloc(SPEC spec) {
 		total_earthquakes = earthquake_file_delimiter(leqsfil, eqkdir);
 	}
 	char timefiles[maxsta][MAXSTRLEN + 1];
-	int timefile_counts = read_timefiles(iread, nxyz, timefiles, timedir);
+	int timefile_counts = get_time(iread, nxyz, timefiles, SPHFD);
 	if (timefile_counts < 0) {
 		printf("file can not open\n");
 		assert(0);
@@ -334,7 +335,7 @@ int sphfdloc(SPEC spec) {
 	}
 	*/
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int nev = 0; nev < total_earthquakes; nev++) {
 		char filename[100];
 		sprintf(filename, "%s/%d.eqk", eqkdir, nev + 1);
@@ -1236,6 +1237,63 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], c
 			}
 		}
 		fclose(fp_tab);
+		if(DEBUG_PRINT)
+			printf("...Done.\n");
+	}
+	return i;
+}
+
+int get_time(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **SPHFD) {
+
+	int i = -1;
+	float **t = (float *)malloc(sizeof(float *) * num_parfiles);
+	for (i = 0; i < num_parfiles; i++) {
+		t[i] = (float *)malloc(sizeof(float) * nxyz);
+
+		strcpy(timefiles[i], SPHFD[i]->timefile);
+		if (i >= maxsta) {
+			printf("Error: too many station.\n");
+			assert(0);
+		}
+
+		char head[5], type[5], syst[5];
+		char quant[5];
+		char flatten[5];
+		char hcomm[125];
+
+		char *offset = SPHFD[i]->hdr;
+		sscanf(offset, "%4s", head);
+		offset += strlen(head);
+		sscanf(offset, "%4s", type);
+		offset += strlen(type);
+		sscanf(offset, "%4s", syst);
+		offset += strlen(syst);
+		sscanf(offset, "%4s", quant);
+		offset += strlen(quant);
+		sscanf(offset, "%4s", flatten);
+		offset += strlen(flatten);
+		sscanf(offset, "%124s", hcomm);
+
+//---verify that this is a valid header
+		if (strcmp(head, "HEAD") == 0) {
+			if(DEBUG_PRINT) {
+				printf(" File has a header...\n");
+			}
+			if (strcmp(type, "FINE") != 0) {
+				if(DEBUG_PRINT)
+					printf("WARNING: input mesh does not appear to be FINE: %s\n", type);
+			}
+			if (iread == 0) {
+				t[i] = SPHFD[i]->time0;
+			}
+		} else {
+			if(DEBUG_PRINT) {
+				printf(" File has no header...\n");
+			}
+			if (iread == 0) {
+				t[i] = SPHFD[i]->time0;
+			}
+		}
 		if(DEBUG_PRINT)
 			printf("...Done.\n");
 	}

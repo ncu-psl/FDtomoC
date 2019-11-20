@@ -15,6 +15,7 @@ extern float azmod;
 extern int iread, ivs, nthres, kmin;
 extern double vpvs, resthres, resthrep, stdmax;
 extern int ndiv, ndiv2, total_earthquakes;
+extern int num_parfiles;
 
 //sphrayderv
 extern int ivpvs, idmean, iray, iraystat, idatout, nomat;
