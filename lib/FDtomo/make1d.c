@@ -122,9 +122,9 @@ float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
 
-make1d_data *make1d(SPEC spec) {
-	make1d_data *return_data = (make1d_data *)malloc(sizeof(make1d_data));
-	memset(return_data, 0, sizeof(make1d_data));
+MAKE1D_DATA *make1d(SPEC spec) {
+	MAKE1D_DATA *make1d_data = (MAKE1D_DATA *)malloc(sizeof(MAKE1D_DATA));
+	memset(make1d_data, 0, sizeof(MAKE1D_DATA));
 
 	//initialize variable
 	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
@@ -457,7 +457,7 @@ make1d_data *make1d(SPEC spec) {
 			for (j = 0; j < nyc; j++) {
 				int joff = koff + nxc * j;
 				for (i = 0; i < nxc; i++) {
-					return_data->vsave[joff + i] = vfl;
+					make1d_data->vsave[joff + i] = vfl;
 				}
 			}
 		}
@@ -466,16 +466,16 @@ make1d_data *make1d(SPEC spec) {
 	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
 
 	
-	memcpy(return_data->hdr, hdr, strlen(hdr)+1);
-	memcpy(return_data->igridx, igridx, sizeof(spec.igridx));
-	memcpy(return_data->igridy, igridy, sizeof(spec.igridy));
-	memcpy(return_data->igridz, igridz, sizeof(spec.igridz));
-	//memcpy(return_data.vsave, vsave, sizeof(vsave));
+	memcpy(make1d_data->hdr, hdr, strlen(hdr)+1);
+	memcpy(make1d_data->igridx, igridx, sizeof(spec.igridx));
+	memcpy(make1d_data->igridy, igridy, sizeof(spec.igridy));
+	memcpy(make1d_data->igridz, igridz, sizeof(spec.igridz));
+	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
 
 
 	fclose(fp_log);
 	fclose(fp_one);
-	return return_data;
+	return make1d_data;
 }
 
 float flatvel(float v, float z) {
@@ -502,3 +502,4 @@ float uflatz(float z) {
 	float r = 6371.00f;
 	return r * (1. - expf(-z / r));
 }
+
