@@ -9,7 +9,8 @@ typedef struct{
     int igridx[nxcm1], igridy[nycm1], igridz[nzcm1];
     float vsave[nxyzcm2];
 
-}make1d_data;
-make1d_data *make1d(SPEC);
+}MAKE1D_DATA;
+MAKE1D_DATA *make1d(SPEC);
+int OUTPUT_MAKE1D(MAKE1D_DATA *, SPEC);
 
 #endif

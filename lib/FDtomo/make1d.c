@@ -503,3 +503,18 @@ float uflatz(float z) {
 	return r * (1. - expf(-z / r));
 }
 
+int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
+	FILE *fp_cor;
+	fp_cor = fopen(spec.oldvfil, "wb");
+	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	int nxyc = nxc * nyc;
+	int nxyzc = nxyc * nzc;
+	int nxyzc2 = nxyzc * 2;
+	fwrite(maked1d_data->hdr, sizeof(maked1d_data->hdr[0]), nhbyte, fp_cor);
+	fwrite(maked1d_data->igridx, sizeof(maked1d_data->igridx[0]), nxc - 1, fp_cor);
+	fwrite(maked1d_data->igridy, sizeof(maked1d_data->igridy[0]), nyc - 1, fp_cor);
+	fwrite(maked1d_data->igridz, sizeof(maked1d_data->igridz[0]), nzc - 1, fp_cor);
+	fwrite(maked1d_data->vsave, sizeof(maked1d_data->vsave[0]), nxyzc2, fp_cor);
+
+}
+
