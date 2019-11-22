@@ -7499,3 +7499,52 @@ int FixDouble(double *n)
 
 	return (1);
 }
+
+int OUTPUT_SPHFD(SPHFD_DATA *sphfd_data, SPEC spec){
+	int nx, ny, nz;
+	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	nx = 1, ny = 1, nz = 1;
+	for (int i = 1; i < nxc; i++) {
+		nx = nx + spec.igridx[i - 1];
+	}
+
+	for (int i = 1; i < nyc; i++) {
+		ny = ny + spec.igridy[i - 1];
+	}
+
+	for (int i = 1; i < nzc; i++) {
+		nz = nz + spec.igridz[i - 1];
+	}
+//	c----dimension check
+	if (nx > nxm) {
+		printf(" nx(%d) is too large, maximum is: %d\n",nx , nxm);
+		assert(0);
+	}
+	if (ny > nym) {
+		printf(" ny is too large, maximum is: %d\n", nym);
+		assert(0);
+	}
+	if (nz > nzm) {
+		printf(" nz is too large, maximum is: %d\n", nzm);
+		assert(0);
+	}
+
+	int nxy = nx * ny;
+	int nxyz = nxy * nz;
+	
+	char timefile[160];
+	int tfint;
+	strcpy(timefile, spec.timedir);
+	strcat(timefile, "/");
+	strcat(timefile, sphfd_data->timefile);
+	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1) {
+		fprintf(stderr, "cannot open %s\n", timefile);
+		assert(0);
+	}
+	write(tfint, sphfd_data->hdr, 232);
+	write(tfint, sphfd_data->time0, nxyz * 4);
+	close(tfint);
+	return 0;
+
+
+}
