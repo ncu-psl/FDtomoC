@@ -77,7 +77,7 @@
 #define rearth 6371.0
 #define VERSION "2018.0429"
 
-float t[maxsta][nxyzm];
+float **t;
 char str_fhd[160000][100], str_data[160000][10000];
 char str_sum[160000][20000], str_out[160000][10000];
 
@@ -1246,7 +1246,7 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], c
 int get_time(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **SPHFD) {
 
 	int i = -1;
-	float **t = (float *)malloc(sizeof(float *) * num_parfiles);
+	t = (float *)malloc(sizeof(float *) * num_parfiles);
 	for (i = 0; i < num_parfiles; i++) {
 		t[i] = (float *)malloc(sizeof(float) * nxyz);
 
