@@ -78,14 +78,12 @@
 #define VERSION "2018.0429"
 
 float **t;
-char str_fhd[160000][100], str_data[160000][10000];
-char str_sum[160000][20000], str_out[160000][10000];
 
 void find_time(double, double, double, double *, int, int *);
 void read_station_set(int *, int *, int *, int *, int *, double *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
-int sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
+SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -320,22 +318,24 @@ int sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 		assert(0);
 	}
 	//qsort(timefiles, timefile_counts, sizeof(timefiles[0]), (int (*)(const void*, const void*))strcmp);
-	/*
-	char *str_fhd[total_earthquakes], *str_data[total_earthquakes];
-	char *str_sum[total_earthquakes], *str_out[total_earthquakes];
+	
+	SPHFDLOC_DATA **str_data = (SPHFDLOC_DATA **)malloc(sizeof(SPHFDLOC_DATA *) * total_earthquakes);
+	char **str_fhd = (char **)malloc(sizeof(char *) * total_earthquakes);
+	char **str_sum = (char **)malloc(sizeof(char *) * total_earthquakes);
+	char **str_out = (char **)malloc(sizeof(char *) * total_earthquakes);
 	for(int i=0;i<total_earthquakes;i++) {
 		str_fhd[i]=(char*)malloc(sizeof(char)*100);
 		str_out[i]=(char*)malloc(sizeof(char)*1000);
-		str_data[i]=(char*)malloc(sizeof(char)*10000);
+		str_data[i]=(SPHFDLOC_DATA*)malloc(sizeof(SPHFDLOC_DATA));
 		str_sum[i]=(char*)malloc(sizeof(char)*20000);
 		memset(str_fhd[i], 0, sizeof(str_fhd[i]));
-		memset(str_data[i], 0, sizeof(str_data[i]));
+		//memset(str_data[i], 0, sizeof(str_data[i]));
 		memset(str_sum[i], 0, sizeof(str_sum[i]));
 		memset(str_out[i], 0, sizeof(str_out[i]));
 	}
-	*/
+	
 
-//#pragma omp parallel for
+#pragma omp parallel for
 	for (int nev = 0; nev < total_earthquakes; nev++) {
 		char filename[100];
 		sprintf(filename, "%s/%d.eqk", eqkdir, nev + 1);
@@ -911,7 +911,7 @@ int sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 				int len_str_data = 0;
-				strapp(str_data[nev], &len_str_data, tmp);
+				strcpy(str_data[nev]->event_hdr, tmp);
 				strcpy(str_fhd[nev], tmp);
 				
 				sprintf(tmp,
@@ -993,9 +993,9 @@ int sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 								rwts[j], resmin[j] - avrmin);
 						strapp(str_out[nev], &len_str_out, tmp);
 					}
-					strapp(str_data[nev], &len_str_data, tmp);
+					strapp(str_data[nev]->event, &len_str_data, tmp);
 				}
-				strapp(str_data[nev], &len_str_data, "\n");
+				strapp(str_data[nev]->event, &len_str_data, "\n");
 			}
 		} else {
 			double ot = dpot + avrmin;
@@ -1069,7 +1069,7 @@ int sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	fclose(fp_fdt);
 	fclose(fp_sum);
 	fclose(fp_out);
-	return 0;
+	return str_data;
 }
 
 void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
