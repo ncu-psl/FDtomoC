@@ -78,7 +78,7 @@
 #define VERSION "2018.0429"
 
 float **t;
-
+int total_earthquakes = 0;
 void find_time(double, double, double, double *, int, int *);
 void read_station_set(int *, int *, int *, int *, int *, double *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
@@ -92,7 +92,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
 
 	int iread = spec.iread, ivs = spec.ivs, nthres = spec.nthres, kmin = spec.kmin, 
-		ndiv = spec.ndiv, ndiv2 = spec.ndiv2, ittnum = spec.ittnum, total_earthquakes = spec.total_earthquakes;
+		ndiv = spec.ndiv, ndiv2 = spec.ndiv2, ittnum = spec.ittnum;
 
 	double vpvs = spec.vpvs, resthres = spec.resthres, resthrep = spec.resthrep, stdmax = spec.stdmax;
 

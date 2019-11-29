@@ -646,7 +646,14 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	int evenum = 0;
 	char *evetmp;
 a3: ;
+	if (evenum >= total_earthquakes) {
+		goto a60;
+	}
 	evetmp = SPHFDLOC[evenum]->event;
+	if (*evetmp == NULL){
+		evenum++;
+		goto a3;
+	}
 	/*
 	fgets(str_inp, sizeof(str_inp), fp_din);
 	if (feof(fp_din)) {
