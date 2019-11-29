@@ -1,6 +1,6 @@
 #ifndef SPHRAYDERV_H_
 #define SPHRAYDERV_H_
-#include "common/read_spec.h"
-int sphrayderv(SPEC spec);
+#include "FDtomo/sphfdloc.h"
+int sphrayderv(SPEC, SPHFDLOC_DATA **);
 
 #endif

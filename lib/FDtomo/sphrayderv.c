@@ -69,6 +69,7 @@
 #include "common/environment_setting.h"
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
+#include "FDtomo/sphrayderv.h"
 // #include "common/dirent.h"
 #include "sphrayderv/bjdaz2.h"
 #include "sphrayderv/dfind.h"
@@ -154,7 +155,7 @@ int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
 int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
 
-int sphrayderv(SPEC spec) {
+int sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -172,7 +173,7 @@ int sphrayderv(SPEC spec) {
 
 	char VERSION[10] = "2004.0923";
 	char timedir[60 + 1];
-
+	char parval[MAXSTRLEN];
 	char stafile[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
     	dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
 		dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1]; 
@@ -243,6 +244,9 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		printf("nz is too large.\n");
 		assert(0);
 	}
+
+	get_field(spec.spec_file, aline, ib, &ie, parval, &nvl, &ierr);
+
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 	//c-- - Note that x0, y0, z0 are the spherical coordinates of the model origin
@@ -639,7 +643,11 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
 	// ****************** Start Loop over events ******************
 	//    Read in event header
-a3:
+	int evenum = 0;
+	char *evetmp;
+a3: ;
+	evetmp = SPHFDLOC[evenum]->event;
+	/*
 	fgets(str_inp, sizeof(str_inp), fp_din);
 	if (feof(fp_din)) {
 		goto a60;
@@ -647,12 +655,12 @@ a3:
 	if (strlen(str_inp) > sizeof(str_inp)) {
 		printf("str_inp is too long: %s\n", str_inp);
 		assert(0);
-	}
+	}*/
 	int kyr, kday, khr, kmn;
 	double esec;
 	float dep;
 
-	sscanf(str_inp, "%d %d %d %d %lf %f %f %f %s\n", &kyr, &kday, &khr,
+	sscanf(SPHFDLOC[evenum]->event_hdr, "%d %d %d %d %lf %f %f %f %s\n", &kyr, &kday, &khr,
 		&kmn, &esec, &xlat, &xlon, &dep, evid);
 
 	//	c---convert to epochal time
@@ -691,7 +699,7 @@ a3:
 			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
 			fprintf(fp_err, "\n");
 			while (aline[0] != '\0') {
-				if(fgets(str_inp, sizeof(str_inp), fp_din)== NULL) {
+				if(!sscanf(evetmp, "%[^\n]", str_inp)) {
 					break;
 				}
 				len = (int)strlen(str_inp);
@@ -704,7 +712,9 @@ a3:
 				if (str_inp[0] == '\n' || str_inp[0] == '\0') {
 					break;
 				}
+				evetmp = evetmp + strlen(str_inp) + 1;
 			}
+			evenum++;
 			goto a3;
 		}
 
@@ -720,7 +730,7 @@ a3:
 	int nsta = 0;
 	int isgood[maxobs];
 	memset(isgood, 0, sizeof(isgood));
-	for (nsta = 0; fgets(str_inp, sizeof(str_inp), fp_din); nsta++) {
+	for (nsta = 0; sscanf(evetmp, "%[^\n]", str_inp); nsta++) {
 		if (nsta >= maxobs) {
 			printf("Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
 			fprintf(fp_log, "Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
@@ -772,6 +782,7 @@ a3:
 			fprintf(fp_log, " Error: too many observations!\n");
 			assert(0);
 		}
+		evetmp = evetmp + strlen(str_inp) + 1;
 	}
 	if (DEBUG_PRINT) {
 		if (isshot == 0) {
@@ -951,6 +962,7 @@ a3:
 	a7:
 		// ----test to see if all data can be read in correctly
 		if (iread == 1) {
+			evenum++;
 			goto a3;
 		}
 
@@ -2242,7 +2254,7 @@ a3:
 		}
 		fprintf(fp_dot, "\n");
 	}
-
+	evenum++;
 	goto a3; // 2474 go back and start on next earthquake
 a60:
 	{
@@ -2289,6 +2301,7 @@ a60:
 							slats[i][j] = xlat;
 						}
 					}
+					evenum++;
 					goto a3;
 				}
 				else {
@@ -2301,6 +2314,7 @@ a60:
 						}
 						fp_din = fp_sht;
 						istel = 0;
+						evenum++;
 						goto a3;
 					}
 				}
@@ -2315,6 +2329,7 @@ a60:
 					}
 					fp_din = fp_sht;
 					istel = 0;
+					evenum++;
 					goto a3;
 				}
 			}
