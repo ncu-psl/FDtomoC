@@ -9,5 +9,5 @@ typedef struct{
 }SPHFD_DATA;
 
 SPHFD_DATA *sphfd(int, char**, SPEC, C2F_DATA *);
-
+int OUTPUT_SPHFD(SPHFD_DATA *, SPEC);
 #endif
