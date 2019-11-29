@@ -566,16 +566,6 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	nxyz = nx * ny * nz;
 
 	/* FORM AND FILL TT AND SLOWNESS ARRAYS */
-	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1)
-	{
-		fprintf(stderr, "cannot open %s\n", timefile);
-		assert(0);
-	}
-	if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1)
-	{
-		fprintf(stderr, "cannot open %s\n", velfile);
-		assert(0);
-	}
 	if (fill == 1)
 	{
 		if ((bfint = open(boxfile, O_RDONLY, 0664)) <= 1)
@@ -6431,7 +6421,6 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	memcpy(SPHFD->hdr, &headout, 232);
 	SPHFD->time0 = time0;
 	fprintf(stderr, "wavefront done \n");
-	close(tfint);
 	return SPHFD;
 }
 /* -------------------------------------------------------------------------- */
