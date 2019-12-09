@@ -68,11 +68,13 @@
 
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
-#define hpi 3.14159265358979323846 / 2
-#define degrad 0.017453292
+//#define hpi 3.14159265358979323846 / 2
+//#define degrad 0.017453292
 #define rearth 6371.0
 #define VERSION "2018.0429"
 
+double hpi = 1.570796f;
+double degrad = 0.017453292f;
 char timedir[60 + 1] = "./ttimes\0";
 char eqkdir[60 + 1] = "./eqkdir/\0";
 
@@ -90,7 +92,7 @@ char str_fhd[160000][100], str_data[160000][10000];
 char str_sum[160000][20000], str_out[160000][10000];
 
 void find_time(double, double, double, double *, int, int *);
-void read_station_set(int *, int *, int *, int *, int *, double *, int *,
+void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1]);
 
@@ -564,7 +566,7 @@ int main() {
 	}
 	*/
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int nev = 0; nev < total_earthquakes; nev++) {
 		char filename[100];
 		sprintf(filename, "%s/%d.eqk", eqkdir, nev + 1);
@@ -588,12 +590,12 @@ int main() {
 			assert(0);
 		}
 		int iyr, jday, ihr, imn;
-		double sec;
+		float sec;
 		float xlat, xlon, dep;
 		char evid[10 + 1];
 // c---START LOOP OVER EVENTS
 // c	read in event header
-		sscanf(str_inp, "%d %d %d %d %lf %f %f %f %s\n", &iyr, &jday, &ihr,
+		sscanf(str_inp, "%d %d %d %d %f %f %f %f %s\n", &iyr, &jday, &ihr,
 				&imn, &sec, &xlat, &xlon, &dep, evid);
 //	c---convert to epochal time
 		double dsec = sec;
@@ -631,7 +633,7 @@ int main() {
 			}
 
 			char str_tmp[100];
-			sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
+			sscanf(str_inp, "%s %d %d %d %d %f %99[^\n]\n", sta[nsta], &iyr,
 					&jday, &ihr, &imn, &sec, str_tmp);
 
 			isgood[nsta] = 1;
@@ -759,13 +761,13 @@ int main() {
 		//   h = 10, z0 = -25, so starting at k = 4 makes min depth at this stage 5.0.
 		//   this could be anywhere from -5 to 5 in next stage.
 		int nxx = 0, nyy = 0, nzz = 0;
-		double stdmin = DBL_MAX;
+		float stdmin = DBL_MAX;
 		double avrmin = 0.;
 		for (int k = kmin; k < nz; k++) {
 			for (int j = 0; j < ny; j++) {
 				for (int i = 0; i < nx; i++) {
 					int n = nxy * k + nx * j + i;
-					double avres = 0.0, rsq = 0.0, facs = 0.0;
+					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					for (int is = 0; is < nsta; is++) {
 						double tp = t[indsta[is]][n];
 						if (ivs == 0 && phs[is] == 'S') {
@@ -775,8 +777,8 @@ int main() {
 						float wt = pwt[is];
 						wtsave[is] = wt;
 						if (isgood[is]) {
-							double res1 = res[is] * wt;
-							double res2 = res1 * res[is];
+							float res1 = res[is] * wt;
+							float res2 = res1 * res[is];
 							avres += res1;
 							rsq += res2;
 							facs += wt;
@@ -785,12 +787,12 @@ int main() {
 					//    c---calculate variance of data
 					//    c         avwt = facs/nsta
 					//    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
-					double avwt = facs / ngood;
-					double deb = (rsq - avres * avres / facs)
+					float avwt = facs / ngood;
+					float deb = (rsq - avres * avres / facs)
 							/ ((ngood - 4) * avwt);
-					double dsum = fabs(deb);
+					float dsum = fabs(deb);
 					//    c------ find total sigma and the most likely hypocenter with min std
-					double std = sqrt(dsum);
+					float std = sqrtf(dsum);
 					if (std < stdmin) {
 						nxx = i;
 						nyy = j;
@@ -886,17 +888,19 @@ int main() {
 		double x0i = x0 + df * ix0;
 		if(DEBUG_PRINT)
 			printf("ix0=%d iy0=%d iz0=%d\n", ix0, iy0, iz0);
-
+		int count = 0;
 		for (int k = 0; k < nstepz; k++) {
 			double zp = z0i + dh * k;
 			for (int j = 0; j < nstepy; j++) {
 				double yp = y0i + ddq * j;
 				for (int i = 0; i < nstepx; i++) {
-					double avres = 0.0, rsq = 0.0, facs = 0.0;
+					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					double xp = x0i + ddf * i;
+					count ++;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
 						find_time(xp, yp, zp, &tp, is, indsta);
+						//printf("%d %lf\n", count, tp);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -904,8 +908,8 @@ int main() {
 						float wt = pwt[is];
 						wtsave[is] = wt;
 						if (isgood[is]) {
-							double res1 = res[is] * wt;
-							double res2 = res1 * res[is];
+							float res1 = res[is] * wt;
+							float res2 = res1 * res[is];
 							avres += res1;
 							rsq += res2;
 							facs += wt;
@@ -914,12 +918,12 @@ int main() {
 					//    c---calculate variance of data
 					//    c         avwt = facs/nsta
 					//    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
-					double avwt = facs / ngood;
-					double deb = (rsq - avres * avres / facs)
+					float avwt = facs / ngood;
+					float deb = (rsq - avres * avres / facs)
 							/ ((ngood - 4) * avwt);
-					double dsum = fabs(deb);
+					float dsum = fabs(deb);
 					//------ find total sigma and the most likely hypocenter with min std
-					double std = sqrt(dsum);
+					float std = sqrtf(dsum);
 					if (std < stdmin) {
 						nxx = i;
 						nyy = j;
@@ -999,13 +1003,12 @@ int main() {
 		}
 		if (exm + ddf >= xmax)
 			nstepx = nstep1 - 1;
-
 		for (int k = 0; k < nstepz; k++) {
 			double zp = z0i + ddh * k;
 			for (int j = 0; j < nstepy; j++) {
 				double yp = y0i + dddq * j;
 				for (int i = 0; i < nstepx; i++) {
-					double avres = 0.0, rsq = 0.0, facs = 0.0;
+					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					double xp = x0i + dddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
@@ -1017,8 +1020,8 @@ int main() {
 						float wt = pwt[is];
 						wtsave[is] = wt;
 						if (isgood[is]) {
-							double res1 = res[is] * wt;
-							double res2 = res1 * res[is];
+							float res1 = res[is] * wt;
+							float res2 = res1 * res[is];
 							avres += res1;
 							rsq += res2;
 							facs += wt;
@@ -1027,12 +1030,12 @@ int main() {
 					//    c---calculate variance of data
 					//    c         avwt = facs/nsta
 					//    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
-					double avwt = facs / ngood;
-					double deb = (rsq - avres * avres / facs)
+					float avwt = facs / ngood;
+					float deb = (rsq - avres * avres / facs)
 							/ ((ngood - 4) * avwt);
-					double dsum = fabs(deb);
+					float dsum = fabs(deb);
 					//------ find total sigma and the most likely hypocenter with min std
-					double std = sqrt(dsum);
+					float std = sqrtf(dsum);
 					if (std < stdmin) {
 						nxx = i;
 						nyy = j;
@@ -1136,7 +1139,7 @@ int main() {
 				sec = dsec;
 				char tmp[100];
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5f %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 				int len_str_data = 0;
@@ -1144,7 +1147,7 @@ int main() {
 				strcpy(str_fhd[nev], tmp);
 				
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5f %8.4lf %12s %13.3f\n",
 						iyr, jday, ihr, imn, sec, exm, eym, ezmr, evid, stdmin);
 
 				if (ngood < nsta) {
@@ -1165,7 +1168,7 @@ int main() {
 				sprintf(tmp, "  Info Density Maximum for event %12d\n", nev);
 				strapp(str_sum[nev], &len_str_sum, tmp);
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf  %8.5f %10.5f %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f  %8.5f %10.5f %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, exm, eym, ezmr, evid, stdmin);
 				strapp(str_sum[nev], &len_str_sum, tmp);
 				sprintf(tmp, " Event ID: %7s\n", evid);
@@ -1233,11 +1236,11 @@ int main() {
 			char tmp[200];
 			if (DBL_MAX - stdmin < 1) {
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s    **********\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5lf %8.4lf %12s    **********\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid);
 			} else {
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5lf %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 			}
@@ -1294,6 +1297,7 @@ int main() {
 			assert(0);
 		}
 	}
+
 	fclose(fp_fhd);
 	fclose(fp_fdt);
 	fclose(fp_sum);
@@ -1305,6 +1309,7 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 	int i = ((int) ((x - x0) / df));
 	int j = ((int) ((yy - y[0]) / dq));
 	int k = ((int) ((z - z0) / h));
+	//printf("i,j,k = %d %d %d \n",i,j,k);
 	if (i < 0)
 		i = 0;
 	if (j < 0)
@@ -1325,8 +1330,8 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 
 	int nk = nx * ny * k;
 	int nj = nx * j;
-	int nk2 = nx * ny * k;
-	int nj2 = nx * j;
+	int nk2 = nx * ny * ( k + 1);
+	int nj2 = nx * (j + 1);
 	double fx = (x - xi) / df;
 	double fy = (yy - yj) / dq;
 	double fz = (z - zk) / h;
@@ -1343,7 +1348,7 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 }
 
 void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
-		double *sec, int *isgood, char *phs, float *rwts,
+		float *sec, int *isgood, char *phs, float *rwts,
 		char sta[maxobs][MAXSTRLEN + 1], char *usemark, FILE *fp_leq) {
 	while (1) {
 		char str_inp[100];
@@ -1364,7 +1369,7 @@ void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
 		}
 
 		char str_tmp[100];
-		sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[*nsta],
+		sscanf(str_inp, "%s %d %d %d %d %f %99[^\n]\n", sta[*nsta],
 				&iyr[*nsta], &jday[*nsta], &ihr[*nsta], &imn[*nsta],
 				&sec[*nsta], str_tmp);
 
@@ -1454,7 +1459,7 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1]) {
 					printf("WARNING: input mesh does not appear to be FINE: %s\n", type);
 			}
 			if (iread == 0) {
-				fread(t[i], sizeof(t[i][0]), nxyz, fp_tab);
+				fread(t[i], sizeof(t[i][0]), nxyz*4, fp_tab);
 			}
 		} else {
 			rewind(fp_tab);
@@ -1462,7 +1467,7 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1]) {
 				printf(" File has no header...\n");
 			}
 			if (iread == 0) {
-				fread(t[i], sizeof(t[i][0]), nxyz, fp_tab);
+				fread(t[i], sizeof(t[i][0]), nxyz*4, fp_tab);
 			}
 		}
 		fclose(fp_tab);
