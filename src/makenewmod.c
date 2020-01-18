@@ -105,9 +105,7 @@
 
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
-#define hpi 3.14159265358979323846 / 2
-#define degrad 0.017453292
-#define rearth 6371.0
+float rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
 #define VERSION "2018.0625"
 
 // c---du holds all the perturbations.  
@@ -128,10 +126,10 @@ int main(void) {
 	char *mvals[MUSTV] = { "nxc\0", "nyc\0", "nzc\0" };
 	char *files[MUSTF] = { "nmodfil\0", "oldvfil\0", "fmodfil\0" };
 	char nmodfil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], fmodfil[MAXSTRLEN + 1];
+	double fxs = 6.0134700169990685e-154, fys = 6.0134700169990685e-154, fzs = 6.0134700169990685e-154;
 	float azh;
 	double clath, clonh, czh;
 	double axo, ayo, azo, dx, dy, dz;
-
 	int nxh, nyh, nzh;
 	printf("Enter parameter specification file: ");
 	scanf("%s", spec_file);
@@ -455,10 +453,10 @@ int main(void) {
 					dusmin = vd[i];
 					isets = 1;
 				} else {
-					if (vd[i] > dupmax)
-						dupmax = vd[i];
-					if (vd[i] < dupmin)
-						dupmin = vd[i];
+					if (vd[i] > dusmax)
+						dusmax = vd[i];
+					if (vd[i] < dusmin)
+						dusmin = vd[i];
 				}
 			}
 			du[jndx[i]] = vd[i];
@@ -677,24 +675,24 @@ int main(void) {
 
 // untested
 	if (limitu == 1) {
-		float dvm1 = 1 - dvperc;
-		float dvm2 = 1 + dvperc;
+		float dvm1 = 1.f - dvperc;
+		float dvm2 = 1.f + dvperc;
 		for (int i = 0; i < maxvarc; i++) {
 			int ipv = i;
 			if (ido1d == 1)
 				ipv = nxyc * i;
 			float voi = vo[ipv];
-			float vnew = 1 / (du[i] + 1 / voi);
+			float vnew = 1.f / (du[i] + 1.f / voi);
 			float dvn = vnew - voi;
 			float vnewmin = voi * dvm1;
 			float vnewmax = voi * dvm2;
 			if (vnew > vnewmax) {
 				dvn = vnewmax - voi;
-				du[i] = 1 / vnewmax - 1 / voi;
+				du[i] = 1.f / vnewmax - 1.f / voi;
 			}
 			if (vnew < vnewmin) {
 				dvn = vnewmin - voi;
-				du[i] = 1 / vnewmin - 1 / voi;
+				du[i] = 1.f / vnewmin - 1.f / voi;
 			}
 			vn[i] = voi + dvn;
 		}
@@ -723,12 +721,12 @@ int main(void) {
 				}
 			} else {
 //c     Case of du = dVS
-				float vnew = 1 / (du[i] + 1 / voi);
+				float vnew = 1.f / (du[i] + 1.f / voi);
 				if (vnew > vnewmax) {
-					du[i] = 1 / vnewmax - 1 / voi;
+					du[i] = 1.f / vnewmax - 1.f / voi;
 				}
 				if (vnew < vnewmin) {
-					du[i] = 1 / vnewmin - 1 / voi;
+					du[i] = 1.f / vnewmin - 1.f / voi;
 				}
 			}
 		}
@@ -812,7 +810,7 @@ int main(void) {
 								for (int kk = kmin; kk <= kmax; kk++) {
 									int nnkk = nxc * nyc * kk + ioff;
 									for (int jj = jmin; jj <= jmax; jj++) {
-										walll += du[nnkk + nxc * jj + imin];
+										walll += du[nnkk + nxc * jj + imin - 1];
 									}
 								}
 							}
@@ -820,7 +818,7 @@ int main(void) {
 								for (int kk = kmin; kk <= kmax; kk++) {
 									int nnkk = nxc * nyc * kk + ioff;
 									for (int jj = jmin; jj <= jmax; jj++) {
-										wallr += du[nnkk + nxc * jj + imax + 1];
+										wallr += du[nnkk + nxc * jj + imax];
 									}
 								}
 							}
@@ -925,7 +923,7 @@ int main(void) {
 			ivar = i / nxyc;
 		ddu = ds[ivar];
 		vold = vo[i];
-		vnew = 1 / (ddu + (1 / vold));
+		vnew = 1.f / (ddu + (1.f / vold));
 		dv = vnew - vold;
 		if (i == 0) {
 			dv_min = dv;
@@ -951,12 +949,12 @@ int main(void) {
 		vn[i] = vnew;
 	}
 	printf("  dvpmax, dvpmin = %15.8E %15.8E\n", dv_max, dv_min);
-	printf("  Old Vp max, New Vp max = %12.7f %15.7f\n", v_max_old, v_max_new);
-	printf("  Old Vp min, New Vp min = %12.7f %15.7f\n", v_min_old, v_min_new);
+	printf("  Old Vp max, New Vp max = %12.8f %15.8f\n", v_max_old, v_max_new);
+	printf("  Old Vp min, New Vp min = %12.8f %15.8f\n", v_min_old, v_min_new);
 	fprintf(fp_log, "  dvpmax, dvpmin = %15.8E %15.8E\n", dv_max, dv_min);
-	fprintf(fp_log, "  Old Vp max, New Vp max = %12.7f %15.7f\n", v_max_old,
+	fprintf(fp_log, "  Old Vp max, New Vp max = %12.8f %15.8f\n", v_max_old,
 			v_max_new);
-	fprintf(fp_log, "  Old Vp min, New Vp min = %12.7f %15.7f\n", v_min_old,
+	fprintf(fp_log, "  Old Vp min, New Vp min = %12.8f %15.8f\n", v_min_old,
 			v_min_new);
 
 // c---add Vs perturbation to model - recall that vo was changed to Vp/Vs above if ivpvs = 1
@@ -1006,26 +1004,26 @@ int main(void) {
 
 	if (ivpvs == 1) {
 		printf("  d(vp/vs)max, d(vp/vs)smin = %15.8E %15.8E\n", dv_max, dv_min);
-		printf("  Old Vp/Vs max, New Vp/Vs max = %12.7f %15.7f\n", v_max_old,
+		printf("  Old Vp/Vs max, New Vp/Vs max = %12.8f %15.8f\n", v_max_old,
 				v_max_new);
-		printf("  Old Vp/Vs min, New Vp/Vs min = %12.7f %15.7f\n", v_min_old,
+		printf("  Old Vp/Vs min, New Vp/Vs min = %12.8f %15.8f\n", v_min_old,
 				v_min_new);
 		fprintf(fp_log, "  d(vp/vs)max, d(vp/vs)smin = %15.8E %15.8E\n", dv_max,
 				dv_min);
-		fprintf(fp_log, "  Old Vp/Vs max, New Vp/Vs max = %12.7f %15.7f\n",
+		fprintf(fp_log, "  Old Vp/Vs max, New Vp/Vs max = %12.8f %15.8f\n",
 				v_max_old, v_max_new);
-		fprintf(fp_log, "  Old Vp/Vs min, New Vp/Vs min = %12.7f %15.7f\n",
+		fprintf(fp_log, "  Old Vp/Vs min, New Vp/Vs min = %12.8f %15.8f\n",
 				v_min_old, v_min_new);
 	} else {
 		printf("  dvsmax, dvsmin = %15.8E %15.8E\n", dv_max, dv_min);
-		printf("  Old Vs max, New Vs max = %12.7f %15.7f\n", v_max_old,
+		printf("  Old Vs max, New Vs max = %12.8f %15.8f\n", v_max_old,
 				v_max_new);
-		printf("  Old Vs min, New Vs min = %12.7f %15.7f\n", v_min_old,
+		printf("  Old Vs min, New Vs min = %12.8f %15.8f\n", v_min_old,
 				v_min_new);
 		fprintf(fp_log, "  dvsmax, dvsmin = %15.8E %15.8E\n", dv_max, dv_min);
-		fprintf(fp_log, "  Old Vs max, New Vs max = %12.7f %15.7f\n", v_max_old,
+		fprintf(fp_log, "  Old Vs max, New Vs max = %12.78 %15.8f\n", v_max_old,
 				v_max_new);
-		fprintf(fp_log, "  Old Vs min, New Vs min = %12.7f %15.7f\n", v_min_old,
+		fprintf(fp_log, "  Old Vs min, New Vs min = %12.8f %15.8f\n", v_min_old,
 				v_min_new);
 	}
 	fclose(fp_log);
@@ -1106,7 +1104,7 @@ int main(void) {
 		sscanf(pval, "%lf", &h);
 	fclose(fp_spc);
 
-	double gz[nzcm];
+	float gz[nzcm];
 	gz[0]=z0;
 	for(int i=1;i<nzc;i++) {
 		gz[i]=gz[i-1]+h*igridz[i-1];
@@ -1134,7 +1132,7 @@ int main(void) {
 		if(igridz[i+nzc]>0)
 			du[i+nzc]/=igridz[i+nzc];
 		if(du[i+nzc]>-0.001 && du[i+nzc]<0.001)
-			du[i+nzc]=du[i]/1.78;
+			du[i+nzc]=du[i]/1.78f;
 		fprintf(fp_1dm, "%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 	}
 	fclose(fp_1dm);

@@ -55,7 +55,7 @@
 // c---number of 4 byte words in the header
 #define nhbyte 58 * 4
 
-double gx[nxcm], gy[nxcm], gz[nxcm];
+float gx[nxcm], gy[nxcm], gz[nxcm];
 float vp[nxyzcm2];
 
 // c-----------------------------------------------------------------------------
@@ -97,13 +97,13 @@ int nxh, nyh, nzh;
 
 char hdr[nhbyte + 1];
 
-double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
+float rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
 int len_head = nhbyte;
 
 int nxyc, nxyzc, nxyzc2;
 
-void find_vel(double, double, double, double *, int);
 
+void find_vel(float, float, float, float *, int);
 int main() {
 	printf("Enter parameter specification file: ");
 	scanf("%s", spec_file);
@@ -447,7 +447,7 @@ int main() {
 	sscanf(offset, "%4s", flatten);
 	offset += strlen(flatten);
 	sscanf(offset, "%100s", hcomm);
-	
+
 	for (int i = 0; i < nxyzm2; i++)
 		vsave[i] = 0.;
 
@@ -536,8 +536,8 @@ int main() {
 
 	printf("Interpolating ...");
 // c----interpolation
-	int iph, joff, nk2, ij = 0;
-	double z, yy, x, v;
+	int iph, joff, nk2, ij = -1;
+	float z, yy, x, v;
 	for (int n = 0; n <= 1; n++) {
 		iph = n;
 		joff = ny * nz * n;
@@ -550,8 +550,8 @@ int main() {
 					x = x0 + i * h;
 					find_vel(x, yy, z, &v, iph);
 //c-----convert back to velocity
-					vsave[ij] = 1. / v;
 					ij++;
+					vsave[ij] = 1.f / v;
 				}
 			}
 		}
@@ -632,7 +632,7 @@ int main() {
 	return 0;
 }
 
-void find_vel(double x, double y, double z, double *v, int iph) {
+void find_vel(float x, float y, float z, float *v, int iph) {
 // c-----find a velocity at x, y, z
 	int i;
 	for (i = 1; i < nxc; i++) {
@@ -642,9 +642,9 @@ void find_vel(double x, double y, double z, double *v, int iph) {
 	if (i == nxc)
 		i--;
 	i--;
-	double xi = gx[i];
-	double hx = gx[i + 1] - xi;
 
+	float xi = gx[i];
+	float hx = gx[i + 1] - xi;
 	int j;
 	for (j = 1; j < nyc; j++) {
 		if (gy[j] > y)
@@ -653,9 +653,9 @@ void find_vel(double x, double y, double z, double *v, int iph) {
 	if (j == nyc)
 		j--;
 	j--;
-	double yj = gy[j];
-	double hy = gy[j + 1] - yj;
 
+	float yj = gy[j];
+	float hy = gy[j + 1] - yj;
 	int k;
 	for (k = 1; k < nzc; k++) {
 		if (gz[k] > z)
@@ -664,25 +664,25 @@ void find_vel(double x, double y, double z, double *v, int iph) {
 	if (k == nzc)
 		k--;
 	k--;
-	double zk = gz[k];
-	double hz = gz[k + 1] - zk;
+	float zk = gz[k];
+	float hz = gz[k + 1] - zk;
 
 	int nk = nxc * nyc * k;
 	int nj = nxc * j;
 	int nk2 = nxc * nyc * (k + 1);
 	int nj2 = nxc * (j + 1);
-	double fx = (x - xi) / hx;
-	double fy = (y - yj) / hy;
-	double fz = (z - zk) / hz;
+	float fx = (x - xi) / hx;
+	float fy = (y - yj) / hy;
+	float fz = (z - zk) / hz;
 	i = i + iph * nxyzc;
-	double tv = 0.;
-	tv = (1. - fx) * (1. - fy) * (1. - fz) * vp[nk + nj + i];
-	tv = tv + fx * (1. - fy) * (1. - fz) * vp[nk + nj + i + 1];
-	tv = tv + (1. - fx) * fy * (1. - fz) * vp[nk + nj2 + i];
-	tv = tv + (1. - fx) * (1. - fy) * fz * vp[nk2 + nj + i];
-	tv = tv + fx * fy * (1. - fz) * vp[nk + nj2 + i + 1];
-	tv = tv + fx * (1. - fy) * fz * vp[nk2 + nj + i + 1];
-	tv = tv + (1. - fx) * fy * fz * vp[nk2 + nj2 + i];
+	float tv = 0.;
+	tv = (1.f - fx) * (1.f - fy) * (1.f - fz) * vp[nk + nj + i];
+	tv = tv + fx * (1.f - fy) * (1.f - fz) * vp[nk + nj + i + 1];
+	tv = tv + (1.f - fx) * fy * (1.f - fz) * vp[nk + nj2 + i];
+	tv = tv + (1.f - fx) * (1.f - fy) * fz * vp[nk2 + nj + i];
+	tv = tv + fx * fy * (1.f - fz) * vp[nk + nj2 + i + 1];
+	tv = tv + fx * (1.f - fy) * fz * vp[nk2 + nj + i + 1];
+	tv = tv + (1.f - fx) * fy * fz * vp[nk2 + nj2 + i];
 	tv = tv + fx * fy * fz * vp[nk2 + nj2 + i + 1];
 	*v = tv;
 	return;

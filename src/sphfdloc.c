@@ -68,8 +68,6 @@
 
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
-//#define hpi 3.14159265358979323846 / 2
-//#define degrad 0.017453292
 #define rearth 6371.0
 #define VERSION "2018.0429"
 
@@ -108,17 +106,17 @@ int main() {
 //----ivs = 1 to treat Vp and Vs separately (individual time files).
 //        = 0 to compute Ts as Tp*vpvs
 	int ivs = 1;
-	double vpvs = 1.78;
 
+	float vpvs = 1.78;
 //---thresholds to define an acceptable location
 //---number of phases threshold
 	int nthres = 8;
 //---residual threshold (absolute time)
-	double resthres = .5;
+	float resthres = .5;
 //---residual threshold (percentage of travel time)
-	double resthrep = 5.0;
+	float resthrep = 5.0;
 //---std threshold
-	double stdmax = 15.0;
+	float stdmax = 15.0;
 
 	int kmin = 2;
 
@@ -227,7 +225,7 @@ int main() {
 	}
 	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &vpvs);
+		sscanf(pval, "%f", &vpvs);
 	get_vars(fp_spc, "timedir ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%s", timedir);
@@ -253,13 +251,13 @@ int main() {
 		sscanf(pval, "%d", &nthres);
 	get_vars(fp_spc, "resthres ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &resthres);
+		sscanf(pval, "%f", &resthres);
 	get_vars(fp_spc, "resthrep ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &resthrep);
+		sscanf(pval, "%f", &resthrep);
 	get_vars(fp_spc, "stdmax ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &stdmax);
+		sscanf(pval, "%f", &stdmax);
 	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
 	if (ierr == 0) {
 		sscanf(pval, "%d", &kmin);
@@ -501,10 +499,10 @@ int main() {
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 
-	double xmax = x0 + (nx - 1) * df;
-	double ymax = y[0] + (ny - 1) * dq;
-	double zmax = z0 + (nz - 1) * h;
 
+	float xmax = x0 + (nx - 1) * df;
+	float ymax = y[0] + (ny - 1) * dq;
+	float zmax = z0 + (nz - 1) * h;
 	fprintf(fp_log, " Total Number of fine grid nodes:%13d\n", nxyz);
 	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", nxyzc);
 	fprintf(fp_log, "\n");
@@ -650,7 +648,7 @@ int main() {
 			} else if (phs[nsta] == '1') {
 				phs[nsta] = 'S';
 			}
-			pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
+			pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
 			dsec = sec;
 
 			double tarr;
@@ -689,7 +687,7 @@ int main() {
 
 //---see if the travel time tables for these stations have been read in.  If
 //   not, read them in.
-		if (nsta >= maxsta) {
+		if (nsta > maxsta) {
 			printf("Error: too many station.\n");
 			assert(0);
 		}
@@ -716,7 +714,7 @@ int main() {
 				if(DEBUG_PRINT)
 					printf(" Limit reached...looking for one we do not need now.\n");
 				assert(0);
-				for (j = 0; j < ntread - 1; j++) {
+				for (j = 0; j < ntread; j++) {
 					int flag = 0;
 					for (int k = 0; k < nsta; k++) {
 						if (strcmp(sta[k], stn[j]) == 0) {
@@ -762,7 +760,7 @@ int main() {
 		//   this could be anywhere from -5 to 5 in next stage.
 		int nxx = 0, nyy = 0, nzz = 0;
 		float stdmin = DBL_MAX;
-		double avrmin = 0.;
+		float avrmin = 0.;
 		for (int k = kmin; k < nz; k++) {
 			for (int j = 0; j < ny; j++) {
 				for (int i = 0; i < nx; i++) {
@@ -838,7 +836,7 @@ int main() {
 			for (int i = 0; i < nsta; i++) {
 				printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 						sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-						1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+						1.f / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
 						obstime[i] - tps[i]);
 			}
 			printf("\n");
@@ -947,7 +945,7 @@ int main() {
 			printf("\n");
 			printf(" First Order Refinement finished ... \n");
 			printf(" Info Density Maximum for event   %12d\n", nev + 1);
-			printf(" Minimum Standard Deviation   : %12.8lf\n", stdmin);
+			printf(" Minimum Standard Deviation   : %12.9lf\n", stdmin);
 			printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
 					nyy + 1, nzz + 1);
 			printf(" Average residual             : %10.8lf\n", avrmin);
@@ -962,7 +960,7 @@ int main() {
 			for (int i = 0; i < nsta; i++) {
 				printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 						sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-						1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+						1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
 						obstime[i] - tps[i]);
 			}
 			printf("\n");
@@ -983,7 +981,7 @@ int main() {
 			z0i = ezm;
 			nstepz = nstep1;
 		}
-		if (ezm + dh >= zmax)
+		if (ezm + dh > zmax)
 			nstepz = nstep1 - 1;
 
 		y0i = eym - ddq;
@@ -992,7 +990,7 @@ int main() {
 			y0i = eym;
 			nstepy = nstep1;
 		}
-		if (eym + ddq >= ymax)
+		if (eym + ddq > ymax)
 			nstepy = nstep1 - 1;
 
 		x0i = exm - ddf;
@@ -1001,7 +999,8 @@ int main() {
 			x0i = exm;
 			nstepx = nstep1;
 		}
-		if (exm + ddf >= xmax)
+
+		if (exm + ddf > xmax)
 			nstepx = nstep1 - 1;
 		for (int k = 0; k < nstepz; k++) {
 			double zp = z0i + ddh * k;
@@ -1064,7 +1063,7 @@ int main() {
 			printf("\n");
 			printf(" Second Order Refinement finished ... \n");
 			printf(" Info Density Maximum for event   %12d\n", nev + 1);
-			printf(" Minimum Standard Deviation   : %12.8lf\n", stdmin);
+			printf(" Minimum Standard Deviation   : %12.9lf\n", stdmin);
 			printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
 					nyy + 1, nzz + 1);
 			printf(" Average residual             : %10.8lf\n", avrmin);
@@ -1079,7 +1078,7 @@ int main() {
 			for (int i = 0; i < nsta; i++) {
 				printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 						sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-						1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+						1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
 						obstime[i] - tps[i]);
 			}
 			printf("\n");
@@ -1090,8 +1089,8 @@ int main() {
 		int iredo = 0;
 		for (int i = 0; i < nsta; i++) {
 			if (isgood[i]) {
-				double absres = fabs(resmin[i] - avrmin);
-				double percres = 100.0 * absres / tps[i];
+				float absres = fabs(resmin[i] - avrmin);
+				float percres = 100.0f * absres / tps[i];
 				if (absres <= resthres || percres <= resthrep)
 					ngood++;
 				else {
@@ -1110,13 +1109,13 @@ int main() {
 			}
 			//---in some cases, a revised location can bring back data that originally was considered outlier
 			//       so we allow the program to go back and use this recovered data
-			if (iretry > maxretry) {
+			if (iretry < maxretry) {
 				iretry++;
 				iredo = 0;
 				for (int i = 0; i < nsta; i++) {
 					if (isgood[i] == 0) {
-						double absres = fabs(resmin[i] - avrmin);
-						double percres = 100.0 * absres / tps[i];
+						float absres = fabs(resmin[i] - avrmin);
+						float percres = 100.0f * absres / tps[i];
 						if (absres <= resthres || percres <= resthrep) {
 							ngood++;
 							isgood[i] = 1;
@@ -1205,7 +1204,7 @@ int main() {
 					sprintf(tmp,
 							"%4s   %c %10.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 							sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-							1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+							1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
 							obstime[i] - tps[i]);
 					strapp(str_sum[nev], &len_str_sum, tmp);
 				}
@@ -1227,7 +1226,7 @@ int main() {
 					}
 					strapp(str_data[nev], &len_str_data, tmp);
 				}
-				strapp(str_data[nev], &len_str_data, "\n");
+				strapp(str_data[nev], &len_str_data, " \n");
 			}
 		} else {
 			double ot = dpot + avrmin;
@@ -1337,13 +1336,13 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 	double fz = (z - zk) / h;
 
 	int ist = indsta[is];
-	*tp = (1. - fx) * (1. - fy) * (1. - fz) * t[ist][nk + nj + i];
-	*tp = *tp + fx * (1. - fy) * (1. - fz) * t[ist][nk + nj + i + 1];
-	*tp = *tp + (1. - fx) * fy * (1. - fz) * t[ist][nk + nj2 + i];
-	*tp = *tp + (1. - fx) * (1. - fy) * fz * t[ist][nk2 + nj + i];
-	*tp = *tp + fx * fy * (1. - fz) * t[ist][nk + nj2 + i + 1];
-	*tp = *tp + fx * (1. - fy) * fz * t[ist][nk2 + nj + i + 1];
-	*tp = *tp + (1. - fx) * fy * fz * t[ist][nk2 + nj2 + i];
+	*tp = (1.f - fx) * (1.f - fy) * (1.f - fz) * t[ist][nk + nj + i];
+	*tp = *tp + fx * (1.f - fy) * (1.f - fz) * t[ist][nk + nj + i + 1];
+	*tp = *tp + (1.f - fx) * fy * (1.f - fz) * t[ist][nk + nj2 + i];
+	*tp = *tp + (1.f - fx) * (1.f - fy) * fz * t[ist][nk2 + nj + i];
+	*tp = *tp + fx * fy * (1.f - fz) * t[ist][nk + nj2 + i + 1];
+	*tp = *tp + fx * (1.f - fy) * fz * t[ist][nk2 + nj + i + 1];
+	*tp = *tp + (1.f - fx) * fy * fz * t[ist][nk2 + nj2 + i];
 	*tp = *tp + fx * fy * fz * t[ist][nk2 + nj2 + i + 1];
 }
 
@@ -1382,7 +1381,7 @@ void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
 		}
 		sscanf(str_tmp, "%c %f", &phs[*nsta], &rwts[*nsta]);
 		*nsta = *nsta + 1;
-		if (*nsta >= maxobs) {
+		if (*nsta > maxobs) {
 			printf("Error:  too many observations! nsta=%d maxobs=%d\n", *nsta,
 					maxobs);
 			assert(0);
