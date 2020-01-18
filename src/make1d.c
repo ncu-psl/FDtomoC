@@ -85,7 +85,7 @@ c		    change so that dx = df and dy = df.
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
 
-double gx[nxcm], gy[nxcm], gz[nxcm];
+float gx[nxcm], gy[nxcm], gz[nxcm];
 float vp[MAX1D][2], z[MAX1D];
 
 int iflat = 0, isph = 0;
