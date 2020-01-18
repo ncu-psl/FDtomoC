@@ -126,7 +126,7 @@ float tdelts[maxobs], az1s[maxobs], az2s[maxobs];
 float azs[maxobs], ais[maxobs];
 float tcor[maxlst][2], dtc[maxlst2];
 float stlat[maxlst], stlon[maxlst];
-float t[200][41 * 41 * 31];
+float t[maxsta][nxyzm];
 float vm[maxnbk][maxobs], vmp[maxkbl][maxobs];
 float vsum[maxkbl];
 float am[maxobs][4];
@@ -176,9 +176,9 @@ int main(void) {
 		dotfile[MAXSTRLEN], headfil[MAXSTRLEN], entfile[MAXSTRLEN],
 		stcfile[MAXSTRLEN], sclefil[MAXSTRLEN], specfile[MAXSTRLEN];
 	int iread = 0, ivs = 1;
-	float vpvs = 1.78;
+	float vpvs = 1.78f;
 	int idmean = 0, iray = 0, iraystat = 0, idatout = 1, nomat = 0;
-	float resflag = 1.0;
+	float resflag = 1.0f;
 	int ido1d = 0, ittnum = 0, ivpvs = 0, istacor = 0, idoshot = 0, idotel = 0;
 	int kmin, kmax;
 	int total_earthquakes = 0;
@@ -824,6 +824,9 @@ a15:
 		gz[i] = gz[i - 1] + h * igridz[i - 1];
 	}
 
+	nxy = nx*ny;
+	nxyz = nxy*nz;
+	int nz1 = nz - 1;
 	int nxyz2 = nxyz * 2;
 	int maxvar = nxyz;
 	int maxvar2 = nxyz2;
@@ -863,8 +866,6 @@ a15:
 		int ielev;
 		float slat, slon;
 		sscanf(str_inp, "%lf %lf %d %s %f %f %f %f", &sty, &stx, &ielev, stt[nstr], &slat, &slon, &tcor[nstr][0], &tcor[nstr][1]);
-		tcor[nstr][0] = 0;
-		tcor[nstr][1] = 0;
 
 		// ---temp lines to reassign slat and slon as the reference locations
 		stx = slon;
@@ -872,13 +873,13 @@ a15:
 		// --end temp lines
 		stlon[nstr] = stx * degrad;
 		stlat[nstr] = hpi - glat(sty * degrad);
-		stz[nstr] = -ielev / 1000.;
+		stz[nstr] = -(float)(ielev / 1000.f);
 		//    stz(nstr) = -elev
 		// ---left justify the station name (no leading blanks)
 		ljust(stt[nstr]);
 	}
 	nstr--;
-	printf(" %d stations read in.\n", nstr);
+	printf(" %d stations read in.\n", nstr+1);
 	fclose(fp_sta);
 
 	// -- - header on station correction array
@@ -1034,7 +1035,7 @@ a3:
 		}
 		d_blank(filen, &len);
 
-		pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
+		pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
 		dsec = sec;
 
 		htoe(iyr, jday, ihr, imn, dsec, &tarr);
@@ -1074,12 +1075,12 @@ a3:
 		isgood[i] = 1;
 
 		// Find this station in the station list
-		for (kn = 0; kn < nstr; kn++) {
+		for (kn = 0; kn < nstr + 1; kn++) {
 			if (strcmp(sta[i], stt[kn]) == 0) {
 				break;
 			}
 		}
-		if (kn == nstr) {
+		if (kn == nstr + 1 ) {
 			printf(" Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
 			fprintf(fp_log, " Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
 			isgood[i] = 0;
@@ -1278,9 +1279,9 @@ a3:
 			ies = (int)((ebx - x0) / df);
 			jes = (int)((eby - y[0]) / dq);
 			kes = (int)((ebz - z0) / h);
-			if (((ebx - x0) < 0.) || (ies >= nx) ||
-				((eby - y[0]) < 0.) || (jes >= ny) ||
-				((ebz - z0) < 0.) || (kes >= nz)) {
+			if (((ebx - x0) < 0.f) || (ies >= nx) ||
+				((eby - y[0]) < 0.f) || (jes >= ny) ||
+				((ebz - z0) < 0.f) || (kes >= nz)) {
 				printf(" Error:  this station has an out of bounds entry point: %s\n", sta[i]);
 				printf(" Skipping this station.\n");
 				fprintf(fp_err, " %d %d %d %d %lf %lf %lf %lf %s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
@@ -1377,13 +1378,13 @@ a3:
 		// printf("1345 fx=%lf fy=%lf fz=%lf\n", fx, fy, fz);
 
 		float ds[8];
-		ds[0] = (1. - fz)*(1. - fy)*(1. - fx);
-		ds[1] = (1. - fz)*(1. - fy)*fx;
-		ds[2] = (1. - fz)*fy*(1. - fx);
-		ds[3] = (1. - fz) * fy * fx;
-		ds[4] = fz * (1. - fy) * (1. - fx);
-		ds[5] = fz * (1. - fy) * fx;
-		ds[6] = fz * fy * (1. - fx);
+		ds[0] = (1.f - fz)*(1.f - fy)*(1.f - fx);
+		ds[1] = (1.f - fz)*(1.f - fy)*fx;
+		ds[2] = (1.f - fz)*fy*(1.f - fx);
+		ds[3] = (1.f - fz) * fy * fx;
+		ds[4] = fz * (1.f - fy) * (1.f - fx);
+		ds[5] = fz * (1.f - fy) * fx;
+		ds[6] = fz * fy * (1.f - fx);
 		ds[7] = fz * fy * fx;
 
 		dt = 0;
@@ -1401,33 +1402,33 @@ a3:
 
 		//     This could be skipped for teles, but is innocuous
 		float dsdx[8];
-		dsdx[0] = -(1. - fz) * (1. - fy);
-		dsdx[1] = (1. - fz) * (1. - fy);
-		dsdx[2] = -(1. - fz) * fy;
-		dsdx[3] = (1. - fz) * fy;
-		dsdx[4] = -fz * (1. - fy);
-		dsdx[5] = fz * (1. - fy);
+		dsdx[0] = -(1.f - fz) * (1.f - fy);
+		dsdx[1] = (1.f - fz) * (1.f - fy);
+		dsdx[2] = -(1.f - fz) * fy;
+		dsdx[3] = (1.f - fz) * fy;
+		dsdx[4] = -fz * (1.f - fy);
+		dsdx[5] = fz * (1.f - fy);
 		dsdx[6] = -fz * fy;
 		dsdx[7] = fz * fy;
 
 		float dsdy[8];
-		dsdy[0] = -(1. - fz) * (1. - fx);
-		dsdy[1] = -(1. - fz) * fx;
-		dsdy[2] = (1. - fz) * (1. - fx);
-		dsdy[3] = (1. - fz) * fx;
-		dsdy[4] = -fz * (1. - fx);
+		dsdy[0] = -(1.f - fz) * (1.f - fx);
+		dsdy[1] = -(1.f - fz) * fx;
+		dsdy[2] = (1.f - fz) * (1.f - fx);
+		dsdy[3] = (1.f - fz) * fx;
+		dsdy[4] = -fz * (1.f - fx);
 		dsdy[5] = -fz * fx;
-		dsdy[6] = fz * (1. - fx);
+		dsdy[6] = fz * (1.f - fx);
 		dsdy[7] = fz * fx;
 
 		float dsdz[8];
-		dsdz[0] = -(1. - fy) * (1. - fx);
-		dsdz[1] = -(1. - fy) * fx;
-		dsdz[2] = -fy * (1. - fx);
+		dsdz[0] = -(1.f - fy) * (1.f - fx);
+		dsdz[1] = -(1.f - fy) * fx;
+		dsdz[2] = -fy * (1.f - fx);
 		dsdz[3] = -fy * fx;
-		dsdz[4] = (1. - fy) * (1. - fx);
-		dsdz[5] = (1. - fy) * fx;
-		dsdz[6] = fy * (1. - fx);
+		dsdz[4] = (1.f - fy) * (1.f - fx);
+		dsdz[5] = (1.f - fy) * fx;
+		dsdz[6] = fy * (1.f - fx);
 		dsdz[7] = fy * fx;
 		float dtdx = 0, dtdy = 0, dtdz = 0;
 		for (int iii = 0; iii < 8; iii++) {
@@ -1478,14 +1479,15 @@ a3:
 		float rs = rearth - zz;
 		float dqs = rs * dys;
 		float dfs = rs * sin(yy) * dxs;
-		dlen = sqrtf(dfs * dfs + dqs * dqs + dzs * dzs);
 
-		if ((ie == iscell && je == jscell && ke == kscell) || (dlen < (h / 1000.))) {
+		float float_dlen=sqrtf(dfs * dfs + dqs * dqs + dzs * dzs);
+		dlen = float_dlen;
 
+		if ((ie == iscell && je == jscell && ke == kscell) || (dlen < (h / 1000.f))) {
 			// ----add on derivative for the station cell segment
-			xm = xx - dxs * 0.5;
-			ym = yy - dys * 0.5;
-			zm = zz - dzs * 0.5;
+			xm = xx - dxs * 0.5f;
+			ym = yy - dys * 0.5f;
+			zm = zz - dzs * 0.5f;
 			int i1 = -1, j1 = -1, k1 = -1;
 
 			//--- find xm in coarse grid
@@ -1537,13 +1539,13 @@ a3:
 			fy = (ym - ycj) / hy;
 			fz = (zm - zck) / hz;
 
-			ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
-			ds[1] = (1. - fz) * (1. - fy) * fx;
-			ds[2] = (1. - fz) * fy * (1. - fx);
-			ds[3] = (1. - fz) * fy * fx;
-			ds[4] = fz * (1. - fy) * (1. - fx);
-			ds[5] = fz * (1. - fy) * fx;
-			ds[6] = fz * fy * (1. - fx);
+			ds[0] = (1.f - fz) * (1.f - fy) * (1.f - fx);
+			ds[1] = (1.f - fz) * (1.f - fy) * fx;
+			ds[2] = (1.f - fz) * fy * (1.f - fx);
+			ds[3] = (1.f - fz) * fy * fx;
+			ds[4] = fz * (1.f - fy) * (1.f - fx);
+			ds[5] = fz * (1.f - fy) * fx;
+			ds[6] = fz * fy * (1.f - fx);
 			ds[7] = fz * fy * fx;
 
 			nk = nxyc * (k1 - 1);
@@ -1820,19 +1822,19 @@ a3:
 		xo = ro * sinq * cosf;
 		yo = ro * sinq * sinf;
 		zo = ro * cosq;
-
 		// if ray in seismometer cube, use straight ray from source
-		if (ie >= (is - 1) && ie < (is + 1) &&
-			je >= (js - 1) && je < (js + 1) &&
-			ke >= (ks - 1) && ke < (ks + 1)) {
+		if (ie >= (is - 2) && ie < (is + 2) &&
+			je >= (js - 2) && je < (js + 2) &&
+			ke >= (ks - 2) && ke < (ks + 2)) {
 			r2 = rearth - zs;
 			float x2 = r2 * sin(ys) * cos(xs);
 			float y2 = r2 * sin(ys) * sin(xs);
 			float z2 = r2 * cos(ys);
-			float dx = x2 - xo;
-			float dy = y2 - yo;
-			float dz = z2 - zo;
-			dl = sqrtf(dx * dx + dy * dy + dz * dz);
+			double dx = x2 - xo;
+			double dy = y2 - yo;
+			double dz = z2 - zo;
+			float float_dl = sqrtf(dx * dx + dy * dy + dz * dz);
+			dl = sqrt(dx * dx + dy * dy + dz * dz);
 			sx = dx / dl;
 			sy = dy / dl;
 			sz = dz / dl;
@@ -1847,7 +1849,7 @@ a3:
 			//c	gradtm is thus not really necessary, and is kept here only for reasons
 			//c	of heritage.
 
-			gradtm = sqrtf(gradt[0] * gradt[0] + gradt[1] * gradt[1] + gradt[2] * gradt[2]);
+			gradtm = sqrt(gradt[0] * gradt[0] + gradt[1] * gradt[1] + gradt[2] * gradt[2]);
 			sf = gradt[0] / gradtm;
 			sq = gradt[1] / gradtm;
 			sr = gradt[2] / gradtm;
@@ -1863,7 +1865,7 @@ a3:
 
 		//----save ray direction from source for use in focal mechanisms
 		if (nseg == 0) {
-			sfq = sqrtf(sf * sf + sq * sq);
+			sfq = sqrt(sf * sf + sq * sq);
 			float az = atan2f(sf, -sq) / degrad;
 			float ai = atan2f(sfq, -sr) / degrad;
 			ais[i] = ai;
@@ -1882,7 +1884,9 @@ a3:
 			c = xo * xo + yo * yo + zo * zo - ro * ro;
 			quad = b * b - c;
 			if (quad >= 0) {
-				dd[2] = pmin(-b + sqrt(quad), -b - sqrt(quad));
+                float d1 = -b + sqrt(quad);
+                float d2 = -b - sqrt(quad);
+				dd[2] = pmin(d1, d2);
 			}
 		}
 
@@ -1917,7 +1921,9 @@ a3:
 
 			quad = b * b - a * c;
 			if (quad >= 0) {
-				dd[1] = pmin((-b + sqrt(quad)) / a, (-b - sqrt(quad)) / a);
+                float d1 = (-b + sqrt(quad)) / a;
+                float d2 = (-b - sqrt(quad)) / a;
+				dd[1] = pmin(d1, d2);
 			}
 		}
 
@@ -2150,22 +2156,22 @@ a3:
 		float hy = gy[j1] - gy[j1 - 1];
 		float hz = gz[k1] - gz[k1 - 1];
 
-		float xci = gx[i1];
-		float ycj = gy[j1];
-		float zck = gz[k1];
+		float xci = gx[i1-1];
+		float ycj = gy[j1-1];
+		float zck = gz[k1-1];
 
 		// --- derivatives
 		fx = (xm - xci) / hx;
 		fy = (ym - ycj) / hy;
 		fz = (zm - zck) / hz;
 
-		ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
-		ds[1] = (1. - fz) * (1. - fy) * fx;
-		ds[2] = (1. - fz) * fy * (1. - fx);
-		ds[3] = (1. - fz) * fy * fx;
-		ds[4] = fz * (1. - fy) * (1. - fx);
-		ds[5] = fz * (1. - fy) * fx;
-		ds[6] = fz * fy * (1. - fx);
+		ds[0] = (1.f - fz) * (1.f - fy) * (1.f - fx);
+		ds[1] = (1.f - fz) * (1.f - fy) * fx;
+		ds[2] = (1.f - fz) * fy * (1.f - fx);
+		ds[3] = (1.f - fz) * fy * fx;
+		ds[4] = fz * (1.f - fy) * (1.f - fx);
+		ds[5] = fz * (1.f - fy) * fx;
+		ds[6] = fz * fy * (1.f - fx);
 		ds[7] = fz * fy * fx;
 
 		nk = nxyc * (k1 - 1);
