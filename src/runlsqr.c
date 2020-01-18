@@ -101,6 +101,7 @@ char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
 char logfile[80 + 1];
 char VERSION[9] = "2018.0114";
 
+float one = 1.0f;
 int main() {
 	printf("Enter parameter specification file: ");
 	scanf("%s",spec_file);
@@ -263,6 +264,7 @@ int main() {
 // c
 // c------------------------------------------------------------------------
 
+	one = 1.0f;
 	dampsq = damp * damp;
 
 	printf("                  residual norm (abar*x - bbar)    residual norm (normal eqns)    solution norm (x)\n");
@@ -307,6 +309,7 @@ int main() {
 // c	  x(j) = x(j)/sc
 // c	  se(j) = se(j)/sc
 // c200	continue
+<<<<<<< HEAD
 	fwrite(&n, sizeof(n), 1, fp_fmd);
 	fwrite(x, sizeof(x[0]), n, fp_fmd);
 	fwrite(jndx, sizeof(jndx[0]), n, fp_fmd);
@@ -617,21 +620,22 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 	fprintf(fp_out, "%25satol   =%10.2E          conlim =%10.2E\n", "", atoL, conlim);
 	fprintf(fp_out, "%25sbtol   =%10.2E          itnlim =%10d\n\n\n", "", btol, itnlim);
 
-	double ctol = 0;
+	float ctol = 0;
+	float one = 1.0f;
 	if (conlim > 0) {
 		ctol = 1 / conlim;
 	}
-	double dampsq = damp * damp;
+	float dampsq = damp * damp;
 	anorm = 0;
 	acond = 0;
-	double bbnorm = 0;
-	double ddnorm = 0;
-	double res2 = 0;
+	float bbnorm = 0;
+	float ddnorm = 0;
+	float res2 = 0;
 	*xnorm = 0;
-	double xxnorm = 0;
-	double cs2 = -1;
-	double sn2 = 0;
-	double z = 0;
+	float xxnorm = 0;
+	float cs2 = -1;
+	float sn2 = 0;
+	float z = 0;
 	int itn = 0;
 	istop = 0;
 	int nstop = 0;
@@ -677,7 +681,7 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 		}
 	}
 
-	float test1 = 1;
+	float test1 = one;
 	float test2 = alfa / beta;
 	if (fp_nout) {
 		fprintf(fp_nout, "%6d    %.10E   %.10E    %.3E    %.3E\n\n", itn,x[0], *rnorm, test1, test2);
@@ -704,33 +708,33 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 
 //     use a plane rotation to eliminate the damping parameter.
 //     this alters the diagonal (rhobar) of the lower-bidiagonal matrix.
-	double rhbar2 = rhobar * rhobar + dampsq;
-	double rhbar1 = sqrt(rhbar2);
-	double cs1 = rhobar / rhbar1;
-	double sn1 = damp / rhbar1;
-	double psi = sn1 * phibar;
+	float rhbar2 = rhobar * rhobar + dampsq;
+	float rhbar1 = sqrtf(rhbar2);
+	float cs1 = rhobar / rhbar1;
+	float sn1 = damp / rhbar1;
+	float psi = sn1 * phibar;
 	phibar = cs1 * phibar;
 
 //      use a plane rotation to eliminate the subdiagonal element (beta)
 //      of the lower-bidiagonal matrix, giving an upper-bidiagonal matrix.
 
-	double rho = sqrt(rhbar2 + beta * beta);
-	double cs = rhbar1 / rho;
-	double sn = beta / rho;
-	double theta = sn * alfa;
+	float rho = sqrtf(rhbar2 + beta * beta);
+	float cs = rhbar1 / rho;
+	float sn = beta / rho;
+	float theta = sn * alfa;
 	rhobar = -cs * alfa;
-	double phi = cs * phibar;
+	float phi = cs * phibar;
 	phibar = sn * phibar;
-	double tau = sn * phi;
+	float tau = sn * phi;
 
 //     update  x, w  and the standard error estimates.
-	double t1 = phi / rho;
-	double t2 = -theta / rho;
-	double t3 = 1 / rho;
+	float t1 = phi / rho;
+	float t2 = -theta / rho;
+	float t3 = one / rho;
 	for (int i = 0; i < n; i++) {
-		double t = w[i];
+		float t = w[i];
 		x[i] += t1 * t;
-		w[i] = t1 * t + v[i];
+		w[i] = t2 * t + v[i];
 		t = (t3 * t) * (t3 * t);
 		se[i] += t;
 		ddnorm += t;
@@ -740,12 +744,12 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 //c     super-diagonal element (theta) of the upper-bidiagonal matrix.
 //c     then use the result to estimate  norm(x).
 
-	double delta = sn2 * rho;
-	double gambar = -cs2 * rho;
-	double rhs = phi - delta * z;
-	double zbar = rhs / gambar;
-	*xnorm = sqrt(xxnorm + zbar * zbar);
-	double gamma = sqrt(gambar * gambar + theta * theta);
+	float delta = sn2 * rho;
+	float gambar = -cs2 * rho;
+	float rhs = phi - delta * z;
+	float zbar = rhs / gambar;
+	*xnorm = sqrtf(xxnorm + zbar * zbar);
+	float gamma = sqrtf(gambar * gambar + theta * theta);
 	cs2 = gambar / gamma;
 	sn2 = theta / gamma;
 	z = rhs / gamma;
@@ -755,21 +759,21 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 //      first, estimate the norm and condition of the matrix  abar,
 //      and the norms of  rbar  and  abar(transpose)*rbar.
 
-	anorm = sqrt(bbnorm);
-	acond = anorm * sqrt(ddnorm);
-	double res1 = phibar * phibar;
+	anorm = sqrtf(bbnorm);
+	acond = anorm * sqrtf(ddnorm);
+	float res1 = phibar * phibar;
 	res2 = res2 + psi * psi;
-	*rnorm = sqrt(res1 + res2);
+	*rnorm = sqrtf(res1 + res2);
 	*arnorm = alfa * fabs(tau);
-
+	
 //      now use these norms to estimate certain other quantities,
 //      some of which will be small near a solution.
 
 	test1 = *rnorm / bnorm;
 	test2 = *arnorm / (anorm * *rnorm);
-	double test3 = 1 / acond;
-	t1 = test1 / (1 + anorm * *xnorm / bnorm);
-	double rtol = btol + atoL * anorm * *xnorm / bnorm;
+	float test3 = one / acond;
+	t1 = test1 / (one + anorm * *xnorm / bnorm);
+	float rtol = btol + atoL * anorm * *xnorm / bnorm;
 
 //      the following tests guard against extremely small values of
 //      atoL, btol  or  ctol.  (the user may have set any or all of
@@ -777,21 +781,21 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 //      the effect is equivalent to the normal tests using
 //      atoL = relpr,  btol = relpr,  conlim = 1/relpr.
 
-	t3 = 1 + test3;
-	t2 = 1 + test2;
-	t1 = 1 + t1;
+	t3 = one + test3;
+	t2 = one + test2;
+	t1 = one + t1;
 
 	if (itn >= itnlim)
 		istop = 7;
-	if (t3 <= 1)
+	if (t3 <= one)
 		istop = 6;
-	if (t2 <= 1)
+	if (t2 <= one)
 		istop = 5;
-	if (t1 <= 1)
+	if (t1 <= one)
 		istop = 4;
 
 //     allow for tolerances set by the user.
-
+	
 	if (test3 <= ctol)
 		istop = 3;
 	if (test2 <= atoL)
@@ -834,15 +838,15 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 
 // c     finish off the standard error estimates.
 
-	int t = 1;
+	float t = one;
 	if (m > n)
 		t = m - n;
 	if (dampsq > 0)
 		t = m;
-	t = *rnorm / sqrt(t);
 
+	t = *rnorm / sqrtf(t);
 	for (int i = 0; i < n; i++) {
-		se[i] = t * sqrt(se[i]);
+		se[i] = t * sqrtf(se[i]);
 	}
 	a800:
 	printf("\n no. of iterations =%6d         stopping condition =%3d\n\n", itn, istop);
