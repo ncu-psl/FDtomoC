@@ -71,6 +71,7 @@ c		    change so that dx = df and dy = df.
 #include "common/gridspec.h"
 #include "common/geographic_method.h"
 #include "common/string_process.h"
+#include "common/vhead.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132
@@ -120,7 +121,7 @@ double axo, ayo, azo, dx, dy, dz;
 float az;
 int nxh, nyh, nzh;
 //--------------------------------------
-char hdr[nhbyte + 1];
+char hdr[120];
 
 float rearth = 6371.0f;
 int lenhead = nhbyte;
@@ -493,7 +494,7 @@ int main() {
 		strcpy(flatten, "NOFL");
 	}
 	flatten[4] = '\0';
-	sprintf(hcomm, "Output from make1d.f using %s", onedfil);
+	sprintf(hcomm, "Output from make1d.c using %s", onedfil);
 	hcomm[100] = '\0';
 	axo = x0;
 	ayo = y[0];
@@ -616,7 +617,25 @@ int main() {
 	}
 
 	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
+	struct vhead headout;
+	headout.fxs = fxs;
+	headout.fys = fys;
+	headout.fzs = fzs;
+	headout.clat = clat;
+	headout.clon = clon;
+	headout.cz = cz;
+	headout.x0 = axo;
+	headout.y0 = ayo;
+	headout.z0 = azo;
+	headout.dx = dx;
+	headout.dy = dy;
+	headout.dz = dz;
+	headout.az = az;
+	headout.nx = nxh;
+	headout.ny = nyh;
+	headout.nz = nzh;
+	strncpy(headout.header, hdr, 120);
+	fwrite(&headout, sizeof(char), nhbyte, fp_cor);
 	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_cor);
 	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_cor);
 	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
