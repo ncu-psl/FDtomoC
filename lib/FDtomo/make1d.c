@@ -86,7 +86,7 @@ c		    change so that dx = df and dy = df.
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
 
-double gx[nxcm], gy[nxcm], gz[nxcm];
+float gx[nxcm], gy[nxcm], gz[nxcm];
 float vp[MAX1D][2], z[MAX1D];
 
 double z0r;
@@ -94,8 +94,8 @@ double y00;
 
 //float vsave[nxyzcm2];
 
-char VERSION[10] = "2017.1122\0";
-double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
+char VERSION[10] = "2004.0909\0";
+double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
 
 char terp[MAX1D + 1];
 
@@ -112,7 +112,7 @@ int nxh, nyh, nzh;
 //--------------------------------------
 char hdr[nhbyte + 1];
 
-int lenhead = nhbyte * 4;
+int lenhead = nhbyte;
 
 FILE *fp_log;
 FILE *fp_one;
@@ -163,7 +163,7 @@ MAKE1D_DATA *make1d(SPEC spec) {
 			df = fabs(h / (rearth * sin(y00)));
 		dy = dq / degrad;
 		dx = df / degrad;
-		printf("dx=%lf dy=%lf df=%lf dq=%lf\n", dx, dy, df, dq);
+		printf("dx=%.17E dy=%.17E df=%.17E dq=%.17E\n", dx, dy, df, dq);
 	} else {
 		dx = h;
 		dy = h;
@@ -249,8 +249,8 @@ MAKE1D_DATA *make1d(SPEC spec) {
 		fprintf(fp_log, "  Fine grid spacing: %lf\n", h);
 	} else {
 		fprintf(fp_log, "  Coordinate system is SPHERICAL \n");
-		fprintf(fp_log, "  Fine Longitude spacing (df):    %.16E\n", dx);
-		fprintf(fp_log, "  Fine Latidtude spacing (dq):    %.16E\n", dy);
+		fprintf(fp_log, "  Fine Longitude spacing (df):   %.17E\n", dx);
+		fprintf(fp_log, "  Fine Latidtude spacing (dq):   %.17E\n", dy);
 		dtoa(out_str, h, 18);
 		fprintf(fp_log, "  Fine Radial spacing    (dz):   %s     \n", out_str);
 	}
@@ -263,7 +263,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 			fprintf(fp_log, "\n");
 		}
 	}
-	fprintf(fp_log, "\n");
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
 	fprintf(fp_log, "  Y coarse grid node spacing: \n");
@@ -273,7 +272,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 			fprintf(fp_log, "\n");
 		}
 	}
-	fprintf(fp_log, "\n");
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
 	fprintf(fp_log, "  Z coarse grid node spacing: \n");

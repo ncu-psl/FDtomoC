@@ -72,15 +72,13 @@
 
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
-#define hpi 3.14159265358979323846 / 2
-#define degrad 0.017453292
 #define rearth 6371.0
 #define VERSION "2018.0429"
 
 float **t;
 int total_earthquakes = 0;
 void find_time(double, double, double, double *, int, int *);
-void read_station_set(int *, int *, int *, int *, int *, double *, int *,
+void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
@@ -268,10 +266,10 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 
-	double xmax = x0 + (nx - 1) * df;
-	double ymax = y[0] + (ny - 1) * dq;
-	double zmax = z0 + (nz - 1) * h;
 
+	float xmax = x0 + (nx - 1) * df;
+	float ymax = y[0] + (ny - 1) * dq;
+	float zmax = z0 + (nz - 1) * h;
 	fprintf(fp_log, " Total Number of fine grid nodes:%13d\n", nxyz);
 	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", nxyzc);
 	fprintf(fp_log, "\n");
@@ -359,12 +357,12 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			assert(0);
 		}
 		int iyr, jday, ihr, imn;
-		double sec;
+		float sec;
 		float xlat, xlon, dep;
 		char evid[10 + 1];
 // c---START LOOP OVER EVENTS
 // c	read in event header
-		sscanf(str_inp, "%d %d %d %d %lf %f %f %f %s\n", &iyr, &jday, &ihr,
+		sscanf(str_inp, "%d %d %d %d %f %f %f %f %s\n", &iyr, &jday, &ihr,
 				&imn, &sec, &xlat, &xlon, &dep, evid);
 //	c---convert to epochal time
 		double dsec = sec;
@@ -402,7 +400,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			}
 
 			char str_tmp[100];
-			sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
+			sscanf(str_inp, "%s %d %d %d %d %f %99[^\n]\n", sta[nsta], &iyr,
 					&jday, &ihr, &imn, &sec, str_tmp);
 
 			isgood[nsta] = 1;
@@ -419,7 +417,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			} else if (phs[nsta] == '1') {
 				phs[nsta] = 'S';
 			}
-			pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
+			pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
 			dsec = sec;
 
 			double tarr;
@@ -458,7 +456,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 
 //---see if the travel time tables for these stations have been read in.  If
 //   not, read them in.
-		if (nsta >= maxsta) {
+		if (nsta > maxsta) {
 			printf("Error: too many station.\n");
 			assert(0);
 		}
@@ -485,7 +483,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 				if(DEBUG_PRINT)
 					printf(" Limit reached...looking for one we do not need now.\n");
 				assert(0);
-				for (j = 0; j < ntread - 1; j++) {
+				for (j = 0; j < ntread; j++) {
 					int flag = 0;
 					for (int k = 0; k < nsta; k++) {
 						if (strcmp(sta[k], stn[j]) == 0) {
@@ -530,13 +528,13 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 		//   h = 10, z0 = -25, so starting at k = 4 makes min depth at this stage 5.0.
 		//   this could be anywhere from -5 to 5 in next stage.
 		int nxx = 0, nyy = 0, nzz = 0;
-		double stdmin = DBL_MAX;
-		double avrmin = 0.;
+		float stdmin = DBL_MAX;
+		float avrmin = 0.;
 		for (int k = kmin; k < nz; k++) {
 			for (int j = 0; j < ny; j++) {
 				for (int i = 0; i < nx; i++) {
 					int n = nxy * k + nx * j + i;
-					double avres = 0.0, rsq = 0.0, facs = 0.0;
+					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					for (int is = 0; is < nsta; is++) {
 						double tp = t[indsta[is]][n];
 						if (ivs == 0 && phs[is] == 'S') {
@@ -546,8 +544,8 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 						float wt = pwt[is];
 						wtsave[is] = wt;
 						if (isgood[is]) {
-							double res1 = res[is] * wt;
-							double res2 = res1 * res[is];
+							float res1 = res[is] * wt;
+							float res2 = res1 * res[is];
 							avres += res1;
 							rsq += res2;
 							facs += wt;
@@ -556,12 +554,12 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					//    c---calculate variance of data
 					//    c         avwt = facs/nsta
 					//    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
-					double avwt = facs / ngood;
-					double deb = (rsq - avres * avres / facs)
+					float avwt = facs / ngood;
+					float deb = (rsq - avres * avres / facs)
 							/ ((ngood - 4) * avwt);
-					double dsum = fabs(deb);
+					float dsum = fabs(deb);
 					//    c------ find total sigma and the most likely hypocenter with min std
-					double std = sqrt(dsum);
+					float std = sqrtf(dsum);
 					if (std < stdmin) {
 						nxx = i;
 						nyy = j;
@@ -607,7 +605,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			for (int i = 0; i < nsta; i++) {
 				printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 						sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-						1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+						1.f / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
 						obstime[i] - tps[i]);
 			}
 			printf("\n");
@@ -663,7 +661,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			for (int j = 0; j < nstepy; j++) {
 				double yp = y0i + ddq * j;
 				for (int i = 0; i < nstepx; i++) {
-					double avres = 0.0, rsq = 0.0, facs = 0.0;
+					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					double xp = x0i + ddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
@@ -675,8 +673,8 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 						float wt = pwt[is];
 						wtsave[is] = wt;
 						if (isgood[is]) {
-							double res1 = res[is] * wt;
-							double res2 = res1 * res[is];
+							float res1 = res[is] * wt;
+							float res2 = res1 * res[is];
 							avres += res1;
 							rsq += res2;
 							facs += wt;
@@ -685,12 +683,13 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					//    c---calculate variance of data
 					//    c         avwt = facs/nsta
 					//    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
-					double avwt = facs / ngood;
-					double deb = (rsq - avres * avres / facs)
+
+					float avwt = facs / ngood;
+					float deb = (rsq - avres * avres / facs)
 							/ ((ngood - 4) * avwt);
-					double dsum = fabs(deb);
+					float dsum = fabs(deb);
 					//------ find total sigma and the most likely hypocenter with min std
-					double std = sqrt(dsum);
+					float std = sqrtf(dsum);
 					if (std < stdmin) {
 						nxx = i;
 						nyy = j;
@@ -714,7 +713,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			printf("\n");
 			printf(" First Order Refinement finished ... \n");
 			printf(" Info Density Maximum for event   %12d\n", nev + 1);
-			printf(" Minimum Standard Deviation   : %12.8lf\n", stdmin);
+			printf(" Minimum Standard Deviation   : %12.9lf\n", stdmin);
 			printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
 					nyy + 1, nzz + 1);
 			printf(" Average residual             : %10.8lf\n", avrmin);
@@ -729,7 +728,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			for (int i = 0; i < nsta; i++) {
 				printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 						sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-						1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+						1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
 						obstime[i] - tps[i]);
 			}
 			printf("\n");
@@ -750,7 +749,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			z0i = ezm;
 			nstepz = nstep1;
 		}
-		if (ezm + dh >= zmax)
+		if (ezm + dh > zmax)
 			nstepz = nstep1 - 1;
 
 		y0i = eym - ddq;
@@ -759,7 +758,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			y0i = eym;
 			nstepy = nstep1;
 		}
-		if (eym + ddq >= ymax)
+		if (eym + ddq > ymax)
 			nstepy = nstep1 - 1;
 
 		x0i = exm - ddf;
@@ -768,15 +767,15 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			x0i = exm;
 			nstepx = nstep1;
 		}
-		if (exm + ddf >= xmax)
-			nstepx = nstep1 - 1;
 
+		if (exm + ddf > xmax)
+			nstepx = nstep1 - 1;
 		for (int k = 0; k < nstepz; k++) {
 			double zp = z0i + ddh * k;
 			for (int j = 0; j < nstepy; j++) {
 				double yp = y0i + dddq * j;
 				for (int i = 0; i < nstepx; i++) {
-					double avres = 0.0, rsq = 0.0, facs = 0.0;
+					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					double xp = x0i + dddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
@@ -788,8 +787,8 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 						float wt = pwt[is];
 						wtsave[is] = wt;
 						if (isgood[is]) {
-							double res1 = res[is] * wt;
-							double res2 = res1 * res[is];
+							float res1 = res[is] * wt;
+							float res2 = res1 * res[is];
 							avres += res1;
 							rsq += res2;
 							facs += wt;
@@ -798,12 +797,12 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					//    c---calculate variance of data
 					//    c         avwt = facs/nsta
 					//    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
-					double avwt = facs / ngood;
-					double deb = (rsq - avres * avres / facs)
+					float avwt = facs / ngood;
+					float deb = (rsq - avres * avres / facs)
 							/ ((ngood - 4) * avwt);
-					double dsum = fabs(deb);
+					float dsum = fabs(deb);
 					//------ find total sigma and the most likely hypocenter with min std
-					double std = sqrt(dsum);
+					float std = sqrtf(dsum);
 					if (std < stdmin) {
 						nxx = i;
 						nyy = j;
@@ -832,7 +831,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			printf("\n");
 			printf(" Second Order Refinement finished ... \n");
 			printf(" Info Density Maximum for event   %12d\n", nev + 1);
-			printf(" Minimum Standard Deviation   : %12.8lf\n", stdmin);
+			printf(" Minimum Standard Deviation   : %12.9lf\n", stdmin);
 			printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
 					nyy + 1, nzz + 1);
 			printf(" Average residual             : %10.8lf\n", avrmin);
@@ -847,7 +846,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			for (int i = 0; i < nsta; i++) {
 				printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 						sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-						1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+						1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
 						obstime[i] - tps[i]);
 			}
 			printf("\n");
@@ -858,8 +857,8 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 		int iredo = 0;
 		for (int i = 0; i < nsta; i++) {
 			if (isgood[i]) {
-				double absres = fabs(resmin[i] - avrmin);
-				double percres = 100.0 * absres / tps[i];
+				float absres = fabs(resmin[i] - avrmin);
+				float percres = 100.0f * absres / tps[i];
 				if (absres <= resthres || percres <= resthrep)
 					ngood++;
 				else {
@@ -878,13 +877,13 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			}
 			//---in some cases, a revised location can bring back data that originally was considered outlier
 			//       so we allow the program to go back and use this recovered data
-			if (iretry > maxretry) {
+			if (iretry < maxretry) {
 				iretry++;
 				iredo = 0;
 				for (int i = 0; i < nsta; i++) {
 					if (isgood[i] == 0) {
-						double absres = fabs(resmin[i] - avrmin);
-						double percres = 100.0 * absres / tps[i];
+						float absres = fabs(resmin[i] - avrmin);
+						float percres = 100.0f * absres / tps[i];
 						if (absres <= resthres || percres <= resthrep) {
 							ngood++;
 							isgood[i] = 1;
@@ -907,7 +906,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 				sec = dsec;
 				char tmp[100];
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5f %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 				int len_str_data = 0;
@@ -915,7 +914,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 				strcpy(str_fhd[nev], tmp);
 				
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5f %8.4lf %12s %13.3f\n",
 						iyr, jday, ihr, imn, sec, exm, eym, ezmr, evid, stdmin);
 
 				if (ngood < nsta) {
@@ -936,7 +935,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 				sprintf(tmp, "  Info Density Maximum for event %12d\n", nev);
 				strapp(str_sum[nev], &len_str_sum, tmp);
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf  %8.5f %10.5f %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f  %8.5f %10.5f %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, exm, eym, ezmr, evid, stdmin);
 				strapp(str_sum[nev], &len_str_sum, tmp);
 				sprintf(tmp, " Event ID: %7s\n", evid);
@@ -973,7 +972,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					sprintf(tmp,
 							"%4s   %c %10.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
 							sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
-							1. / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+							1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
 							obstime[i] - tps[i]);
 					strapp(str_sum[nev], &len_str_sum, tmp);
 				}
@@ -1004,11 +1003,11 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			char tmp[200];
 			if (DBL_MAX - stdmin < 1) {
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s    **********\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5lf %8.4lf %12s    **********\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid);
 			} else {
 				sprintf(tmp,
-						"%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n",
+						"%4d %3d %2d %2d %8.4f %9.5f %10.5lf %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 			}
@@ -1096,25 +1095,25 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 
 	int nk = nx * ny * k;
 	int nj = nx * j;
-	int nk2 = nx * ny * k;
-	int nj2 = nx * j;
+	int nk2 = nx * ny * ( k + 1);
+	int nj2 = nx * (j + 1);
 	double fx = (x - xi) / df;
 	double fy = (yy - yj) / dq;
 	double fz = (z - zk) / h;
 
 	int ist = indsta[is];
-	*tp = (1. - fx) * (1. - fy) * (1. - fz) * t[ist][nk + nj + i];
-	*tp = *tp + fx * (1. - fy) * (1. - fz) * t[ist][nk + nj + i + 1];
-	*tp = *tp + (1. - fx) * fy * (1. - fz) * t[ist][nk + nj2 + i];
-	*tp = *tp + (1. - fx) * (1. - fy) * fz * t[ist][nk2 + nj + i];
-	*tp = *tp + fx * fy * (1. - fz) * t[ist][nk + nj2 + i + 1];
-	*tp = *tp + fx * (1. - fy) * fz * t[ist][nk2 + nj + i + 1];
-	*tp = *tp + (1. - fx) * fy * fz * t[ist][nk2 + nj2 + i];
+	*tp = (1.f - fx) * (1.f - fy) * (1.f - fz) * t[ist][nk + nj + i];
+	*tp = *tp + fx * (1.f - fy) * (1.f - fz) * t[ist][nk + nj + i + 1];
+	*tp = *tp + (1.f - fx) * fy * (1.f - fz) * t[ist][nk + nj2 + i];
+	*tp = *tp + (1.f - fx) * (1.f - fy) * fz * t[ist][nk2 + nj + i];
+	*tp = *tp + fx * fy * (1.f - fz) * t[ist][nk + nj2 + i + 1];
+	*tp = *tp + fx * (1.f - fy) * fz * t[ist][nk2 + nj + i + 1];
+	*tp = *tp + (1.f - fx) * fy * fz * t[ist][nk2 + nj2 + i];
 	*tp = *tp + fx * fy * fz * t[ist][nk2 + nj2 + i + 1];
 }
 
 void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
-		double *sec, int *isgood, char *phs, float *rwts,
+		float *sec, int *isgood, char *phs, float *rwts,
 		char sta[maxobs][MAXSTRLEN + 1], char *usemark, FILE *fp_leq) {
 	while (1) {
 		char str_inp[100];
@@ -1135,7 +1134,7 @@ void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
 		}
 
 		char str_tmp[100];
-		sscanf(str_inp, "%s %d %d %d %d %lf %99[^\n]\n", sta[*nsta],
+		sscanf(str_inp, "%s %d %d %d %d %f %99[^\n]\n", sta[*nsta],
 				&iyr[*nsta], &jday[*nsta], &ihr[*nsta], &imn[*nsta],
 				&sec[*nsta], str_tmp);
 
@@ -1148,7 +1147,7 @@ void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
 		}
 		sscanf(str_tmp, "%c %f", &phs[*nsta], &rwts[*nsta]);
 		*nsta = *nsta + 1;
-		if (*nsta >= maxobs) {
+		if (*nsta > maxobs) {
 			printf("Error:  too many observations! nsta=%d maxobs=%d\n", *nsta,
 					maxobs);
 			assert(0);

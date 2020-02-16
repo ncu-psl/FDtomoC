@@ -86,9 +86,8 @@
 #define nhbyte 58 * 4
 
 #define MAXSTRLEN 132
-#define rearth 6371.0
-#define degrad 0.017453292
-#define hpi 3.14159265358979323846 / 2
+// #define degrad 0.017453292f
+// #define hpi 1.570796f // 3.14159265358979323846 / 2
 
 #define _ATL_SECURE_NO_WARNINGS
 #pragma warning(disable : 4206 4221 4464 4710 5045)
@@ -98,18 +97,23 @@ int je = 0, ke = 0;
 
 double dsec, tarr, dpot;
 double stx, sty;
-float xlat, xlon;
+double stz[maxlst];
+double xlat, xlon;
 double a, b, c, quad;
 double tolmin, tolmax;
 double ex, ey, ez;
-double xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
+double xx, yy, zz, xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
 double sx, sy, sz, sf, sq, sr;
 double xo, yo, zo;
 double xold, yold, zold;
 double ro, r1, r2, q1, q2, f1, f2;
 double xs, ys, zs;
 double sinq, cosq, tanq, ctanq, tansq, ctansq;
-double dl, tc, rdevs;
+double dl;
+// some variable name is used in <math.h>, moved it into main()
+
+// added by lzw
+double sfq;
 
 float gx[nxcm], gy[nycm], gz[nzcm];
 float sp[nxyzm2];
@@ -128,6 +132,7 @@ float avrstn[maxlst][2];
 float rstnsq[maxlst][2];
 float facstn[maxlst][2];
 float du[nxyzm];
+
 float slats[nxm][nym], slons[nxm][nym];
 
 int nobstn[maxlst][2];
@@ -276,13 +281,13 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	if (fabs(df) < 0.0001)
 		df = fabs(h / (rearth * sin(y[0])));
 
-	tolmin = h * 1.E-6;
-	tolmax = h * 6.0;
+	tolmin = h * 1.E-6f;
+	tolmax = h * 6.0f;
 	if (DEBUG_PRINT) {
-		printf("  Origin:  %22.14lf %25.15lf %25.16lf       radians/km\n", x0, y[0], z0);
+		printf("  Origin:  %22.16lf %25.16lf %25.16lf       radians/km\n", x0, y[0], z0);
 		printf("  Radial Spacing: %24.16lf       km\n", h);
-		printf("  Latitude Spacing:  %25.17E  degrees\n", dq / degrad);
-		printf("  Longitude Spacing: %25.17E  degrees\n", df / degrad);
+		printf("  Latitude Spacing:  %25.16E  degrees\n", dq / degrad);
+		printf("  Longitude Spacing: %25.16E  degrees\n", df / degrad);
 		printf("  nxc, nyc, nzc: %12d%12d%12d\n", nxc, nyc, nzc);
 	}
 	sprintf(logfile, "sphrayderv.log%d", ittnum);
@@ -303,16 +308,16 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	fprintf(fp_log, "  \n");
 	fprintf(fp_log, "  Iteration counter: %18d\n", ittnum);
 	fprintf(fp_log, "  \n");
-	fprintf(fp_log, "  Longitude origin (x0) : %12.5lf    \n", x00);
-	fprintf(fp_log, "  Latitude origin  (y0) : %12.5lf    \n", y00);
-	fprintf(fp_log, "  Depth origin     (z0) : %21.16lf     \n", z0);
+	fprintf(fp_log, "  Longitude origin (x0) :  %12.6lf    \n", x00);
+	fprintf(fp_log, "  Latitude origin  (y0) :  %12.7lf    \n", y00);
+	fprintf(fp_log, "  Depth origin     (z0) :  %21.16lf     \n", z0);
 	{
 		char tmp[MAXSTRLEN];
 		dtoa(tmp, h, 18);
 		fprintf(fp_log, "  Fine Radial Spacing   :   %s       km\n", tmp);
 	}
-	fprintf(fp_log, "  Fine Latitude Spacing :   %19.17E  degrees\n", dq / degrad);
-	fprintf(fp_log, "  Fine Longitude Spacing:   %19.17E  degrees\n", df / degrad);
+	fprintf(fp_log, "  Fine Latitude Spacing :  %24.16E  degrees\n", dq / degrad);
+	fprintf(fp_log, "  Fine Longitude Spacing:  %24.16E  degrees\n", df / degrad);
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", nxc);
 	fprintf(fp_log, "  X coarse grid node spacing: \n");
@@ -352,8 +357,8 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, " Input file attachments:\n");
 	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Input station list: %-53s\n", stafile);
-	fprintf(fp_log, " Local Earthquake data file: %-31s\n", locdfil);
+	fprintf(fp_log, " Input station list:           %-60s\n", stafile);
+	fprintf(fp_log, " Local Earthquake data file:   %-60s\n", locdfil);
 	if (idoshot)
 		fprintf(fp_log, " Local Shot data file: %s\n", shotfil);
 
@@ -372,34 +377,34 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	fprintf(fp_log, " Output file attachments:\n");
 	fprintf(fp_log, " \n");
 	if (iraystat)
-		fprintf(fp_log, " Ray Statistics file: %s\n", raystat);
-	fprintf(fp_log, " Error Summary file: %s\n", telrerr);
-	fprintf(fp_log, " dt/ds file: %s\n", dtdsfil);
-	fprintf(fp_log, " Residuals file: %s\n", resfile);
-	fprintf(fp_log, " Hit file: %s\n", hitfile);
-	fprintf(fp_log, " Hypo derivatives file: %s\n", dtdhfil);
-	fprintf(fp_log, " Book keeping file: %s\n", bookfil);
+		fprintf(fp_log, " Ray Statistics file:          %s\n", raystat);
+	fprintf(fp_log, " Error Summary file:           %s\n", telrerr);
+	fprintf(fp_log, " dt/ds file:                   %s\n", dtdsfil);
+	fprintf(fp_log, " Residuals file:               %s\n", resfile);
+	fprintf(fp_log, " Hit file:                     %s\n", hitfile);
+	fprintf(fp_log, " Hypo derivatives file:        %s\n", dtdhfil);
+	fprintf(fp_log, " Book keeping file:            %s\n", bookfil);
 	if (idatout) {
-		fprintf(fp_log, " Data Output file: %s\n", dotfile);
-		fprintf(fp_log, " Header Output file: %s\n", headfil);
+		fprintf(fp_log, " Data Output file:             %s\n", dotfile);
+		fprintf(fp_log, " Header Output file:           %s\n", headfil);
 	}
 	if (nomat) {
 		fprintf(fp_log, " Tele Entry Point file: %s\n", entfile);
-		fprintf(fp_log, " Current index vector: %s\n", sclefil);
 	}
+	fprintf(fp_log, " Current index vector: %s\n", sclefil);
 	fprintf(fp_log, " \n");
 
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
 
-	double xmax = x0 + (nx - 1) * df;
-	double ymax = y[0] + (ny - 1) * dq;
-	double zmax = z0 + (nz - 1) * h;
+	float xmax = x0 + (nx - 1) * df;
+	float ymax = y[0] + (ny - 1) * dq;
+	float zmax = z0 + (nz - 1) * h;
 
 	if (DEBUG_PRINT) {
 		printf("  xmax = %21.14lf       degrees\n", xmax / degrad);
-		printf("  ymax = %21.14lf       degrees\n", ymax / degrad);
+		printf("  ymax = %21.15f       degrees\n", ymax / degrad);
 		printf("  zmax = %13.6lf      km\n", zmax);
 	}
 
@@ -407,9 +412,9 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	fprintf(fp_log, "  Total Number of coarse grid nodes: %12d\n", nxyzc);
 	fprintf(fp_log, " \n");
 	fprintf(fp_log, "  X Max:    %18.14lf       degrees\n", xmax / degrad);
-	fprintf(fp_log, "  Y Max:    %18.14lf       degrees(colatitude)\n", ymax / degrad);
-	fprintf(fp_log, "  Y Max:    %18.14lf       degrees(latitude)\n", 90. - ymax / degrad);
-	fprintf(fp_log, "  Z Max: %12.6lf      km\n", zmax);
+	fprintf(fp_log, "  Y Max:    %18.15lf       degrees (colatitude)\n", ymax / degrad);
+	fprintf(fp_log, "  Y Max:    %18.15lf       degrees (latitude)\n", 90. - ymax / degrad);
+	fprintf(fp_log, "  Z Max:  %12.7lf      km\n", zmax);
 	fprintf(fp_log, " \n");
 
 	char doo[2][10] = { " not", "" };
@@ -428,12 +433,12 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	strcpy(doo[0], " does not");
 	strcpy(doo[1], "");
 	fprintf(fp_log, "  Sphrayderv%s output raypaths (iray = %d)\n", doo[iray], iray);
-	fprintf(fp_log, "  Sphrayderv%s output ray stats (iraystat = %d)\n", doo[iraystat], iraystat);
+	fprintf(fp_log, "  Sphrayderv%s outputs ray stats (iraystat = %d)\n", doo[iraystat], iraystat);
 
 	fprintf(fp_log, "  Sphrayderv%s creates data file (idatout = %d)\n", doo[idatout], idatout);
 	if (idatout)
-		fprintf(fp_log, "  Residuals are flagged if more than %12.7f\n", resflag);
-	fprintf(fp_log, "  Sphrayderv %s make matrices (nomat = %d)\n", doo[!nomat], nomat);
+		fprintf(fp_log, "  Residuals are flagged if more than %12.8f\n", resflag);
+	fprintf(fp_log, "  Sphrayderv %s makes matrices (nomat = %d)\n", doo[!nomat], nomat);
 	strcpy(doo[0], "3D");
 	strcpy(doo[1], "1D");
 	fprintf(fp_log, "  Sphrayderv will do a %s inversion (do1d = %d)\n", doo[ido1d], ido1d);
@@ -559,6 +564,9 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		gz[i] = gz[i - 1] + h * igridz[i - 1];
 	}
 
+	nxy = nx*ny;
+	nxyz = nxy*nz;
+	int nz1 = nz - 1;
 	int nxyz2 = nxyz * 2;
 	int maxvar = nxyz;
 	int maxvar2 = nxyz2;
@@ -573,7 +581,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
 	int nstr;
 	char str_inp[MAXSTRLEN];
-	double stz[maxlst];
 
 	for (nstr = 0; fgets(str_inp, sizeof(str_inp), fp_sta); nstr++) {
 		char str_inp_trimed[MAXSTRLEN];
@@ -597,20 +604,22 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		//
 
 		int ielev;
-		double slat, slon;
-		sscanf(str_inp, "%lf %lf %d %s %lf %lf %f %f", &sty, &stx, &ielev, stt[nstr], &slat, &slon, &tcor[nstr][0], &tcor[nstr][1]);
+		float slat, slon;
+		sscanf(str_inp, "%lf %lf %d %s %f %f %f %f", &sty, &stx, &ielev, stt[nstr], &slat, &slon, &tcor[nstr][0], &tcor[nstr][1]);
+
 		// ---temp lines to reassign slat and slon as the reference locations
 		stx = slon;
 		sty = slat;
 		// --end temp lines
 		stlon[nstr] = stx * degrad;
 		stlat[nstr] = hpi - glat(sty * degrad);
-		stz[nstr] = -ielev / 1000.;
+		stz[nstr] = -(float)(ielev / 1000.f);
 		//    stz(nstr) = -elev
 		// ---left justify the station name (no leading blanks)
 		ljust(stt[nstr]);
 	}
-	printf(" %d stations read in.\n", nstr);
+	nstr--;
+	printf(" %d stations read in.\n", nstr+1);
 	fclose(fp_sta);
 
 	// -- - header on station correction array
@@ -664,10 +673,10 @@ a3: ;
 		assert(0);
 	}*/
 	int kyr, kday, khr, kmn;
-	double esec;
+	float esec;
 	float dep;
 
-	sscanf(SPHFDLOC[evenum]->event_hdr, "%d %d %d %d %lf %f %f %f %s\n", &kyr, &kday, &khr,
+	sscanf(SPHFDLOC[evenum]->event_hdr, "%d %d %d %d %f %lf %lf %f %s\n", &kyr, &kday, &khr,
 		&kmn, &esec, &xlat, &xlon, &dep, evid);
 
 	//	c---convert to epochal time
@@ -686,7 +695,7 @@ a3: ;
 		nshot++;
 	}
 	int ies = 0, jes = 0, kes = 0;
-	double xis = 0, yjs = 0, zks = 0;
+	float xis = 0, yjs = 0, zks = 0;
 	if (istel == 0) {
 		ex = xlon * degrad;
 		ey = hpi - glat(xlat * degrad);
@@ -706,7 +715,11 @@ a3: ;
 			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
 			fprintf(fp_err, "\n");
 			while (aline[0] != '\0') {
+<<<<<<< HEAD:lib/FDtomo/sphrayderv.c
 				if(!sscanf(evetmp, "%[^\n]", str_inp)) {
+=======
+				if (fgets(str_inp, sizeof(str_inp), fp_din) == NULL) {
+>>>>>>> origin/bugfix-float-double:src/sphrayderv.c
 					break;
 				}
 				len = (int)strlen(str_inp);
@@ -757,15 +770,15 @@ a3: ;
 		}
 
 		char str_tmp[MAXSTRLEN];
-		int iyr, jday, ihr, imn;
-		double sec = 0;
-		sscanf(str_inp_trimed, "%s %d %d %d %d %lf %99[^\n]\n", sta[nsta], &iyr,
+		int iyr = 0, jday = 0, ihr = 0, imn = 0;
+		float sec = 0;
+		sscanf(str_inp_trimed, "%s %d %d %d %d %f %99[^\n]\n", sta[nsta], &iyr,
 			&jday, &ihr, &imn, &sec, str_tmp);
 		if (str_tmp[0] == '*') {
 			str_tmp[0] = ' ';
 			//trim(str_tmp);
 		}
-		char str_t[10];
+		char str_t[10] = "";
 		sscanf(str_tmp, " %c %f", str_t, &rwts[nsta]);
 		phs[nsta] = str_t[0];
 		// --- left justify station name
@@ -779,11 +792,12 @@ a3: ;
 		}
 		d_blank(filen, &len);
 
-		pwt[nsta] = 1. / (rwts[nsta] * rwts[nsta]);
+		pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
 		dsec = sec;
 
 		htoe(iyr, jday, ihr, imn, dsec, &tarr);
 		obstime[nsta] = tarr - dpot;
+
 		if (nsta > maxobs) {
 			printf(" Error: too many observations!\n");
 			fprintf(fp_log, " Error: too many observations!\n");
@@ -815,16 +829,16 @@ a3: ;
 		memset(du, 0, maxvar * sizeof(du[0]));
 
 		inbk[i] = 0;
-		rdevs = 0;
+		float rdevs = 0;
 		isgood[i] = 1;
 
 		// Find this station in the station list
-		for (kn = 0; kn < nstr; kn++) {
+		for (kn = 0; kn < nstr + 1; kn++) {
 			if (strcmp(sta[i], stt[kn]) == 0) {
 				break;
 			}
 		}
-		if (kn == nstr) {
+		if (kn == nstr + 1 ) {
 			printf(" Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
 			fprintf(fp_log, " Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
 			isgood[i] = 0;
@@ -839,7 +853,7 @@ a3: ;
 		if (phs[i] == 'S')
 			iph = 1;
 		int iphm1 = iph;
-		tc = tcor[kn][iph];
+		float tc = tcor[kn][iph];
 		istn[i] = kn + nstr * iphm1;
 
 		//--- This is the nearest grid point to the Station
@@ -974,31 +988,31 @@ a3: ;
 		}
 
 		// ----(rsx, rsy) is a unit vector from earthquake to station used in raypath stats only
-		double rsx = xs - ex;
-		double rsy = ys - ey;
+		float rsx = xs - ex;
+		float rsy = ys - ey;
 
 		// ----if this is a teleseism, find the entry point at the base of the model
-		double ttel = 0, ebx = 0, eby = 0, ebz = 0;
+		float ttel = 0, ebx = 0, eby = 0, ebz = 0;
 		if (istel) {
 			// --- calculate the ellipticity correction for this station - event pair(need station at surface!)
-			double rlon = xlon * degrad;
-			double rlat = hpi - glat(xlat * degrad);
+			float rlon = xlon * degrad;
+			float rlat = hpi - glat(xlat * degrad);
 			ez = dep;
 			float slat = stlat[kn];
 			float slon = stlon[kn];
 			float delt = 0, az1 = 0, az2 = 0;
 			bjdaz2(slat, slon, rlat, rlon, &delt, &az1, &az2, 0);
-			double tdelt = delt / degrad;
+			float tdelt = delt / degrad;
 			tdelts[i] = tdelt;
 			az1s[i] = az1 / degrad;
 			az2s[i] = az2 / degrad;
 			// ------elpcr gets the proper ellipticity correction for this ray
-			double elat = hpi - rlat;
-			double azdd = az2 / degrad;
-			double ezr4 = ez;
-			double elpc = 0;
+			float elat = hpi - rlat;
+			float azdd = az2 / degrad;
+			float ezr4 = ez;
+			float elpc = 0;
 			elpcr(elat, tdelt, azdd, ezr4, &elpc, iphm1, 1);
-			double time = 0, tbase = 0;
+			float time = 0, tbase = 0;
 			int inbound = 0;
 			// entry(rlat, rlon, ezr4, &ebx, &eby, &ebz, iphm1, j, elpc, &time, &tbase, &inbound);
 
@@ -1013,9 +1027,9 @@ a3: ;
 				// continue; // for(i=0;i<nsta;i++){...
 			}
 			if (nomat) {
-				double xent = ebx / degrad;
-				double yent = glatinv(hpi - eby) / degrad;
-				fprintf(fp_mat, "%lf %lf %lf\n", xent, yent, ebz);
+				float xent = ebx / degrad;
+				float yent = glatinv(hpi - eby) / degrad;
+				fprintf(fp_mat, "%f %f %f\n", xent, yent, ebz);
 				// --- extra output for testing
 			}
 			ttel = tbase;
@@ -1024,9 +1038,9 @@ a3: ;
 			ies = (int)((ebx - x0) / df);
 			jes = (int)((eby - y[0]) / dq);
 			kes = (int)((ebz - z0) / h);
-			if (((ebx - x0) < 0.) || (ies >= nx) ||
-				((eby - y[0]) < 0.) || (jes >= ny) ||
-				((ebz - z0) < 0.) || (kes >= nz)) {
+			if (((ebx - x0) < 0.f) || (ies >= nx) ||
+				((eby - y[0]) < 0.f) || (jes >= ny) ||
+				((ebz - z0) < 0.f) || (kes >= nz)) {
 				printf(" Error:  this station has an out of bounds entry point: %s\n", sta[i]);
 				printf(" Skipping this station.\n");
 				fprintf(fp_err, " %d %d %d %d %lf %lf %lf %lf %s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
@@ -1045,7 +1059,7 @@ a3: ;
 			rsx = xs - ebx;
 			rsy = ys - eby;
 		}
-		double smag = sqrt(rsx * rsx + rsy * rsy);
+		float smag = sqrtf(rsx * rsx + rsy * rsy);
 		rsx /= smag;
 		rsy /= smag;
 
@@ -1056,7 +1070,6 @@ a3: ;
 		int isegm2 = 0;
 
 		// ----start at the earthquake
-		double xx = 0, yy = 0, zz = 0;
 		if (istel == 0) {
 			xx = ex;
 			yy = ey;
@@ -1123,14 +1136,14 @@ a3: ;
 		fz = (zz - zk) / h;
 		// printf("1345 fx=%lf fy=%lf fz=%lf\n", fx, fy, fz);
 
-		double ds[8];
-		ds[0] = (1. - fz)*(1. - fy)*(1. - fx);
-		ds[1] = (1. - fz)*(1. - fy)*fx;
-		ds[2] = (1. - fz)*fy*(1. - fx);
-		ds[3] = (1. - fz) * fy * fx;
-		ds[4] = fz * (1. - fy) * (1. - fx);
-		ds[5] = fz * (1. - fy) * fx;
-		ds[6] = fz * fy * (1. - fx);
+		float ds[8];
+		ds[0] = (1.f - fz)*(1.f - fy)*(1.f - fx);
+		ds[1] = (1.f - fz)*(1.f - fy)*fx;
+		ds[2] = (1.f - fz)*fy*(1.f - fx);
+		ds[3] = (1.f - fz) * fy * fx;
+		ds[4] = fz * (1.f - fy) * (1.f - fx);
+		ds[5] = fz * (1.f - fy) * fx;
+		ds[6] = fz * fy * (1.f - fx);
 		ds[7] = fz * fy * fx;
 
 		dt = 0;
@@ -1147,36 +1160,36 @@ a3: ;
 		resmin[i] = dt;
 
 		//     This could be skipped for teles, but is innocuous
-		double dsdx[8];
-		dsdx[0] = -(1. - fz) * (1. - fy);
-		dsdx[1] = (1. - fz) * (1. - fy);
-		dsdx[2] = -(1. - fz) * fy;
-		dsdx[3] = (1. - fz) * fy;
-		dsdx[4] = -fz * (1. - fy);
-		dsdx[5] = fz * (1. - fy);
+		float dsdx[8];
+		dsdx[0] = -(1.f - fz) * (1.f - fy);
+		dsdx[1] = (1.f - fz) * (1.f - fy);
+		dsdx[2] = -(1.f - fz) * fy;
+		dsdx[3] = (1.f - fz) * fy;
+		dsdx[4] = -fz * (1.f - fy);
+		dsdx[5] = fz * (1.f - fy);
 		dsdx[6] = -fz * fy;
 		dsdx[7] = fz * fy;
 
-		double dsdy[8];
-		dsdy[0] = -(1. - fz) * (1. - fx);
-		dsdy[1] = -(1. - fz) * fx;
-		dsdy[2] = (1. - fz) * (1. - fx);
-		dsdy[3] = (1. - fz) * fx;
-		dsdy[4] = -fz * (1. - fx);
+		float dsdy[8];
+		dsdy[0] = -(1.f - fz) * (1.f - fx);
+		dsdy[1] = -(1.f - fz) * fx;
+		dsdy[2] = (1.f - fz) * (1.f - fx);
+		dsdy[3] = (1.f - fz) * fx;
+		dsdy[4] = -fz * (1.f - fx);
 		dsdy[5] = -fz * fx;
-		dsdy[6] = fz * (1. - fx);
+		dsdy[6] = fz * (1.f - fx);
 		dsdy[7] = fz * fx;
 
-		double dsdz[8];
-		dsdz[0] = -(1. - fy) * (1. - fx);
-		dsdz[1] = -(1. - fy) * fx;
-		dsdz[2] = -fy * (1. - fx);
+		float dsdz[8];
+		dsdz[0] = -(1.f - fy) * (1.f - fx);
+		dsdz[1] = -(1.f - fy) * fx;
+		dsdz[2] = -fy * (1.f - fx);
 		dsdz[3] = -fy * fx;
-		dsdz[4] = (1. - fy) * (1. - fx);
-		dsdz[5] = (1. - fy) * fx;
-		dsdz[6] = fy * (1. - fx);
+		dsdz[4] = (1.f - fy) * (1.f - fx);
+		dsdz[5] = (1.f - fy) * fx;
+		dsdz[6] = fy * (1.f - fx);
 		dsdz[7] = fy * fx;
-		double dtdx = 0, dtdy = 0, dtdz = 0;
+		float dtdx = 0, dtdy = 0, dtdz = 0;
 		for (int iii = 0; iii < 8; iii++) {
 			dtdx += dsdx[iii] * t[j][ipt[iii]];
 			dtdy += dsdy[iii] * t[j][ipt[iii]];
@@ -1188,11 +1201,11 @@ a3: ;
 
 		//----- wt = 1 / variance
 		//----- wet = 1 / standard deviation
-		double wt = pwt[i];
-		double wet = sqrt(wt);
+		float wt = pwt[i];
+		float wet = sqrtf(wt);
 
-		double res1 = dt * wt;
-		double res2 = res1 * dt;
+		float res1 = dt * wt;
+		float res2 = res1 * dt;
 		avres += res1;
 		avresev += res1;
 		rsq += res2;
@@ -1211,8 +1224,6 @@ a3: ;
 		// ***** Propagate ray from earthquake to station ******
 
 		//----location of cell
-		double dxs = 0, dys = 0, dzs = 0;
-		double rs = 0, dqs = 0, dfs = 0;
 	a100:
 		xi = df * ie + x0;
 		yj = dq * je + y[0];
@@ -1221,20 +1232,21 @@ a3: ;
 		//     Test to see if ray has reached the station.If so, accumulate normal equation
 		//     stuff and then go do next ray
 
-		dxs = xx - xs;
-		dys = yy - ys;
-		dzs = zz - zs;
-		rs = rearth - zz;
-		dqs = rs * dys;
-		dfs = rs * sin(yy) * dxs;
-		dlen = sqrt(dfs * dfs + dqs * dqs + dzs * dzs);
+		float dxs = xx - xs;
+		float dys = yy - ys;
+		float dzs = zz - zs;
+		float rs = rearth - zz;
+		float dqs = rs * dys;
+		float dfs = rs * sin(yy) * dxs;
 
-		if ((ie == iscell && je == jscell && ke == kscell) || (dlen < (h / 1000.))) {
+		float float_dlen=sqrtf(dfs * dfs + dqs * dqs + dzs * dzs);
+		dlen = float_dlen;
 
+		if ((ie == iscell && je == jscell && ke == kscell) || (dlen < (h / 1000.f))) {
 			// ----add on derivative for the station cell segment
-			xm = xx - dxs * 0.5;
-			ym = yy - dys * 0.5;
-			zm = zz - dzs * 0.5;
+			xm = xx - dxs * 0.5f;
+			ym = yy - dys * 0.5f;
+			zm = zz - dzs * 0.5f;
 			int i1 = -1, j1 = -1, k1 = -1;
 
 			//--- find xm in coarse grid
@@ -1286,13 +1298,13 @@ a3: ;
 			fy = (ym - ycj) / hy;
 			fz = (zm - zck) / hz;
 
-			ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
-			ds[1] = (1. - fz) * (1. - fy) * fx;
-			ds[2] = (1. - fz) * fy * (1. - fx);
-			ds[3] = (1. - fz) * fy * fx;
-			ds[4] = fz * (1. - fy) * (1. - fx);
-			ds[5] = fz * (1. - fy) * fx;
-			ds[6] = fz * fy * (1. - fx);
+			ds[0] = (1.f - fz) * (1.f - fy) * (1.f - fx);
+			ds[1] = (1.f - fz) * (1.f - fy) * fx;
+			ds[2] = (1.f - fz) * fy * (1.f - fx);
+			ds[3] = (1.f - fz) * fy * fx;
+			ds[4] = fz * (1.f - fy) * (1.f - fx);
+			ds[5] = fz * (1.f - fy) * fx;
+			ds[6] = fz * fy * (1.f - fx);
 			ds[7] = fz * fy * fx;
 
 			nk = nxyc * (k1 - 1);
@@ -1323,10 +1335,10 @@ a3: ;
 			}
 
 			if (iray) {
-				double xray1 = xx / degrad;
-				double yray1 = glatinv(hpi - yy) / degrad;
-				double xray2 = xs / degrad;
-				double yray2 = glatinv(hpi - ys) / degrad;
+				float xray1 = xx / degrad;
+				float yray1 = glatinv(hpi - yy) / degrad;
+				float xray2 = xs / degrad;
+				float yray2 = glatinv(hpi - ys) / degrad;
 				FILE* fp_pth = fopen("", "");
 				assert(0);
 				fprintf(fp_pth, "%12.7f %12.7f %12.7f", xray1, yray1, zz);
@@ -1336,7 +1348,7 @@ a3: ;
 
 			// ----rdevav is a measure of the deviation of ray from the source - station plane
 			if (iraystat) {
-				double rdevav = rdevs / nseg;
+				float rdevav = rdevs / nseg;
 				rdevs = 0.;
 				fprintf(fp_ray, " %10.4f %10.4f %10.4f %10.4f %10.4f %s %10.4f", ex, ey, ez, rsx, rsy, stt[kn], rdevav);
 			}
@@ -1500,7 +1512,7 @@ a3: ;
 			goto a200; // ----go do next phase
 		}
 
-		// FIND THE RAY[GRAD(T)]
+		// FIND THE RAY [GRAD(T)]
 		nk = nxy * ke;
 		nj = nx * je;
 		nk2 = nx * ny * (ke + 1);
@@ -1569,18 +1581,18 @@ a3: ;
 		xo = ro * sinq * cosf;
 		yo = ro * sinq * sinf;
 		zo = ro * cosq;
-
 		// if ray in seismometer cube, use straight ray from source
 		if (ie >= (is - 2) && ie < (is + 2) &&
 			je >= (js - 2) && je < (js + 2) &&
 			ke >= (ks - 2) && ke < (ks + 2)) {
 			r2 = rearth - zs;
-			double x2 = r2 * sin(ys) * cos(xs);
-			double y2 = r2 * sin(ys) * sin(xs);
-			double z2 = r2 * cos(ys);
+			float x2 = r2 * sin(ys) * cos(xs);
+			float y2 = r2 * sin(ys) * sin(xs);
+			float z2 = r2 * cos(ys);
 			double dx = x2 - xo;
 			double dy = y2 - yo;
 			double dz = z2 - zo;
+			float float_dl = sqrtf(dx * dx + dy * dy + dz * dz);
 			dl = sqrt(dx * dx + dy * dy + dz * dz);
 			sx = dx / dl;
 			sy = dy / dl;
@@ -1604,7 +1616,7 @@ a3: ;
 			sx = -sinf * sf + cosq * cosf * sq + sinq * cosf * sr;
 			sy = cosf * sf + cosq * sinf * sq + sinq * sinf * sr;
 			sz = -sinq * sq + cosq * sr;
-			smag = sqrt(sx * sx + sy * sy + sz * sz);
+			smag = sqrtf(sx * sx + sy * sy + sz * sz);
 			sx /= smag;
 			sy /= smag;
 			sz /= smag;
@@ -1612,9 +1624,9 @@ a3: ;
 
 		//----save ray direction from source for use in focal mechanisms
 		if (nseg == 0) {
-			double sfq = sqrt(sf * sf + sq * sq);
-			double az = atan2(sf, -sq) / degrad;
-			double ai = atan2(sfq, -sr) / degrad;
+			sfq = sqrt(sf * sf + sq * sq);
+			float az = atan2f(sf, -sq) / degrad;
+			float ai = atan2f(sfq, -sr) / degrad;
 			ais[i] = ai;
 			azs[i] = az;
 		}
@@ -1631,7 +1643,9 @@ a3: ;
 			c = xo * xo + yo * yo + zo * zo - ro * ro;
 			quad = b * b - c;
 			if (quad >= 0) {
-				dd[2] = pmin(-b + sqrt(quad), -b - sqrt(quad));
+                float d1 = -b + sqrt(quad);
+                float d2 = -b - sqrt(quad);
+				dd[2] = pmin(d1, d2);
 			}
 		}
 
@@ -1666,7 +1680,9 @@ a3: ;
 
 			quad = b * b - a * c;
 			if (quad >= 0) {
-				dd[1] = pmin((-b + sqrt(quad)) / a, (-b - sqrt(quad)) / a);
+                float d1 = (-b + sqrt(quad)) / a;
+                float d2 = (-b - sqrt(quad)) / a;
+				dd[1] = pmin(d1, d2);
 			}
 		}
 
@@ -1681,13 +1697,13 @@ a3: ;
 				sinf = sin(xi + df);
 				cosf = cos(xi + df);
 			}
-			double d1;
+			float d1;
 			if (fabs(cosf) > fabs(sinf)) {
-				double tanf = sinf / cosf;
+				tanf = sinf / cosf;
 				d1 = (xo * tanf - yo) / (sy - sx * tanf);
 			}
 			else {
-				double ctanf = cosf / sinf;
+				ctanf = cosf / sinf;
 				d1 = (yo * ctanf - xo) / (sx - sy * ctanf);
 			}
 			if (d1 > 0) {
@@ -1895,25 +1911,26 @@ a3: ;
 			assert(0);
 		}
 
-		double hx = gx[i1] - gx[i1 - 1];
-		double hy = gy[j1] - gy[j1 - 1];
-		double hz = gz[k1] - gz[k1 - 1];
-		float xci = gx[i1];
-		float ycj = gy[j1];
-		float zck = gz[k1];
+		float hx = gx[i1] - gx[i1 - 1];
+		float hy = gy[j1] - gy[j1 - 1];
+		float hz = gz[k1] - gz[k1 - 1];
+
+		float xci = gx[i1-1];
+		float ycj = gy[j1-1];
+		float zck = gz[k1-1];
 
 		// --- derivatives
 		fx = (xm - xci) / hx;
 		fy = (ym - ycj) / hy;
 		fz = (zm - zck) / hz;
 
-		ds[0] = (1. - fz) * (1. - fy) * (1. - fx);
-		ds[1] = (1. - fz) * (1. - fy) * fx;
-		ds[2] = (1. - fz) * fy * (1. - fx);
-		ds[3] = (1. - fz) * fy * fx;
-		ds[4] = fz * (1. - fy) * (1. - fx);
-		ds[5] = fz * (1. - fy) * fx;
-		ds[6] = fz * fy * (1. - fx);
+		ds[0] = (1.f - fz) * (1.f - fy) * (1.f - fx);
+		ds[1] = (1.f - fz) * (1.f - fy) * fx;
+		ds[2] = (1.f - fz) * fy * (1.f - fx);
+		ds[3] = (1.f - fz) * fy * fx;
+		ds[4] = fz * (1.f - fy) * (1.f - fx);
+		ds[5] = fz * (1.f - fy) * fx;
+		ds[6] = fz * fy * (1.f - fx);
 		ds[7] = fz * fy * fx;
 
 		nk = nxyc * (k1 - 1);
@@ -1966,10 +1983,10 @@ a3: ;
 					assert(0);
 				}
 			}
-			double xray1 = xold / degrad;
-			double yray1 = glatinv(hpi - yold) / degrad;
-			double xray2 = xx / degrad;
-			double yray2 = glatinv(hpi - yy) / degrad;
+			float xray1 = xold / degrad;
+			float yray1 = glatinv(hpi - yold) / degrad;
+			float xray2 = xx / degrad;
+			float yray2 = glatinv(hpi - yy) / degrad;
 			if (fp_pth) {
 				fprintf(fp_pth, "%12.5f %12.5f %12.5f\n", xray1, yray1, zold);
 				fprintf(fp_pth, "%12.5f %12.5f %12.5f\n", xray2, yray2, zz);
@@ -1980,11 +1997,11 @@ a3: ;
 		// 	  write (31,fmt='(3f10.3)') xold,yold,-zold
 
 		// ----rdev is a measure of the deviation of ray from the source-station plane
-		double rx = xm - ex;
-		double ry = ym - ey;
-		double rmagsq = rx * rx + ry * ry;
-		double rds = rsx * rx + rsy * ry;
-		double rdev = sqrt(rmagsq - rds * rds);
+		float rx = xm - ex;
+		float ry = ym - ey;
+		float rmagsq = rx * rx + ry * ry;
+		float rds = rsx * rx + rsy * ry;
+		float rdev = sqrtf(rmagsq - rds * rds);
 		rdevs += rdev;
 		// -----------------------------------------
 		// ---go back to get next ray segment
@@ -2015,7 +2032,7 @@ a3: ;
 				//  However, in order to be consistent with the local / shot weighting, we
 				//  multiply the data vectory by sqrt(pwt(k)) anticipating that another sqrt(wt)
 				//  will come from a weighted GT.
-				dat[k] = dat[k] * sqrt(pwt[k]);
+				dat[k] = dat[k] * sqrtf(pwt[k]);
 				resmin[k] = resmin[k] - avresev;
 				obstime[k] = obstime[k] - avresev;
 			}
@@ -2056,7 +2073,7 @@ a3: ;
 			for (k = 0; k < nsta; k++) {
 				if (isgood[k]) {
 					float wt = pwt[k];
-					double wet = sqrt(wt);
+					float wet = sqrtf(wt);
 					int lim = inbk[k];
 					if (lim != 0) {
 						for (int j1 = 0; j1 < lim; j1++) {
@@ -2077,7 +2094,7 @@ a3: ;
 				float valv = vsum[jnd] / wsum;
 				for (int i1 = 0; i1 < nsta; i1++) {
 					if (isgood[i1]) {
-						vmp[jnd][i1] -= sqrt(pwt[i1]) * valv;
+						vmp[jnd][i1] -= sqrtf(pwt[i1]) * valv;
 					}
 				}
 			}
@@ -2135,7 +2152,7 @@ a3: ;
 						if (isgood[j1]) {
 							jsave[ja] = j1;
 							ja++;
-							double sqrpwt = sqrt(pwt[j1]);
+							float sqrpwt = sqrtf(pwt[j1]);
 							dtc[ja] = -sqrpwt / wsum;
 							if (k1 == j1) {
 								dtc[ja] = sqrpwt + dtc[ja];
@@ -2231,15 +2248,15 @@ a3: ;
 	// ----output a data file if requested
 	if (idatout == 1) {
 		int iyr = 0, jday = 0, ihr = 0, imn = 0;
-		double sec = 0;
+		float sec = 0;
 		etoh(dpot, &iyr, &jday, &ihr, &imn, &dsec);
 		sec = dsec;
 		if (istel == 0) {
 			xlon = ex / degrad;
 			xlat = glatinv(hpi - ey) / degrad;
 		}
-		fprintf(fp_hed, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
-		fprintf(fp_dot, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3lf\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
+		fprintf(fp_hed, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3f\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
+		fprintf(fp_dot, "%4d %3d %2d %2d %8.4lf %9.5f %10.5lf %8.4lf %12s %13.3f\n", iyr, jday, ihr, imn, sec, xlat, xlon, ez, evid, avresev);
 		for (j = 0; j < nsta; j++) {
 			if (isgood[j]) {
 				tarr = obstime[j] + dpot;
@@ -2352,29 +2369,31 @@ a60:
 		}
 
 		// ---- global statistics
-		double avwt = facs / knobs;
-		double deb = (rsq - avres * avres / facs) / (knobs * avwt);
-		double std = sqrt(deb);
-		rms = sqrt(rms / wtmod);
+		float avwt = facs / knobs;
+		float deb = (rsq - avres * avres / facs) / (knobs * avwt);
+		float std = sqrtf(deb);
+		rms = sqrtf(rms / wtmod);
 		avres = avres / facs;
 
-		char form[34 * 6 + 31 * 4 + 1] = " Overall data variance :  %10.4f\n";
-		strcat(form, "    standard deviation :  %10.4f\n");
-		strcat(form, "                   RMS :  %10.4f\n");
-		strcat(form, "      Average Residual :  %10.4f\n");
-		strcat(form, "        Average Weight :  %10.4f\n");
-		strcat(form, "            Chi-square :  %10.4f\n");
+		char form[34 * 6 + 31 * 4 + 1] = " Overall data variance :  %12.4f\n";
+		strcat(form, "    standard deviation :  %12.4f\n");
+		strcat(form, "                   RMS :  %12.4f\n");
+		strcat(form, "      Average Residual :  %12.4f\n");
+		strcat(form, "        Average Weight :  %12.4f\n");
+		strcat(form, "            Chi-square :  %12.4f\n");
 		strcat(form, "Number of Observations :  %6d\n");
 		strcat(form, " Number of Earthquakes :  %6d\n");
 		strcat(form, "  Number of Teleseisms :  %6d\n");
 		strcat(form, "       Number of Shots :  %6d\n");
-		printf(form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
-		fprintf(fp_err, form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
-		fprintf(fp_log, form, deb, std, rms, avres, avwt, sqrt(rsq) / knobs, knobs, nev, ntel, nshot);
+		printf(form, deb, std, rms, avres, avwt, sqrtf(rsq) / knobs, knobs, nev, ntel, nshot);
+		fprintf(fp_err, form, deb, std, rms, avres, avwt, sqrtf(rsq) / knobs, knobs, nev, ntel, nshot);
+		fprintf(fp_log, form, deb, std, rms, avres, avwt, sqrtf(rsq) / knobs, knobs, nev, ntel, nshot);
 
 		printf("\n");
 		fprintf(fp_err, "\n");
 		fprintf(fp_log, "\n");
+		fprintf(fp_err, "  \n");
+		fprintf(fp_log, "  \n");
 		fprintf(fp_err, "  No. Stn    Phs Average St.Dev. Nobs\n");
 		fprintf(fp_log, "  No. Stn    Phs Average St.Dev. Nobs\n");
 
@@ -2387,15 +2406,15 @@ a60:
 				if (facs > 0) {
 					avwt = facs / knobs;
 					deb = (rsq - avres * avres / facs) / (jnobs * avwt);
-					std = sqrt(fabs(deb));
+					std = sqrtf(fabs(deb));
 					avres = avres / facs;
 				}
 				else {
 					avres = 0.;
 					std = 0.;
 				}
-				fprintf(fp_err, "%d %s %d %lf %lf %d\n", kn, stt[kn], iph, avres, std, jnobs);
-				fprintf(fp_log, "%d %s %d %lf %lf %d\n", kn, stt[kn], iph, avres, std, jnobs);
+				fprintf(fp_err, "%5d %s %4d %8.3f %8.3f %4d\n", kn + 1, stt[kn], iph + 1, avres, std, jnobs);
+				fprintf(fp_log, "%5d %s %4d %8.3f %8.3f %4d\n", kn + 1, stt[kn], iph + 1, avres, std, jnobs);
 			}
 		}
 
