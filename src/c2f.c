@@ -42,6 +42,7 @@
 #include "common/gridspec.h"
 #include "common/parseprogs.h"
 #include "common/string_process.h"
+#include "common/vhead.h"
 
 #define MAX1D 1000
 #define MAXSTRLEN 132
@@ -95,7 +96,7 @@ double axo, ayo, azo, dxh, dyh, dzh;
 float azh;
 int nxh, nyh, nzh;
 
-char hdr[nhbyte + 1];
+char hdr[120];
 
 float rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
 int len_head = nhbyte;
@@ -433,9 +434,10 @@ int main() {
 		printf("(Error in c2f.c)read file error.\n");
 		assert(0);
 	}
-	fread(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
+	struct vhead headin;
+	fread(&headin, sizeof(char), nhbyte, fp_cor);
 	
-	char *offset = hdr;
+	char *offset = headin.header;
 	sscanf(offset, "%4s", head);
 	offset += strlen(head);
 	sscanf(offset, "%4s", type);
@@ -447,7 +449,22 @@ int main() {
 	sscanf(offset, "%4s", flatten);
 	offset += strlen(flatten);
 	sscanf(offset, "%100s", hcomm);
-
+	fxs = headin.fxs;
+	fys = headin.fys;
+	fzs = headin.fzs;
+	clat = headin.clat;
+	clon = headin.clon;
+	cz = headin.cz;
+	axo = headin.x0;
+	ayo = headin.y0;
+	azo = headin.z0;
+	dxh = headin.dx;
+	dyh = headin.dy;
+	dzh = headin.dz;
+	azh = headin.az;
+	nxh = headin.nx;
+	nyh = headin.ny;
+	nzh = headin.nz;
 	for (int i = 0; i < nxyzm2; i++)
 		vsave[i] = 0.;
 
@@ -582,6 +599,24 @@ int main() {
 
 	sprintf(vpfile, "%s.pvel", ffile);
 	sprintf(vsfile, "%s.svel", ffile);
+	struct vhead headout;
+	headout.fxs = fxs;
+	headout.fys = fys;
+	headout.fzs = fzs;
+	headout.clat = clat;
+	headout.clon = clon;
+	headout.cz = cz;
+	headout.x0 = axo;
+	headout.y0 = ayo;
+	headout.z0 = azo;
+	headout.dx = dxh;
+	headout.dy = dyh;
+	headout.dz = dzh;
+	headout.az = azh;
+	headout.nx = nxh;
+	headout.ny = nyh;
+	headout.nz = nzh;
+	strncpy(headout.header, hdr, 120);
 
 	FILE *fp_fnw = fopen(ffile, "wb");
 	if (!fp_fnw) {
@@ -590,19 +625,21 @@ int main() {
 	}
 	printf("Writing out file 1... \n");
 	hdr_appender(hdr, nhbyte, head, type, syst, "BMOD", flatten, hcomm);
+	strncpy(headout.header, hdr, 120);
 
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fnw);
+	fwrite(&headout, sizeof(char), nhbyte, fp_fnw);
 	fwrite(vsave, sizeof(vsave[0]), nxyz2, fp_fnw);
 
 	FILE *fp_fnp = fopen(vpfile, "wb");
 	if (!fp_fnp) {
 		printf("(Error in c2f.c)write file error.\n");
 		assert(0);
-	}
+	} 
 	printf("Writing out file 2... \n");
 	hdr_appender(hdr, nhbyte, head, type, syst, "VPMD", flatten, hcomm);
+	strncpy(headout.header, hdr, 120);
 
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fnp);
+	fwrite(&headout, sizeof(char), nhbyte, fp_fnp);
 	fwrite(vsave, sizeof(vsave[0]), nxyz, fp_fnp);
 
 	FILE *fp_fns = fopen(vsfile, "wb");
@@ -612,8 +649,9 @@ int main() {
 	}
 	printf("Writing out file 3... \n");
 	hdr_appender(hdr, nhbyte, head, type, syst, "VSMD", flatten, hcomm);
+	strncpy(headout.header, hdr, 120);
 
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fns);
+	fwrite(&headout, sizeof(hdr[0]), nhbyte, fp_fns);
 	fwrite(vsave + nxyz, sizeof(vsave[0]), nxyz2 - nxyz, fp_fns);
 
 	goto a65;
