@@ -2663,7 +2663,6 @@ a60:
 			fwrite(&ja, sizeof(ja), 1, fp_dts);
 			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
 			for (int i=0;i < mbl ;i++){
-				fwrite(&i, sizeof(i), 1, fp_dts);
 				fwrite(&jndx[i], sizeof(jndx[i]), 1, fp_dts);
 			}
 
