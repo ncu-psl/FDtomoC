@@ -86,8 +86,8 @@ char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
 fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
 
 float t[maxsta][nxyzm];
-char str_fhd[160000][100], str_data[160000][10000];
-char str_sum[160000][20000], str_out[160000][10000];
+char str_fhd[160000][20000], str_data[160000][20000];
+char str_sum[160000][20000], str_out[160000][20000];
 
 void find_time(double, double, double, double *, int, int *);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
@@ -106,7 +106,6 @@ int main() {
 //----ivs = 1 to treat Vp and Vs separately (individual time files).
 //        = 0 to compute Ts as Tp*vpvs
 	int ivs = 1;
-
 	float vpvs = 1.78;
 //---thresholds to define an acceptable location
 //---number of phases threshold
@@ -597,7 +596,7 @@ int main() {
 				&imn, &sec, &xlat, &xlon, &dep, evid);
 //	c---convert to epochal time
 		double dsec = sec;
-		double dpot;
+		double dpot;	
 		htoe(iyr, jday, ihr, imn, dsec, &dpot);
 
 		int isgood[maxobs], indsta[maxobs];
@@ -739,7 +738,6 @@ int main() {
 			}
 			strcpy(stn[iuse], sta[i]);
 			pha[iuse] = phs[i];
-			j = iuse;
 		}
 		if(DEBUG_PRINT)
 			printf(" Current ntread = %d\n", ntread);
@@ -1214,12 +1212,12 @@ int main() {
 					etoh(tarr, &iyr, &jday, &ihr, &imn, &dsec);
 					if (isgood[j]) {
 						sprintf(tmp,
-								"%s  %4d %3d %2d %2d %7.3lf %c %15.3f %10.3lf\n",
+								"%-6s%4d %3d %2d %2d %7.3lf %c %15.3f %10.3lf\n",
 								sta[j], iyr, jday, ihr, imn, dsec, phs[j],
 								rwts[j], resmin[j] - avrmin);
 					} else {
 						sprintf(tmp,
-								"%s  %4d %3d %2d %2d %7.3lf*%c %15.3f %10.3lf\n",
+								"%-6s%4d %3d %2d %2d %7.3lf*%c %15.3f %10.3lf\n",
 								sta[j], iyr, jday, ihr, imn, dsec, phs[j],
 								rwts[j], resmin[j] - avrmin);
 						strapp(str_out[nev], &len_str_out, tmp);
@@ -1316,12 +1314,12 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 	if (k < 0)
 		k = 0;
 
-	if (i > nx)
-		i = nx;
-	if (j > ny)
-		i = ny;
-	if (k > nz)
-		i = nz;
+	if (i > nx - 2)
+		i = nx - 2;
+	if (j > ny - 2)
+		j = ny - 2;
+	if (k > nz - 2)
+		k = nz - 2;
 
 	double xi = x0 + df * i;
 	double yj = y[0] + dq * j;
