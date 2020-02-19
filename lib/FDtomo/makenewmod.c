@@ -94,6 +94,7 @@
 #include "common/string_process.h"
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
+#include "FDtomo/makenewmod.h"
 
 
 #define MAX1D 1000
@@ -117,10 +118,10 @@
 float du[nxyzcm2], ds[nxyzcm2], vo[nxyzcm2], vn[nxyzcm2];
 
 // c---vd are the pertubations from runlsqr
-float vd[maxmbl];
-int jndx[maxmbl];
+float *vd;
+int *jndx;
 
-int makenewmod(SPEC spec) {
+int makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
@@ -269,28 +270,12 @@ int makenewmod(SPEC spec) {
 	int nph = 2;
 
 //c---read corrections 
-	FILE *fp_fmd = fopen(nmodfil, "rb");
-	if (!fp_fmd) {
-		printf("file open error: %s\n", nmodfil);
-		assert(0);
-	}
 	int nvar = 0;
-	fread(&nvar, sizeof(nvar), 1, fp_fmd);
-	if (nvar > maxmbl) {
-		printf(
-				"  Error:  nvar is greater than maximum: nvar=%12d maxmbl=%12d\n",
-				nvar, maxmbl);
-		fprintf(fp_log,
-				"  Error:  nvar is greater than maximum: nvar=%12d maxmbl=%12d\n",
-				nvar, maxmbl);
-		assert(0);
-	}
-	fread(vd, sizeof(vd[0]), nvar, fp_fmd);
-	fread(jndx, sizeof(jndx[0]), nvar, fp_fmd);
-	for (int i = 0; i < nvar; i++) {
-		jndx[i]--;
-	}
-	fclose(fp_fmd);
+
+	nvar = RUNLSQR->n;
+	vd = RUNLSQR->x;
+	jndx = RUNLSQR->jndx;
+
 
 	printf("  %10d perturbations read in\n", nvar);
 	fprintf(fp_log, "  %10d perturbations read in\n", nvar);
