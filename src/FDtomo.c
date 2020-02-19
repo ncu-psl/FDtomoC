@@ -54,7 +54,7 @@ int main(int argc, char *argv[]){
 	SPHFDLOC_DATA **SPHFDLOC = sphfdloc(spec, SPHFD);
 	SPHRAYDERV_DATA *SPHRAYDERV = sphrayderv(spec, SPHFDLOC);
 	RUNLSQR_DATA *RUNLSQR = runlsqr(spec, SPHRAYDERV);
-	makenewmod(spec, RUNLSQR);
+	MAKENEWMOD_DATA *MAKENEWMOD = makenewmod(spec, RUNLSQR);
 	return 0;
 
 }

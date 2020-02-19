@@ -115,13 +115,14 @@
 // c   ds holds the smoothed perturbations
 // c   vo holds the original model
 // c   vn holds the new model
-float du[nxyzcm2], ds[nxyzcm2], vo[nxyzcm2], vn[nxyzcm2];
+float du[nxyzcm2], ds[nxyzcm2], vo[nxyzcm2], *vn;
 
 // c---vd are the pertubations from runlsqr
 float *vd;
 int *jndx;
 
-int makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
+MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
+	MAKENEWMOD_DATA *MAKENEWMOD = (MAKENEWMOD_DATA *)malloc(sizeof(MAKENEWMOD_DATA));
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
@@ -145,6 +146,8 @@ int makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	strcpy(stafile, spec.stafile);
 	strcpy(nstafil, spec.nstafil);
 	
+	vn = (float *)malloc(sizeof(float) * nxyzcm2);
+
 
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
@@ -862,39 +865,12 @@ int makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	// if (iz2d==1) nzs = 1;
 
 	trim(fmodfil);
-	char vpfile[MAXSTRLEN + 1], vsfile[MAXSTRLEN + 1];
-	sprintf(vpfile,"%s.pvel", fmodfil);
-	sprintf(vsfile,"%s.svel", fmodfil);
 
-	sprintf(hcomm, "Output from makenewmod.c Version %s using %s", VERSION, oldvfil);
-	hdr_appender(hdr, nhbyte,head,type,syst,quant,flatten,hcomm);
-	FILE *fp_nmd=fopen(fmodfil, "wb");
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_nmd);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_nmd);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_nmd);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_nmd);
-	fwrite(vn, sizeof(vn[0]), nxyzc2, fp_nmd);
-	fclose(fp_nmd);
-
-	hdr_appender(hdr, nhbyte,head,type,syst,"VPMD",flatten,hcomm);
-	FILE *fp_vp=fopen(vpfile, "wb");
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_vp);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_vp);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_vp);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_vp);
-	fwrite(vn, sizeof(vn[0]), nxyzc, fp_vp);
-	fclose(fp_vp);
-
-	hdr_appender(hdr, nhbyte,head,type,syst,"VSMD",flatten,hcomm);
-	FILE *fp_vs=fopen(vsfile, "wb");
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_vs);
-	fwrite(igridx, sizeof(igridx[0]), nxc - 1, fp_vs);
-	fwrite(igridy, sizeof(igridy[0]), nyc - 1, fp_vs);
-	fwrite(igridz, sizeof(igridz[0]), nzc - 1, fp_vs);
-	for(int i=nxyzc;i<nxyzc2;i++) {
-		fwrite(vn, sizeof(vn[0]), 1, fp_vs);
-	}
-	fclose(fp_vs);
+	memcpy(MAKENEWMOD->hdr, hdr, strlen(hdr)+1);
+	memcpy(MAKENEWMOD->igridx, igridx, sizeof(spec.igridx));
+	memcpy(MAKENEWMOD->igridy, igridy, sizeof(spec.igridy));
+	memcpy(MAKENEWMOD->igridz, igridz, sizeof(spec.igridz));
+	MAKENEWMOD->vn = vn;
 
 // c---compute a 1D average for the elements that were hit
 	FILE *fp_1dm=fopen("new1d.mod", "w");
@@ -933,4 +909,6 @@ int makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		fprintf(fp_1dm, "%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 	}
 	fclose(fp_1dm);
+	
+	return MAKENEWMOD;
 }
