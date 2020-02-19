@@ -46,8 +46,8 @@ int main(int argc, char *argv[]){
 	C2F_DATA *C2F = c2f(spec, MAKE1D);
 	SPHFD_DATA *SPHFD = sphfd(argc, argv, spec, C2F);
 	SPHFDLOC_DATA **SPHFDLOC = sphfdloc(spec, SPHFD);
-	SPHRAYDERV_DATA *sphrayderv(spec, SPHFDLOC);
-	runlsqr(spec);
+	SPHRAYDERV_DATA *SPHRAYDERV = sphrayderv(spec, SPHFDLOC);
+	runlsqr(spec, SPHRAYDERV);
 	makenewmod(spec);
 	return 0;
 

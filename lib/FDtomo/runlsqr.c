@@ -64,6 +64,7 @@
 #include "common/parseprogs.h"
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
+#include "FDtomo/runlsqr.h"
 
 #include "runlsqr/aprod.h"
 #include "runlsqr/makea.h"
@@ -89,18 +90,18 @@ int m, n, istop, intlim, j;
 FILE *fp_nout = NULL;
 
 // c  functions and local variables
-int ja[SIZEOFA], na[MMAX], jndx[NMAX];
-float b[MMAX], u[MMAX];
+int *ja, *na, *jndx;
+float *b, u[MMAX];
 float damp, v[NMAX], w[NMAX], x[NMAX], se[NMAX];
 float atoL, btol, conlim, anorm;
 float acond, rnorm, arnorm, dampsq, xnorm;
-float a[SIZEOFA];
+float *a;
 
 
 char logfile[80 + 1];
 float one = 1.0f;
 
-int runlsqr(SPEC spec) {
+int runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -166,28 +167,25 @@ int runlsqr(SPEC spec) {
 		printf("file create error: %s\n", fresfil);
 		assert(0);
 	}
-	FILE *fp_dts = fopen(dtdsfil, "rb");
-	if (!fp_dts) {
-		printf("file open error: %s\n", dtdsfil);
-		assert(0);
-	}
-	FILE *fp_res = fopen(resfile, "rb");
-	if (!fp_res) {
-		printf("file open error: %s\n", resfile);
-		assert(0);
-	}
 // c----------------------------------------------------------------------
 // c
 // c  generate a and b.  the vector r, ja, and na will define the matrix a.
 // c
 // c------------------------------------------------------------------------
-
+	
 	printf("  Reading in a and b ... \n");
 	fprintf(fp_log, "  Reading in a and b ... \n");
 	int nbl;
-	makea(&m, &nbl, fp_dts, fp_res, fp_log, jndx, a, na, ja, b);
-	n = nbl;
 
+	m = SPHRAYDERV->mat->number_rows;
+	n = nbl = SPHRAYDERV->mat->number_columns;
+	jndx = SPHRAYDERV->mat->jndx;
+	a = SPHRAYDERV->mat->elements;
+	na = SPHRAYDERV->mat->elements_row;
+	ja = SPHRAYDERV->mat->column_elements;
+	b = SPHRAYDERV->b;
+
+	
 // c---------------------------------------------------------------------
 // c
 // c  solve the problem defined by aprod, damp, and b
