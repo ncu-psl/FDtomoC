@@ -92,7 +92,7 @@ FILE *fp_nout = NULL;
 // c  functions and local variables
 int *ja, *na, *jndx;
 float *b, u[MMAX];
-float damp, v[NMAX], w[NMAX], x[NMAX], se[NMAX];
+float damp, v[NMAX], w[NMAX], *x, *se;
 float atoL, btol, conlim, anorm;
 float acond, rnorm, arnorm, dampsq, xnorm;
 float *a;
@@ -101,7 +101,9 @@ float *a;
 char logfile[80 + 1];
 float one = 1.0f;
 
-int runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
+RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
+	RUNLSQR_DATA *RUNLSQR = (RUNLSQR_DATA *)malloc(sizeof(RUNLSQR_DATA));
+
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -228,6 +230,9 @@ int runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 	}
 	fprintf(fp_log, " %d %d %f %f %d \n", m, n, damp, conlim, intlim);
 
+	x = (float *)malloc(sizeof(float) * NMAX);
+	se = (float *)malloc(sizeof(float) * NMAX);
+
 	lsqr(m, n, damp, 1, 1, ja, a, u, v, w, x, se, atoL, btol, conlim, intlim, fp_nout, istop, anorm, acond, &rnorm, &arnorm, &xnorm, fp_log);
 // c-----------------------------------------------------------------------
 // c
@@ -283,11 +288,12 @@ int runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 // c	  x(j) = x(j)/sc
 // c	  se(j) = se(j)/sc
 // c200	continue
-	fwrite(&n, sizeof(n), 1, fp_fmd);
-	fwrite(x, sizeof(x[0]), n, fp_fmd);
-	fwrite(jndx, sizeof(jndx[0]), n, fp_fmd);
-	fwrite(se, sizeof(se[0]), n, fp_fmd);
-	return 0;
+	RUNLSQR->n = n;
+	RUNLSQR->jndx = jndx;
+	RUNLSQR->x = x;
+	RUNLSQR->se = se;
+
+	return RUNLSQR;
 }
 
 // c     ------------------------------------------------------------------

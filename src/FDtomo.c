@@ -3,6 +3,8 @@
 #include "FDtomo/sphfd.h"
 #include "FDtomo/sphfdloc.h"
 #include "FDtomo/sphrayderv.h"
+#include "FDtomo/runlsqr.h"
+#include "FDtomo/makenewmod.h"
 
 #include "common/shared_variables.h"
 
@@ -43,11 +45,15 @@ int main(int argc, char *argv[]){
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
 	MAKE1D_DATA *MAKE1D = make1d(spec);
+	OUTPUT_MAKE1D(MAKE1D, spec);
 	C2F_DATA *C2F = c2f(spec, MAKE1D);
-	SPHFD_DATA *SPHFD = sphfd(argc, argv, spec, C2F);
+	OUTPUT_C2F(C2F, spec);
+	SPHFD_DATA **SPHFD = sphfd(argc, argv, spec, C2F);
+	for (int i = 0; i < num_parfiles; i++)
+		OUTPUT_SPHFD(SPHFD[i], spec);
 	SPHFDLOC_DATA **SPHFDLOC = sphfdloc(spec, SPHFD);
 	SPHRAYDERV_DATA *SPHRAYDERV = sphrayderv(spec, SPHFDLOC);
-	runlsqr(spec, SPHRAYDERV);
+	RUNLSQR_DATA *RUNLSQR = runlsqr(spec, SPHRAYDERV);
 	makenewmod(spec);
 	return 0;
 
