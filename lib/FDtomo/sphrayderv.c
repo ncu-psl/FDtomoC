@@ -160,7 +160,9 @@ int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
 int wsum = 0, ncwrt = 0;
 // ---- - end header stuff
 
-int sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
+SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
+	SPHRAYDERV_DATA *SPHRAYDERV = (SPHFDLOC_DATA *)malloc(sizeof(SPHFDLOC_DATA));
+	SPHRAYDERV->mat = (sparse_matrix *)malloc(sizeof(sparse_matrix));
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -653,6 +655,7 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	// ****************** Start Loop over events ******************
 	//    Read in event header
 	int evenum = 0;
+	int row_count = 0, ith = 0;
 	char *evetmp;
 a3: ;
 	if (evenum >= total_earthquakes) {
@@ -715,11 +718,7 @@ a3: ;
 			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
 			fprintf(fp_err, "\n");
 			while (aline[0] != '\0') {
-<<<<<<< HEAD:lib/FDtomo/sphrayderv.c
 				if(!sscanf(evetmp, "%[^\n]", str_inp)) {
-=======
-				if (fgets(str_inp, sizeof(str_inp), fp_din) == NULL) {
->>>>>>> origin/bugfix-float-double:src/sphrayderv.c
 					break;
 				}
 				len = (int)strlen(str_inp);
@@ -1699,11 +1698,11 @@ a3: ;
 			}
 			float d1;
 			if (fabs(cosf) > fabs(sinf)) {
-				tanf = sinf / cosf;
+				double tanf = sinf / cosf;
 				d1 = (xo * tanf - yo) / (sy - sx * tanf);
 			}
 			else {
-				ctanf = cosf / sinf;
+				double ctanf = cosf / sinf;
 				d1 = (yo * ctanf - xo) / (sx - sy * ctanf);
 			}
 			if (d1 > 0) {
@@ -2194,13 +2193,18 @@ a3: ;
 				}
 				if (ja > 0) {
 					fwrite(&ja, sizeof(ja), 1, fp_dts);
+					SPHRAYDERV->mat->elements_row[row_count] = ja;
+					row_count++;
 					for (int i1 = 0; i1 < ja; i1++) {
 						indx[mndm[jsave[i1]]]++;
 						fwrite(&indx[mndm[jsave[i1]]], sizeof(indx[mndm[jsave[i1]]]), 1, fp_dts);
+						SPHRAYDERV->mat->column_elements[ith] = indx[mndm[jsave[i1]]] - 1;
 						indx[mndm[jsave[i1]]]--;
 						fwrite(&vmp[jsave[i1]][j1], sizeof(vmp[jsave[i1]][j1]), 1, fp_dts);
+						SPHRAYDERV->mat->elements[ith] = vmp[jsave[i1]][j1];
+						ith++;
 					}
-
+					
 					// write residual file
 					fwrite(&dat[j1], sizeof(dat[j1]), 1, fp_res);
 
@@ -2458,5 +2462,9 @@ a60:
 		fclose(fp_msc);
 		fclose(fp_err);
 	}
-	return 0;
+	SPHRAYDERV->mat->number_rows = row_count;
+	SPHRAYDERV->mat->number_columns = mbl;
+	SPHRAYDERV->mat->jndx = jndx;
+	SPHRAYDERV->b = dat;
+	return SPHRAYDERV;
 }

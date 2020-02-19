@@ -1,5 +1,9 @@
 #include "FDtomo/make1d.h"
 #include "FDtomo/c2f.h"
+#include "FDtomo/sphfd.h"
+#include "FDtomo/sphfdloc.h"
+#include "FDtomo/sphrayderv.h"
+
 #include "common/shared_variables.h"
 
 #include <stdio.h>
@@ -38,11 +42,11 @@ int main(int argc, char *argv[]){
 	read_variables(argv[1], &spec);
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
-	make1d_data *MAKE1D = make1d(spec);
+	MAKE1D_DATA *MAKE1D = make1d(spec);
 	C2F_DATA *C2F = c2f(spec, MAKE1D);
-	sphfd(argc, argv, spec);
-	sphfdloc(spec);
-	sphrayderv(spec);
+	SPHFD_DATA *SPHFD = sphfd(argc, argv, spec, C2F);
+	SPHFDLOC_DATA **SPHFDLOC = sphfdloc(spec, SPHFD);
+	SPHRAYDERV_DATA *sphrayderv(spec, SPHFDLOC);
 	runlsqr(spec);
 	makenewmod(spec);
 	return 0;
