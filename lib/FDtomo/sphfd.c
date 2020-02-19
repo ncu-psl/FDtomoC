@@ -202,7 +202,7 @@ int num_parfiles = 0;
 
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-SPHFD_DATA *sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
+SPHFD_DATA **sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
 {
 	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
 	char tmp[MAXSTRLEN + 1];
@@ -7522,16 +7522,17 @@ int OUTPUT_SPHFD(SPHFD_DATA *sphfd_data, SPEC spec){
 	int nxyz = nxy * nz;
 	
 	char timefile[160];
-	int tfint;
+	FILE *tfint;
 	strcpy(timefile, spec.timedir);
 	strcat(timefile, "/");
 	strcat(timefile, sphfd_data->timefile);
-	if ((tfint = open(timefile, O_CREAT | O_WRONLY | O_TRUNC, 0664)) <= 1) {
-		fprintf(stderr, "cannot open %s\n", timefile);
+	tfint = fopen(timefile, "w");
+	if(!tfint){
+		printf("error on opening file (%s)\n", timefile);
 		assert(0);
 	}
-	write(tfint, sphfd_data->hdr, 232);
-	write(tfint, sphfd_data->time0, nxyz * 4);
+	fwrite(sphfd_data->hdr, sizeof(char), 232, tfint);
+	fwrite(sphfd_data->time0, sizeof(float), nxyz, tfint);
 	close(tfint);
 	return 0;
 
