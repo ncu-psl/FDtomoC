@@ -592,8 +592,8 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	}
 
 	/* ALLOCATE MAIN AND ALTERNATE GRID FOR SLOWNESSES AND TIMES */
-	slow0 = (float *)malloc(4 * nxyz);
-	time0 = (float *)malloc(4 * nxyz);
+	slow0 = (float *)malloc(4 * nxyz *2);
+	time0 = (float *)malloc(4 * nxyz *2);
 
 	/* MAKE ARRAY SORT LARGE ENOUGH FOR ANY SIDE */
 	if (nx <= ny && nx <= nz)

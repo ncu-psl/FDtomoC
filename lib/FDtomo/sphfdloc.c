@@ -1247,8 +1247,6 @@ int get_time(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_D
 	int i = -1;
 	t = (float *)malloc(sizeof(float *) * num_parfiles);
 	for (i = 0; i < num_parfiles; i++) {
-		t[i] = (float *)malloc(sizeof(float) * nxyz);
-
 		strcpy(timefiles[i], SPHFD[i]->timefile);
 		if (i >= maxsta) {
 			printf("Error: too many station.\n");

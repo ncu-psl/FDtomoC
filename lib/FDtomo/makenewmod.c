@@ -108,7 +108,6 @@
 
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
-float rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
 #define VERSION "2018.0625"
 
 // c---du holds all the perturbations.  
