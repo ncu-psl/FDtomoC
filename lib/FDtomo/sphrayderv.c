@@ -137,7 +137,7 @@ float slats[nxm][nym], slons[nxm][nym];
 
 int nobstn[maxlst][2];
 int ind[maxnbk][maxobs];
-int mndm[maxkbl], jndx[maxmbl];
+int mndm[maxkbl], *jndx;
 int mndex[nxyzm2], indx[nxyzm2];
 int nhit[nxyzm2], mhit[nxyzm2];
 int inbk[maxobs];
@@ -163,6 +163,8 @@ int wsum = 0, ncwrt = 0;
 SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	SPHRAYDERV_DATA *SPHRAYDERV = (SPHFDLOC_DATA *)malloc(sizeof(SPHFDLOC_DATA));
 	SPHRAYDERV->mat = (sparse_matrix *)malloc(sizeof(sparse_matrix));
+	SPHRAYDERV->b = (float *)malloc(sizeof(float) * MMAX);
+	jndx = (int *)malloc(sizeof(int) * maxmbl);
 	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
 	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
 	
@@ -202,7 +204,7 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 		elipfil[MAXSTRLEN], raystat[MAXSTRLEN],  dotfile[MAXSTRLEN], 
 		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN];
 	int ido1d = 0;
-	
+	double sinf, cosf, tanf, ctanf;
 	strcpy(aline, "spec.aline");
 	strcpy(telefil, spec.telefil);
 	strcpy(pbasfil, spec.pbasfil);
@@ -1567,8 +1569,8 @@ a3: ;
 		gradt[0] = gradt[0] * -1;
 		gradt[1] = gradt[1] * -1;
 
-		double sinf = sin(xx);
-		double cosf = cos(xx);
+		sinf = sin(xx);
+		cosf = cos(xx);
 		sinq = sin(yy);
 		cosq = cos(yy);
 		ro = rearth - zz;
@@ -1693,11 +1695,11 @@ a3: ;
 			}
 			float d1;
 			if (fabs(cosf) > fabs(sinf)) {
-				double tanf = sinf / cosf;
+				tanf = sinf / cosf;
 				d1 = (xo * tanf - yo) / (sy - sx * tanf);
 			}
 			else {
-				double ctanf = cosf / sinf;
+				ctanf = cosf / sinf;
 				d1 = (yo * ctanf - xo) / (sx - sy * ctanf);
 			}
 			if (d1 > 0) {
@@ -2188,7 +2190,6 @@ a3: ;
 				}
 				if (ja > 0) {
 					SPHRAYDERV->mat->elements_row[row_count] = ja;
-					row_count++;
 					for (int i1 = 0; i1 < ja; i1++) {
 						indx[mndm[jsave[i1]]]++;
 						SPHRAYDERV->mat->column_elements[ith] = indx[mndm[jsave[i1]]] - 1;
@@ -2198,7 +2199,8 @@ a3: ;
 					}
 					
 					// write residual file
-					fwrite(&dat[j1], sizeof(dat[j1]), 1, fp_res);
+					SPHRAYDERV->b[row_count] = dat[j1];
+					row_count++;
 
 					if (isshot == 0) {
 						if (istel == 0) {
@@ -2450,7 +2452,6 @@ a60:
 	SPHRAYDERV->mat->number_columns = mbl;
 	SPHRAYDERV->mat->total_elements = ith;
 	SPHRAYDERV->mat->jndx = jndx;
-	SPHRAYDERV->b = dat;
 	return SPHRAYDERV;
 }
 

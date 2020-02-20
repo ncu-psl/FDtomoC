@@ -890,9 +890,9 @@ int OUTPUT_RUNLSQR(RUNLSQR_DATA *RUNLSQR, SPEC spec){
 	}
 
 	fwrite(&RUNLSQR->n, sizeof(n), 1, fp_fmd);
-	fwrite(RUNLSQR->x, sizeof(x[0]), n, fp_fmd);
-	fwrite(RUNLSQR->jndx, sizeof(jndx[0]), n, fp_fmd);
-	fwrite(RUNLSQR->se, sizeof(se[0]), n, fp_fmd);
+	fwrite(RUNLSQR->x, sizeof(x[0]), RUNLSQR->n, fp_fmd);
+	fwrite(RUNLSQR->jndx, sizeof(jndx[0]), RUNLSQR->n, fp_fmd);
+	fwrite(RUNLSQR->se, sizeof(se[0]), RUNLSQR->n, fp_fmd);
 
 	return 0;
 }
