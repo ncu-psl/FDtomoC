@@ -504,6 +504,11 @@ float uflatz(float z) {
 int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 	FILE *fp_cor;
 	fp_cor = fopen(spec.oldvfil, "wb");
+	if (!fp_cor) {
+		printf("file create error: %s\n", spec.oldvfil);
+		assert(0);
+	}
+	
 	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
@@ -514,5 +519,6 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 	fwrite(maked1d_data->igridz, sizeof(maked1d_data->igridz[0]), nzc - 1, fp_cor);
 	fwrite(maked1d_data->vsave, sizeof(maked1d_data->vsave[0]), nxyzc2, fp_cor);
 
+	return 0;
 }
 

@@ -7,5 +7,5 @@ typedef struct{
 }SPHFDLOC_DATA;
 
 SPHFDLOC_DATA **sphfdloc(SPEC, SPHFD_DATA **);
-
+int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **, SPEC);
 #endif

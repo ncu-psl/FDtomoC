@@ -8,6 +8,7 @@ typedef struct{
     int *jndx;
     int number_columns;
     int number_rows;
+    int total_elements;
 }sparse_matrix;
 
 typedef struct{
@@ -16,5 +17,6 @@ typedef struct{
 }SPHRAYDERV_DATA;
 
 SPHRAYDERV_DATA *sphrayderv(SPEC, SPHFDLOC_DATA **);
+int OUTPUT_SPHFRAYDERV(SPHRAYDERV_DATA *, SPEC);
 
 #endif

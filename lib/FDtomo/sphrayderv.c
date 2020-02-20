@@ -476,11 +476,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		printf("create %s file error.\n", telrerr);
 		assert(0);
 	}
-	FILE* fp_dts = fopen(dtdsfil, "wb");
-	if (!fp_dts) {
-		printf("create %s file error.\n", dtdsfil);
-		assert(0);
-	}
 	FILE* fp_dth = fopen(dtdhfil, "wb");
 	if (!fp_dth) {
 		printf("create %s file error.\n", dtdhfil);
@@ -2192,15 +2187,12 @@ a3: ;
 					}
 				}
 				if (ja > 0) {
-					fwrite(&ja, sizeof(ja), 1, fp_dts);
 					SPHRAYDERV->mat->elements_row[row_count] = ja;
 					row_count++;
 					for (int i1 = 0; i1 < ja; i1++) {
 						indx[mndm[jsave[i1]]]++;
-						fwrite(&indx[mndm[jsave[i1]]], sizeof(indx[mndm[jsave[i1]]]), 1, fp_dts);
 						SPHRAYDERV->mat->column_elements[ith] = indx[mndm[jsave[i1]]] - 1;
 						indx[mndm[jsave[i1]]]--;
-						fwrite(&vmp[jsave[i1]][j1], sizeof(vmp[jsave[i1]][j1]), 1, fp_dts);
 						SPHRAYDERV->mat->elements[ith] = vmp[jsave[i1]][j1];
 						ith++;
 					}
@@ -2426,13 +2418,6 @@ a60:
 		if (nomat == 0) {
 			// -----tack on a marker to signify end of file
 			int ja = -1;
-			fwrite(&ja, sizeof(ja), 1, fp_dts);
-			fwrite(&mbl, sizeof(mbl), 1, fp_dts);
-			for (int i=0;i < mbl ;i++){
-				fwrite(&i, sizeof(i), 1, fp_dts);
-				fwrite(&jndx[i], sizeof(jndx[i]), 1, fp_dts);
-			}
-
 			fprintf(fp_msc, "%d\n", mbl);
 			for (i = 0; i < mbl; i++) {
 				fprintf(fp_msc, "%d\n", jndx[i]);
@@ -2458,13 +2443,30 @@ a60:
 			fprintf(fp_bok, "%d %d\n", m2, m2);
 		}
 
-		fclose(fp_dts);
 		fclose(fp_msc);
 		fclose(fp_err);
 	}
 	SPHRAYDERV->mat->number_rows = row_count;
 	SPHRAYDERV->mat->number_columns = mbl;
+	SPHRAYDERV->mat->total_elements = ith;
 	SPHRAYDERV->mat->jndx = jndx;
 	SPHRAYDERV->b = dat;
 	return SPHRAYDERV;
+}
+
+int OUTPUT_SPHFRAYDERV(SPHRAYDERV_DATA *SPHRAYDERV, SPEC spec){
+	FILE* fp_dts = fopen(spec.dtdsfil, "wb");
+	if (!fp_dts) {
+		printf("create %s file error.\n", spec.dtdsfil);
+		assert(0);
+	}
+	fwrite(&SPHRAYDERV->mat->number_rows, sizeof(int), 1, fp_dts);
+	fwrite(&SPHRAYDERV->mat->number_columns, sizeof(int), 1, fp_dts);
+	fwrite(&SPHRAYDERV->mat->total_elements, sizeof(int), 1, fp_dts);
+	fwrite(SPHRAYDERV->mat->elements_row, sizeof(int), SPHRAYDERV->mat->number_rows, fp_dts);
+	fwrite(SPHRAYDERV->mat->column_elements, sizeof(int), SPHRAYDERV->mat->total_elements, fp_dts);
+	fwrite(SPHRAYDERV->mat->elements, sizeof(float), SPHRAYDERV->mat->total_elements, fp_dts);
+	fwrite(SPHRAYDERV->mat->jndx, sizeof(int), SPHRAYDERV->mat->number_columns, fp_dts);
+
+	fclose(fp_dts);
 }

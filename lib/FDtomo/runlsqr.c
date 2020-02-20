@@ -159,11 +159,6 @@ RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 			" *************************************************************** \n");
 
 	damp = damper;
-	FILE *fp_fmd = fopen(nmodfil, "w");
-	if (!fp_fmd) {
-		printf("file create error: %s\n", nmodfil);
-		assert(0);
-	}
 	FILE *fp_frs = fopen(fresfil, "w");
 	if (!fp_frs) {
 		printf("file create error: %s\n", fresfil);
@@ -885,4 +880,19 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 		}
 	}
 	return;
+}
+
+int OUTPUT_RUNLSQR(RUNLSQR_DATA *RUNLSQR, SPEC spec){
+	FILE *fp_fmd = fopen(spec.nmodfil, "w");
+	if (!fp_fmd) {
+		printf("file create error: %s\n", spec.nmodfil);
+		assert(0);
+	}
+
+	fwrite(&RUNLSQR->n, sizeof(n), 1, fp_fmd);
+	fwrite(RUNLSQR->x, sizeof(x[0]), n, fp_fmd);
+	fwrite(RUNLSQR->jndx, sizeof(jndx[0]), n, fp_fmd);
+	fwrite(RUNLSQR->se, sizeof(se[0]), n, fp_fmd);
+
+	return 0;
 }

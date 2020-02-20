@@ -912,3 +912,24 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	
 	return MAKENEWMOD;
 }
+
+int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *MAKENEWMOD, SPEC spec){
+	FILE *fp_nmd;
+	fp_nmd = fopen(spec.fmodfil, "wb");
+	if (!fp_nmd) {
+		printf("file create error: %s\n", spec.fmodfil);
+		assert(0);
+	}
+
+	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	int nxyc = nxc * nyc;
+	int nxyzc = nxyc * nzc;
+	int nxyzc2 = nxyzc * 2;
+	fwrite(MAKENEWMOD->hdr, sizeof(MAKENEWMOD->hdr[0]), nhbyte, fp_nmd);
+	fwrite(MAKENEWMOD->igridx, sizeof(MAKENEWMOD->igridx[0]), nxc - 1, fp_nmd);
+	fwrite(MAKENEWMOD->igridy, sizeof(MAKENEWMOD->igridy[0]), nyc - 1, fp_nmd);
+	fwrite(MAKENEWMOD->igridz, sizeof(MAKENEWMOD->igridz[0]), nzc - 1, fp_nmd);
+	fwrite(MAKENEWMOD->vn, sizeof(MAKENEWMOD->vn[0]), nxyzc2, fp_nmd);
+
+	return 0;
+}

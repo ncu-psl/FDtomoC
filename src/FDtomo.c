@@ -44,17 +44,35 @@ int main(int argc, char *argv[]){
 	read_variables(argv[1], &spec);
 	read_files(argv[1], &spec);
 	read_grid(argv[1], &spec);
+
 	MAKE1D_DATA *MAKE1D = make1d(spec);
 	OUTPUT_MAKE1D(MAKE1D, spec);
+
 	C2F_DATA *C2F = c2f(spec, MAKE1D);
 	OUTPUT_C2F(C2F, spec);
+
 	SPHFD_DATA **SPHFD = sphfd(argc, argv, spec, C2F);
 	for (int i = 0; i < num_parfiles; i++)
 		OUTPUT_SPHFD(SPHFD[i], spec);
+
 	SPHFDLOC_DATA **SPHFDLOC = sphfdloc(spec, SPHFD);
+	OUTPUT_SPHFDLOC(SPHFDLOC, spec);
+
 	SPHRAYDERV_DATA *SPHRAYDERV = sphrayderv(spec, SPHFDLOC);
+	OUTPUT_SPHFRAYDERV(SPHRAYDERV, spec);
+
 	RUNLSQR_DATA *RUNLSQR = runlsqr(spec, SPHRAYDERV);
+	OUTPUT_RUNLSQR(RUNLSQR, spec);
+
 	MAKENEWMOD_DATA *MAKENEWMOD = makenewmod(spec, RUNLSQR);
+	OUTPUT_MAKENEWMOD(MAKENEWMOD, spec);
+
+	free(MAKE1D);
+	free(C2F);
+	free(SPHRAYDERV);
+	free(RUNLSQR);
+	free(MAKENEWMOD);
+
 	return 0;
 
 }

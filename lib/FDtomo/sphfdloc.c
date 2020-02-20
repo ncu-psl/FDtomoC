@@ -994,7 +994,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					}
 					strapp(str_data[nev]->event, &len_str_data, tmp);
 				}
-				strapp(str_data[nev]->event, &len_str_data, "\n");
+				strapp(str_data[nev]->event, &len_str_data, " \n");
 			}
 		} else {
 			double ot = dpot + avrmin;
@@ -1025,16 +1025,11 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	}
 //---END OF LOOP OVER EQS
 	FILE *fp_fhd = fopen(fhedfil, "w");
-	FILE *fp_fdt = fopen(fdatfil, "w");
 	FILE *fp_sum = fopen(fsumfil, "w");
 	FILE *fp_out = fopen(outlfil, "w");
 
 	if (!fp_fhd) {
 		printf("fp_fhd: open '%s' error\n", fhedfil);
-		assert(0);
-	}
-	if (!fp_fdt) {
-		printf("fp_fdt: open '%s' error\n", fdatfil);
 		assert(0);
 	}
 	if (!fp_sum) {
@@ -1051,21 +1046,16 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			printf("write fp_fhd(%s) error\n", fhedfil);
 			assert(0);
 		}
-		if (fprintf(fp_fdt, "%s", str_data[i]) < 0) {
-			printf("write fp_fdt(%s) error\n", fdatfil);
-			assert(0);
-		}
 		if (fprintf(fp_sum, "%s", str_sum[i]) < 0) {
-			printf("write fp_fdt(%s) error\n", fsumfil);
+			printf("write fp_sum(%s) error\n", fsumfil);
 			assert(0);
 		}
 		if (fprintf(fp_out, "%s", str_out[i]) < 0) {
-			printf("write fp_fdt(%s) error\n", outlfil);
+			printf("write fp_out(%s) error\n", outlfil);
 			assert(0);
 		}
 	}
 	fclose(fp_fhd);
-	fclose(fp_fdt);
 	fclose(fp_sum);
 	fclose(fp_out);
 	return str_data;
@@ -1295,4 +1285,20 @@ int get_time(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_D
 			printf("...Done.\n");
 	}
 	return i;
+}
+
+int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **SPHFDLOC, SPEC spec){
+	FILE *fp_fdt = fopen(spec.fdatfil, "w");
+	if (!fp_fdt) {
+		printf("fp_fdt: open '%s' error\n", spec.fdatfil);
+		assert(0);
+	}
+	for (int i = 0;i < total_earthquakes;i++){
+		fprintf(fp_fdt, SPHFDLOC[i]->event_hdr);
+		fprintf(fp_fdt, SPHFDLOC[i]->event);	
+	}
+
+	fclose(fp_fdt);
+
+	return 0;
 }

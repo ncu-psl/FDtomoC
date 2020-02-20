@@ -10,5 +10,6 @@ typedef struct{
 
 }MAKENEWMOD_DATA;
 MAKENEWMOD_DATA *makenewmod(SPEC, RUNLSQR_DATA *);
+int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *, SPEC);
 
 #endif
