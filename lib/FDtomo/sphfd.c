@@ -7491,18 +7491,18 @@ int FixDouble(double *n)
 
 int OUTPUT_SPHFD(SPHFD_DATA *sphfd_data, SPEC spec){
 	int nx, ny, nz;
-	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc;
 	nx = 1, ny = 1, nz = 1;
 	for (int i = 1; i < nxc; i++) {
-		nx = nx + spec.igridx[i - 1];
+		nx = nx + spec.grid.igridx[i - 1];
 	}
 
 	for (int i = 1; i < nyc; i++) {
-		ny = ny + spec.igridy[i - 1];
+		ny = ny + spec.grid.igridy[i - 1];
 	}
 
 	for (int i = 1; i < nzc; i++) {
-		nz = nz + spec.igridz[i - 1];
+		nz = nz + spec.grid.igridz[i - 1];
 	}
 //	c----dimension check
 	if (nx > nxm) {

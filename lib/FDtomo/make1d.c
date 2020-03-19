@@ -127,11 +127,11 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	memset(make1d_data, 0, sizeof(MAKE1D_DATA));
 
 	//initialize variable
-	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
-	    ny = spec.ny, nz = spec.nz;
-	double h = spec.h, x0 = spec.x0, *y = spec.y, 
-	z0 = spec.z0, dq = spec.dq, df = spec.df, x00 = spec.x00, y00 = spec.y00;
-	int *igridx = spec.igridx, *igridy = spec.igridy, *igridz = spec.igridz;
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 
 	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
 	float az = spec.az, azmod = spec.azmod;
@@ -465,9 +465,9 @@ MAKE1D_DATA *make1d(SPEC spec) {
 
 	
 	memcpy(make1d_data->hdr, hdr, strlen(hdr)+1);
-	memcpy(make1d_data->igridx, igridx, sizeof(spec.igridx));
-	memcpy(make1d_data->igridy, igridy, sizeof(spec.igridy));
-	memcpy(make1d_data->igridz, igridz, sizeof(spec.igridz));
+	memcpy(make1d_data->igridx, igridx, nxc - 1);
+	memcpy(make1d_data->igridy, igridy, nyc - 1);
+	memcpy(make1d_data->igridz, igridz, nzc - 1);
 	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
 
 
@@ -509,7 +509,7 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 		assert(0);
 	}
 	
-	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc;
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
@@ -518,7 +518,7 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 	fwrite(maked1d_data->igridy, sizeof(maked1d_data->igridy[0]), nyc - 1, fp_cor);
 	fwrite(maked1d_data->igridz, sizeof(maked1d_data->igridz[0]), nzc - 1, fp_cor);
 	fwrite(maked1d_data->vsave, sizeof(maked1d_data->vsave[0]), nxyzc2, fp_cor);
-
+	printf("%d %d\n", sizeof(float), sizeof(maked1d_data->vsave[0]));
 	return 0;
 }
 

@@ -90,11 +90,11 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 
 
 	//initialize variable
-	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc, nx = spec.nx,
-	    ny = spec.ny, nz = spec.nz;
-	double h = spec.h, x0 = spec.x0, *y = spec.y, 
-	z0 = spec.z0, dq = spec.dq, df = spec.df, x00 = spec.x00, y00 = spec.y00;
-	int *igridx = spec.igridx, *igridy = spec.igridy, *igridz = spec.igridz;
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 
 	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
 	float az = spec.az, azmod = spec.azmod;
@@ -513,18 +513,18 @@ void find_vel(float x, float y, float z, float *v, int iph, int nxc, int nyc, in
 
 OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
 	int nx, ny, nz;
-	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc;
 	nx = 1, ny = 1, nz = 1;
 	for (int i = 1; i < nxc; i++) {
-		nx = nx + spec.igridx[i - 1];
+		nx = nx + spec.grid.igridx[i - 1];
 	}
 
 	for (int i = 1; i < nyc; i++) {
-		ny = ny + spec.igridy[i - 1];
+		ny = ny + spec.grid.igridy[i - 1];
 	}
 
 	for (int i = 1; i < nzc; i++) {
-		nz = nz + spec.igridz[i - 1];
+		nz = nz + spec.grid.igridz[i - 1];
 	}
 //	c----dimension check
 	if (nx > nxm) {

@@ -77,17 +77,17 @@
 
 float **t;
 int total_earthquakes = 0;
-void find_time(double, double, double, double *, int, int *);
+void find_time(double, double, double, double *, int, int *, GRID grid);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
-	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
-	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
-	
-	h = spec.h; x0 = spec.x0; y = spec.y; 
-	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
-	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
+	//initialize variable
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 
 	int iread = spec.iread, ivs = spec.ivs, nthres = spec.nthres, kmin = spec.kmin, 
 		ndiv = spec.ndiv, ndiv2 = spec.ndiv2, ittnum = spec.ittnum;
@@ -665,7 +665,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					double xp = x0i + ddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta);
+						find_time(xp, yp, zp, &tp, is, indsta, spec.grid);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -779,7 +779,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					double xp = x0i + dddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta);
+						find_time(xp, yp, zp, &tp, is, indsta, spec.grid);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -1061,7 +1061,11 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	return str_data;
 }
 
-void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
+void find_time(double x, double yy, double z, double *tp, int is, int *indsta, GRID grid) {
+	int nxc = grid.nxc, nyc = grid.nyc, nzc = grid.nzc, nx = grid.nx,
+	    ny = grid.ny, nz = grid.nz;
+	double h = grid.h, x0 = grid.x0, *y = grid.y, 
+	z0 = grid.z0, dq = grid.dq, df = grid.df, x00 = grid.x00, y00 = grid.y00;
 	int i = ((int) ((x - x0) / df));
 	int j = ((int) ((yy - y[0]) / dq));
 	int k = ((int) ((z - z0) / h));

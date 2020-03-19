@@ -165,12 +165,12 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	SPHRAYDERV->mat = (sparse_matrix *)malloc(sizeof(sparse_matrix));
 	SPHRAYDERV->b = (float *)malloc(sizeof(float) * MMAX);
 	jndx = (int *)malloc(sizeof(int) * maxmbl);
-	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
-	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
-	
-	h = spec.h; x0 = spec.x0; y = spec.y; 
-	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
-	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
+	//initialize variable
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 
 	int iread = spec.iread, ivs = spec.ivs, ivpvs = spec.ivpvs, idmean = spec.idmean,
 		iray = spec.iray, iraystat = spec.iraystat, idatout = spec.idatout, nomat = spec.nomat,

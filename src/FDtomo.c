@@ -12,6 +12,13 @@
 int main(int argc, char *argv[]){
 	SPEC spec;
 	//set default value
+
+	//GRID
+	spec.grid.igridx = (int *)malloc(sizeof(int) * nxcm1);
+	spec.grid.igridy = (int *)malloc(sizeof(int) * nycm1);
+	spec.grid.igridz = (int *)malloc(sizeof(int) * nzcm1);
+
+
 	//c2f initialization 
 	spec.vs1d = 1;
 	spec.iflat = 0;
@@ -28,11 +35,11 @@ int main(int argc, char *argv[]){
 	spec.resthrep = 5.0;
 	spec.stdmax = 15.0;
 	spec.kmin = 2;
-	spec.x0 = 0;
-	spec.y[0] = 0;
-	spec.z0 = 0;
-	spec.dq = 0;
-	spec.df = 0;
+	spec.grid.x0 = 0;
+	spec.grid.y[0] = 0;
+	spec.grid.z0 = 0;
+	spec.grid.dq = 0;
+	spec.grid.df = 0;
 	spec.ndiv = 20;
 	spec.ndiv2 = 20;
 	spec.ittnum = 1;
@@ -46,7 +53,7 @@ int main(int argc, char *argv[]){
 	read_grid(argv[1], &spec);
 
 	MAKE1D_DATA *MAKE1D = make1d(spec);
-	OUTPUT_MAKE1D(MAKE1D, spec);
+	//OUTPUT_MAKE1D(MAKE1D, spec);
 
 	C2F_DATA *C2F = c2f(spec, MAKE1D);
 	OUTPUT_C2F(C2F, spec);
