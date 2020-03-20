@@ -153,20 +153,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 
-	//	----dimension check
-	if (nx > nxm) {
-		printf(" nx is too large, maximum is: %d", nxm);
-		assert(!(nx > nxm));
-	}
-	if (ny > nym) {
-		printf(" ny is too large, maximum is: %d", nym);
-		assert(!(ny > nym));
-	}
-	if (nz > nzm) {
-		printf(" nz is too large, maximum is: %d", nzm);
-		assert(!(nz > nzm));
-	}
-
 	int lengrd = 4 * (nxc + nyc + nzc - 3);
 	int lenrec = lenhead + lengrd + 4 * nxyzc2;
 

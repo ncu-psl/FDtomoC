@@ -14,4 +14,5 @@ typedef struct {
 
 void moveGrid(GRID *);
 void coordinateCheck(GRID *, int);
+void dimensionCheck(GRID);
 #endif // GRIDSPEC

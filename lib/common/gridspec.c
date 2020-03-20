@@ -52,3 +52,18 @@ void coordinateCheck(GRID *grid, int isph){
 	}
 
 }
+void dimensionCheck(GRID grid){
+
+	if (grid.nx > nxm) {
+		printf(" nx is too large, maximum is: %d", nxm);
+		assert(!(grid.nx > nxm));
+	}
+	if (grid.ny > nym) {
+		printf(" ny is too large, maximum is: %d", nym);
+		assert(!(grid.ny > nym));
+	}
+	if (grid.nz > nzm) {
+		printf(" nz is too large, maximum is: %d", nzm);
+		assert(!(grid.nz > nzm));
+	}
+}

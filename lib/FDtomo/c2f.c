@@ -113,21 +113,7 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	nxyc = nxc * nyc;
 	nxyzc = nxyc * nzc;
 	nxyzc2 = nxyzc * 2;
-
-//	c----dimension check
-	if (nx > nxm) {
-		printf(" nx(%d) is too large, maximum is: %d\n",nx , nxm);
-		assert(0);
-	}
-	if (ny > nym) {
-		printf(" ny is too large, maximum is: %d\n", nym);
-		assert(0);
-	}
-	if (nz > nzm) {
-		printf(" nz is too large, maximum is: %d\n", nzm);
-		assert(0);
-	}
-
+	
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 	int nxyz2 = nxyz * 2;
@@ -494,19 +480,6 @@ void find_vel(float x, float y, float z, float *v, int iph, GRID grid) {
 OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
 	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
 	    ny = spec.grid.ny, nz = spec.grid.nz;
-//	c----dimension check
-	if (nx > nxm) {
-		printf(" nx(%d) is too large, maximum is: %d\n",nx , nxm);
-		assert(0);
-	}
-	if (ny > nym) {
-		printf(" ny is too large, maximum is: %d\n", nym);
-		assert(0);
-	}
-	if (nz > nzm) {
-		printf(" nz is too large, maximum is: %d\n", nzm);
-		assert(0);
-	}
 
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;

@@ -110,20 +110,6 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	int len, ierr;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
-//	c----dimension check
-	if (nx > nxm) {
-		printf("nx is too large.\n");
-		assert(0);
-	}
-	if (ny > nym) {
-		printf("ny is too large.\n");
-		assert(0);
-	}
-	if (nz > nzm) {
-		printf("nz is too large.\n");
-		assert(0);
-	}
-
 // c---If dq and df have not been specified, { make them so that the
 // c   interval at the surface is equal to h
 // c   First Convert geographic latitude to geocentric colatitude

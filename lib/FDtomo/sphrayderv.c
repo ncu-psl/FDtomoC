@@ -224,38 +224,6 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 
 int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
-	nx = 1;
-	ny = 1;
-	nz = 1;
-
-	for (i = 1; i < nxc; i++) {
-		nx = nx + igridx[i - 1];
-	}
-
-	for (i = 1; i < nyc; i++) {
-		ny = ny + igridy[i - 1];
-	}
-
-	for (i = 1; i < nzc; i++) {
-		nz = nz + igridz[i - 1];
-	}
-	if (DEBUG_PRINT) {
-		printf("  Fine grid dimension (nx, ny, nz) = %12d%12d%12d\n", nx, ny, nz);
-	}
-	//	c----dimension check
-	if (nx > nxm) {
-		printf("nx is too large.\n");
-		assert(0);
-	}
-	if (ny > nym) {
-		printf("ny is too large.\n");
-		assert(0);
-	}
-	if (nz > nzm) {
-		printf("nz is too large.\n");
-		assert(0);
-	}
-
 	get_field(spec.spec_file, aline, ib, &ie, parval, &nvl, &ierr);
 
 	int nxy = nx * ny;
