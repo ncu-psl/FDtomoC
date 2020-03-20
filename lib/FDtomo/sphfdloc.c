@@ -110,24 +110,6 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	int len, ierr;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
-	nx = 1;
-	ny = 1;
-	nz = 1;
-
-	for (int i = 1; i < nxc; i++) {
-		nx = nx + igridx[i - 1];
-	}
-
-	for (int i = 1; i < nyc; i++) {
-		ny = ny + igridy[i - 1];
-	}
-
-	for (int i = 1; i < nzc; i++) {
-		nz = nz + igridz[i - 1];
-	}
-	if(DEBUG_PRINT)
-		printf(" Fine grid dimension (nx=%d, ny=%d, nz=%d)\n", nx, ny, nz);
-
 //	c----dimension check
 	if (nx > nxm) {
 		printf("nx is too large.\n");
@@ -154,18 +136,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	double z0r;
 	y[0] = hpi - glath(y[0], z0, &z0r);
 	x0 *= degrad;
-	dq *= degrad;
-	df *= degrad;
-	if (dq == 0)
-		dq = h / rearth;
-	if (df == 0)
-		df = fabs(h / (rearth * sin(y[0])));
-	if(DEBUG_PRINT) {
-		printf(" Origin:  %.14lf\t%.14lf\t%.14lf\n", x0, y[0] / degrad, z0r);
-		printf(" Radial Spacing: %lf\n", h);
-		printf(" Latitude Spacing: %.17E\n", dq);
-		printf(" Longitude Spacing: %.17E\n", df);
-	}
+
 	char logfile[80 + 1];
 	sprintf(logfile, "sphfdloc.log%d", ittnum);
 	FILE *fp_log = fopen(logfile, "w");
@@ -508,7 +479,6 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			}
 			strcpy(stn[iuse], sta[i]);
 			pha[iuse] = phs[i];
-			j = iuse;
 		}
 		if(DEBUG_PRINT)
 			printf(" Current ntread = %d\n", ntread);
@@ -1076,12 +1046,12 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta, G
 	if (k < 0)
 		k = 0;
 
-	if (i > nx)
-		i = nx;
-	if (j > ny)
-		i = ny;
-	if (k > nz)
-		i = nz;
+	if (i > nx - 2)
+		i = nx - 2;
+	if (j > ny - 2)
+		j = ny - 2;
+	if (k > nz - 2)
+		k = nz - 2;
 
 	double xi = x0 + df * i;
 	double yj = y[0] + dq * j;

@@ -86,12 +86,7 @@ c		    change so that dx = df and dy = df.
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
 
-float gx[nxcm], gy[nxcm], gz[nxcm];
 float vp[MAX1D][2], z[MAX1D];
-
-double z0r;
-double y00;
-
 //float vsave[nxyzcm2];
 
 char VERSION[10] = "2004.0909\0";
@@ -107,7 +102,7 @@ char hcomm[101];
 
 //----fxs, fys, and fzs are not used in wavespeed models, so just set to zero
 double fxs = 0.0, fys = 0.0, fzs = 0.0;
-double axo, ayo, azo, dx, dy, dz;
+double axo, ayo, azo;
 int nxh, nyh, nzh;
 //--------------------------------------
 char hdr[nhbyte + 1];
@@ -132,6 +127,10 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
 	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
 	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
+	double dx = spec.grid.dx, dy = spec.grid.dy, dz = spec.grid.dz;
+
+
+	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
 
 	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
 	float az = spec.az, azmod = spec.azmod;
@@ -150,50 +149,11 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
 
-	if (isph == 1) {
-		y00 = y[0] * degrad;
-//		y00 = hpi - glat(y00)
-		y00 = hpi - glath(y00, z0, &z0r);
-
-//	---If dq and df have not been specified, { make them so that the
-//	   interval at the surface is equal to h
-		if (dq == 0.0)
-			dq = h / rearth;
-		if (df == 0.0)
-			df = fabs(h / (rearth * sin(y00)));
-		dy = dq / degrad;
-		dx = df / degrad;
-		printf("dx=%.17E dy=%.17E df=%.17E dq=%.17E\n", dx, dy, df, dq);
-	} else {
-		dx = h;
-		dy = h;
-	}
-	nx = 1;
-	ny = 1;
-	nz = 1;
-	gx[0] = x0;
-	gy[0] = y[0];
-	gz[0] = z0;
-
-	for (int i = 1; i < nxc; i++) {
-		nx = nx + igridx[i - 1];
-		gx[i] = gx[i - 1] + dx * igridx[i - 1];
-	}
-
-	for (int i = 1; i < nyc; i++) {
-		ny = ny + igridy[i - 1];
-		gy[i] = gy[i - 1] + dy * igridy[i - 1];
-	}
-
-	for (int i = 1; i < nzc; i++) {
-		nz = nz + igridz[i - 1];
-		gz[i] = gz[i - 1] + h * igridz[i - 1];
-	}
-
+	
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 
-//	----dimension check
+	//	----dimension check
 	if (nx > nxm) {
 		printf(" nx is too large, maximum is: %d", nxm);
 		assert(!(nx > nxm));
@@ -463,13 +423,12 @@ MAKE1D_DATA *make1d(SPEC spec) {
 
 	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
 
-	
 	memcpy(make1d_data->hdr, hdr, strlen(hdr)+1);
-	memcpy(make1d_data->igridx, igridx, nxc - 1);
-	memcpy(make1d_data->igridy, igridy, nyc - 1);
-	memcpy(make1d_data->igridz, igridz, nzc - 1);
+	memcpy(make1d_data->igridx, igridx, 4 * (nxc - 1));
+	memcpy(make1d_data->igridy, igridy, 4 * (nyc - 1));
+	memcpy(make1d_data->igridz, igridz, 4 * (nzc - 1));
 	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
-
+	printf("%f\n", make1d_data->vsave[19403]);
 
 	fclose(fp_log);
 	fclose(fp_one);
@@ -518,7 +477,6 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 	fwrite(maked1d_data->igridy, sizeof(maked1d_data->igridy[0]), nyc - 1, fp_cor);
 	fwrite(maked1d_data->igridz, sizeof(maked1d_data->igridz[0]), nzc - 1, fp_cor);
 	fwrite(maked1d_data->vsave, sizeof(maked1d_data->vsave[0]), nxyzc2, fp_cor);
-	printf("%d %d\n", sizeof(float), sizeof(maked1d_data->vsave[0]));
 	return 0;
 }
 

@@ -8,5 +8,10 @@ typedef struct {
     int nxc, nyc, nzc, nx, ny, nz;
     double h, x0, y[1], z0, dq, df, x00, y00;
     int *igridx, *igridy, *igridz;
+    float *gx, *gy, *gz;
+    double dx, dy, dz;
 }GRID;
+
+void moveGrid(GRID *);
+void coordinateCheck(GRID *, int);
 #endif // GRIDSPEC

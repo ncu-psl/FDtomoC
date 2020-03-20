@@ -115,7 +115,6 @@ double dl;
 // added by lzw
 double sfq;
 
-float gx[nxcm], gy[nycm], gz[nzcm];
 float sp[nxyzm2];
 float obstime[maxobs];
 float pwt[maxobs], dat[maxobs];
@@ -171,6 +170,9 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
 	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
 	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
+
+	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
+
 
 	int iread = spec.iread, ivs = spec.ivs, ivpvs = spec.ivpvs, idmean = spec.idmean,
 		iray = spec.iray, iraystat = spec.iraystat, idatout = spec.idatout, nomat = spec.nomat,
@@ -548,19 +550,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 			printf("create %s file error.\n", entfile);
 			assert(0);
 		}
-	}
-
-	gx[0] = x0;
-	gy[0] = y[0];
-	gz[0] = z0;
-	for (i = 1; i < nxc; i++) {
-		gx[i] = gx[i - 1] + df * igridx[i - 1];
-	}
-	for (i = 1; i < nyc; i++) {
-		gy[i] = gy[i - 1] + dq * igridy[i - 1];
-	}
-	for (i = 1; i < nzc; i++) {
-		gz[i] = gz[i - 1] + h * igridz[i - 1];
 	}
 
 	nxy = nx*ny;

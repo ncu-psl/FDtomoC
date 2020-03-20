@@ -41,6 +41,7 @@
 #include "common/parameter.h"
 #include "common/parseprogs.h"
 #include "common/string_process.h"
+#include "common/gridspec.h"
 #include "FDtomo/c2f.h"
 
 #define MAX1D 1000
@@ -54,8 +55,6 @@
 
 // c---number of 4 byte words in the header
 #define nhbyte 58 * 4
-
-float gx[nxcm], gy[nxcm], gz[nxcm];
 float *vp;
 
 float vsave[nxyzm2];
@@ -80,7 +79,7 @@ int len_head = nhbyte;
 
 int nxyc, nxyzc, nxyzc2;
 
-void find_vel(float, float, float, float *, int, int, int, int);
+void find_vel(float, float, float, float *, int, GRID grid);
 
 C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	C2F_DATA *c2f_data = (C2F_DATA *)malloc(sizeof(C2F_DATA));
@@ -95,6 +94,8 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
 	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
 	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
+
+	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
 
 	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
 	float az = spec.az, azmod = spec.azmod;
@@ -113,30 +114,6 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	nxyzc = nxyc * nzc;
 	nxyzc2 = nxyzc * 2;
 
-	nx = 1, ny = 1, nz = 1;
-	gx[0] = x0;
-	gy[0] = y[0];
-	gz[0] = z0;
-
-
-// c----this is for spherical (make an option at some point)
-// c        dq = h/rearth
-// c        df = dabs(h/(rearth*dsin(y0)))
-
-	for (int i = 1; i < nxc; i++) {
-		nx = nx + igridx[i - 1];
-		gx[i] = gx[i - 1] + h * igridx[i - 1];
-	}
-
-	for (int i = 1; i < nyc; i++) {
-		ny = ny + igridy[i - 1];
-		gy[i] = gy[i - 1] + h * igridy[i - 1];
-	}
-
-	for (int i = 1; i < nzc; i++) {
-		nz = nz + igridz[i - 1];
-		gz[i] = gz[i - 1] + h * igridz[i - 1];
-	}
 //	c----dimension check
 	if (nx > nxm) {
 		printf(" nx(%d) is too large, maximum is: %d\n",nx , nxm);
@@ -391,7 +368,7 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 				yy = y[0] + j * h;
 				for (i = 0; i < nx; i++) {
 					x = x0 + i * h;
-					find_vel(x, yy, z, &v, iph, nxc, nyc, nzc);
+					find_vel(x, yy, z, &v, iph, spec.grid);
 //c-----convert back to velocity
 					ij++;
 					vsave[ij] = 1.f / v;
@@ -455,9 +432,12 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	return c2f_data;
 }
 
-void find_vel(float x, float y, float z, float *v, int iph, int nxc, int nyc, int nzc) {
+void find_vel(float x, float y, float z, float *v, int iph, GRID grid) {
 // c-----find a velocity at x, y, z
 	int i;
+	int nxc = grid.nxc, nyc = grid.nyc, nzc = grid.nzc;
+	float *gx = grid.gx, *gy = grid.gy, *gz = grid.gz;
+
 	for (i = 1; i < nxc; i++) {
 		if (gx[i] > x)
 			break;
@@ -512,20 +492,8 @@ void find_vel(float x, float y, float z, float *v, int iph, int nxc, int nyc, in
 }
 
 OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
-	int nx, ny, nz;
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc;
-	nx = 1, ny = 1, nz = 1;
-	for (int i = 1; i < nxc; i++) {
-		nx = nx + spec.grid.igridx[i - 1];
-	}
-
-	for (int i = 1; i < nyc; i++) {
-		ny = ny + spec.grid.igridy[i - 1];
-	}
-
-	for (int i = 1; i < nzc; i++) {
-		nz = nz + spec.grid.igridz[i - 1];
-	}
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
 //	c----dimension check
 	if (nx > nxm) {
 		printf(" nx(%d) is too large, maximum is: %d\n",nx , nxm);
