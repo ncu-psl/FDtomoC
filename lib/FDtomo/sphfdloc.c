@@ -115,13 +115,11 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 // c   First Convert geographic latitude to geocentric colatitude
 	if(DEBUG_PRINT)
 		printf(" Origin:  x0=%.14lf\t\ty0=%.14lf\t\tz0=%.14lf\n", x0, y[0], z0);
-	x00 = x0;
-	y00 = y[0];
+	y[0] = y00;
 	y[0] *= degrad;
 //   y[0] = hpi - glat(y[0]);
 	double z0r;
 	y[0] = hpi - glath(y[0], z0, &z0r);
-	x0 *= degrad;
 
 	char logfile[80 + 1];
 	sprintf(logfile, "sphfdloc.log%d", ittnum);

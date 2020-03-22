@@ -56,10 +56,10 @@ void read_variables(char *spec_file, SPEC *spec){
 //---Coordinate origin (used in header)
 	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->grid.x0);
+		sscanf(pval, "%lf", &spec->grid.x00);
 	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->grid.y[0]);
+		sscanf(pval, "%lf", &spec->grid.y00);
 	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%lf", &spec->grid.z0);

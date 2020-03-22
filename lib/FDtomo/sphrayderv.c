@@ -238,22 +238,9 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	//c   is still depth(so an original negative value puts the origin above
 	//c   the nominal surface of the Earth(at r = 6371)
 	//c   First Convert geographic latitude to geocentric colatitude
-	x00 = x0;
-	y00 = y[0];
 	if (DEBUG_PRINT) {
 		printf("  Origin:  %22.14lf %25.15lf %25.16lf       degrees/km\n", x0, y[0], z0);
 	}
-	y[0] *= degrad;
-	y[0] = hpi - glat(y[0]);
-	x0 *= degrad;
-	dq *= degrad;
-	df *= degrad;
-	//c-- - If dq and df have not been specified, then make them so that the
-	//c   interval at the surface is equal to h
-	if (fabs(dq) < 0.0001)
-		dq = h / rearth;
-	if (fabs(df) < 0.0001)
-		df = fabs(h / (rearth * sin(y[0])));
 
 	tolmin = h * 1.E-6f;
 	tolmax = h * 6.0f;
