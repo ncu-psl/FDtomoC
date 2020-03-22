@@ -30,39 +30,39 @@ void read_variables(char *spec_file, SPEC *spec){
 			read_error(mvals[i], "variable", fp_spc);
 		}
 		if (i == 0) {
-			sscanf(pval, "%d", &spec->nxc);
+			sscanf(pval, "%d", &spec->grid.nxc);
 		} else if (i == 1) {
-			sscanf(pval, "%d", &spec->nyc);
+			sscanf(pval, "%d", &spec->grid.nyc);
 		} else if (i == 2) {
-			sscanf(pval, "%d", &spec->nzc);
+			sscanf(pval, "%d", &spec->grid.nzc);
 		} else if (i == 3) {
-			sscanf(pval, "%lf", &spec->h);
+			sscanf(pval, "%lf", &spec->grid.h);
 		}
 	}
 
 //----dimension check
-	if (spec->nxc > nxcm) {
+	if (spec->grid.nxc > nxcm) {
 		printf("nxc is too large, maximum is: %d\n", nxcm);
-		assert(spec->nxc <= nxcm);
-	} else if (spec->nyc > nycm) {
+		assert(spec->grid.nxc <= nxcm);
+	} else if (spec->grid.nyc > nycm) {
 		printf("nyc is too large, maximum is: %d\n", nycm);
-		assert(spec->nyc <= nycm);
-	} else if (spec->nzc > nzcm) {
+		assert(spec->grid.nyc <= nycm);
+	} else if (spec->grid.nzc > nzcm) {
 		printf("nzc is too large, maximum is: %d\n", nzcm);
-		assert(spec->nzc <= nzcm);
+		assert(spec->grid.nzc <= nzcm);
 	}
 
 	//--Optionally read in some variables
 //---Coordinate origin (used in header)
 	get_vars(fp_spc, "x0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->x0);
+		sscanf(pval, "%lf", &spec->grid.x00);
 	get_vars(fp_spc, "y0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->y[0]);
+		sscanf(pval, "%lf", &spec->grid.y00);
 	get_vars(fp_spc, "z0 ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->z0);
+		sscanf(pval, "%lf", &spec->grid.z0);
 	get_vars(fp_spc, "clat ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%lf", &spec->clat);
@@ -83,10 +83,10 @@ void read_variables(char *spec_file, SPEC *spec){
 		sscanf(pval, "%d", &spec->ittnum);
 	get_vars(fp_spc, "df ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->df);
+		sscanf(pval, "%lf", &spec->grid.df);
 	get_vars(fp_spc, "dq ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &spec->dq);
+		sscanf(pval, "%lf", &spec->grid.dq);
 
 //----flatness, Vs, and sph  flags
 	get_vars(fp_spc, "flat ", pval, &len, &ierr);
@@ -352,12 +352,12 @@ void read_grid(char *spec_file, SPEC *spec){
 		goto a11;
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &spec->igridx[0]);
+	sscanf(parval, "%d", &spec->grid.igridx[0]);
 	int k;
-	for (k = 1; k < spec->nxc; k++) {
+	for (k = 1; k < spec->grid.nxc; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &spec->igridx[k]);
+		sscanf(parval, "%d", &spec->grid.igridx[k]);
 	}
 	a12: rewind(fp_spc);
 	a13: get_line(fp_spc, aline, &ierr);
@@ -371,11 +371,11 @@ void read_grid(char *spec_file, SPEC *spec){
 		goto a13;
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-	sscanf(parval, "%d", &spec->igridy[0]);
-	for (k = 1; k < spec->nyc; k++) {
+	sscanf(parval, "%d", &spec->grid.igridy[0]);
+	for (k = 1; k < spec->grid.nyc; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &spec->igridy[k]);
+		sscanf(parval, "%d", &spec->grid.igridy[k]);
 	}
 	a14: rewind(fp_spc);
 
@@ -389,11 +389,11 @@ void read_grid(char *spec_file, SPEC *spec){
 			goto a15;
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-		sscanf(parval, "%d", &spec->igridz[0]);
-		for (k = 1; k < spec->nzc; k++) {
+		sscanf(parval, "%d", &spec->grid.igridz[0]);
+		for (k = 1; k < spec->grid.nzc; k++) {
 			ib = ie;
 			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
-			sscanf(parval, "%d", &spec->igridz[k]);
+			sscanf(parval, "%d", &spec->grid.igridz[k]);
 		}
 	}
 	fclose(fp_spc);

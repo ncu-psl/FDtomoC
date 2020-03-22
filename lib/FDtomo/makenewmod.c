@@ -123,8 +123,12 @@ int *jndx;
 
 MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	MAKENEWMOD_DATA *MAKENEWMOD = (MAKENEWMOD_DATA *)malloc(sizeof(MAKENEWMOD_DATA));
-	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
-	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
+	//initialize variable
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
 	char nmodfil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], fmodfil[MAXSTRLEN + 1];
 	double fxs = 6.0134700169990685e-154, fys = 6.0134700169990685e-154, fzs = 6.0134700169990685e-154;
@@ -419,10 +423,10 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		clonh = spec.clon;
 		czh = spec.cz;
 		azh = spec.azmod;
-		h = spec.h;
-		axo = spec.x0;
-		ayo = spec.y[0];
-		azo = spec.z0;
+		h = spec.grid.h;
+		axo = spec.grid.x0;
+		ayo = spec.grid.y[0];
+		azo = spec.grid.z0;
 		
 		dx = h;
 		dy = h;
@@ -433,9 +437,9 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 
 // c-----Grid specs
 		int ib = 0, ie = 0, lenv = 0, nvl = 0;
-		igridx = spec.igridx;
-		igridy = spec.igridy;
-		igridz = spec.igridz;
+		igridx = spec.grid.igridx;
+		igridy = spec.grid.igridy;
+		igridz = spec.grid.igridz;
 		
 	} else {
 		if (strcmp(type, "CORS") != 0) {
@@ -867,15 +871,15 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	trim(fmodfil);
 
 	memcpy(MAKENEWMOD->hdr, hdr, strlen(hdr)+1);
-	memcpy(MAKENEWMOD->igridx, igridx, sizeof(spec.igridx));
-	memcpy(MAKENEWMOD->igridy, igridy, sizeof(spec.igridy));
-	memcpy(MAKENEWMOD->igridz, igridz, sizeof(spec.igridz));
+	memcpy(MAKENEWMOD->igridx, igridx, sizeof(igridx[0]) * (nxc - 1));
+	memcpy(MAKENEWMOD->igridy, igridy, sizeof(igridy[0]) * (nyc - 1));
+	memcpy(MAKENEWMOD->igridz, igridz, sizeof(igridz[0]) * (nzc - 1));
 	MAKENEWMOD->vn = vn;
 
 // c---compute a 1D average for the elements that were hit
 	FILE *fp_1dm=fopen("new1d.mod", "w");
-	z0 = spec.z0;
-	h = spec.h;
+	z0 = spec.grid.z0;
+	h = spec.grid.h;
 
 	float gz[nzcm];
 	gz[0]=z0;
@@ -921,7 +925,7 @@ int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *MAKENEWMOD, SPEC spec){
 		assert(0);
 	}
 
-	int nxc = spec.nxc, nyc = spec.nyc, nzc = spec.nzc;
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc;
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;

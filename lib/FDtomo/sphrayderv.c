@@ -115,7 +115,6 @@ double dl;
 // added by lzw
 double sfq;
 
-float gx[nxcm], gy[nycm], gz[nzcm];
 float sp[nxyzm2];
 float obstime[maxobs];
 float pwt[maxobs], dat[maxobs];
@@ -165,12 +164,15 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	SPHRAYDERV->mat = (sparse_matrix *)malloc(sizeof(sparse_matrix));
 	SPHRAYDERV->b = (float *)malloc(sizeof(float) * MMAX);
 	jndx = (int *)malloc(sizeof(int) * maxmbl);
-	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
-	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
-	
-	h = spec.h; x0 = spec.x0; y = spec.y; 
-	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
-	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
+	//initialize variable
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
+
+	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
+
 
 	int iread = spec.iread, ivs = spec.ivs, ivpvs = spec.ivpvs, idmean = spec.idmean,
 		iray = spec.iray, iraystat = spec.iraystat, idatout = spec.idatout, nomat = spec.nomat,
@@ -222,38 +224,6 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 
 int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
-	nx = 1;
-	ny = 1;
-	nz = 1;
-
-	for (i = 1; i < nxc; i++) {
-		nx = nx + igridx[i - 1];
-	}
-
-	for (i = 1; i < nyc; i++) {
-		ny = ny + igridy[i - 1];
-	}
-
-	for (i = 1; i < nzc; i++) {
-		nz = nz + igridz[i - 1];
-	}
-	if (DEBUG_PRINT) {
-		printf("  Fine grid dimension (nx, ny, nz) = %12d%12d%12d\n", nx, ny, nz);
-	}
-	//	c----dimension check
-	if (nx > nxm) {
-		printf("nx is too large.\n");
-		assert(0);
-	}
-	if (ny > nym) {
-		printf("ny is too large.\n");
-		assert(0);
-	}
-	if (nz > nzm) {
-		printf("nz is too large.\n");
-		assert(0);
-	}
-
 	get_field(spec.spec_file, aline, ib, &ie, parval, &nvl, &ierr);
 
 	int nxy = nx * ny;
@@ -268,22 +238,9 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	//c   is still depth(so an original negative value puts the origin above
 	//c   the nominal surface of the Earth(at r = 6371)
 	//c   First Convert geographic latitude to geocentric colatitude
-	x00 = x0;
-	y00 = y[0];
 	if (DEBUG_PRINT) {
 		printf("  Origin:  %22.14lf %25.15lf %25.16lf       degrees/km\n", x0, y[0], z0);
 	}
-	y[0] *= degrad;
-	y[0] = hpi - glat(y[0]);
-	x0 *= degrad;
-	dq *= degrad;
-	df *= degrad;
-	//c-- - If dq and df have not been specified, then make them so that the
-	//c   interval at the surface is equal to h
-	if (fabs(dq) < 0.0001)
-		dq = h / rearth;
-	if (fabs(df) < 0.0001)
-		df = fabs(h / (rearth * sin(y[0])));
 
 	tolmin = h * 1.E-6f;
 	tolmax = h * 6.0f;
@@ -548,19 +505,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 			printf("create %s file error.\n", entfile);
 			assert(0);
 		}
-	}
-
-	gx[0] = x0;
-	gy[0] = y[0];
-	gz[0] = z0;
-	for (i = 1; i < nxc; i++) {
-		gx[i] = gx[i - 1] + df * igridx[i - 1];
-	}
-	for (i = 1; i < nyc; i++) {
-		gy[i] = gy[i - 1] + dq * igridy[i - 1];
-	}
-	for (i = 1; i < nzc; i++) {
-		gz[i] = gz[i - 1] + h * igridz[i - 1];
 	}
 
 	nxy = nx*ny;

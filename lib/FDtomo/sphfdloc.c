@@ -77,17 +77,17 @@
 
 float **t;
 int total_earthquakes = 0;
-void find_time(double, double, double, double *, int, int *);
+void find_time(double, double, double, double *, int, int *, GRID grid);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
-	nxc = spec.nxc; nyc = spec.nyc; nzc = spec.nzc; 
-	nx = spec.nx;   ny = spec.ny;   nz = spec.nz;
-	
-	h = spec.h; x0 = spec.x0; y = spec.y; 
-	z0 = spec.z0; dq = spec.dq; df = spec.df; x00 = spec.x00; y00 = spec.y00;
-	igridx = spec.igridx; igridy = spec.igridy; igridz = spec.igridz;
+	//initialize variable
+	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
+	    ny = spec.grid.ny, nz = spec.grid.nz;
+	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
+	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
+	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 
 	int iread = spec.iread, ivs = spec.ivs, nthres = spec.nthres, kmin = spec.kmin, 
 		ndiv = spec.ndiv, ndiv2 = spec.ndiv2, ittnum = spec.ittnum;
@@ -110,62 +110,17 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	int len, ierr;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 
-	nx = 1;
-	ny = 1;
-	nz = 1;
-
-	for (int i = 1; i < nxc; i++) {
-		nx = nx + igridx[i - 1];
-	}
-
-	for (int i = 1; i < nyc; i++) {
-		ny = ny + igridy[i - 1];
-	}
-
-	for (int i = 1; i < nzc; i++) {
-		nz = nz + igridz[i - 1];
-	}
-	if(DEBUG_PRINT)
-		printf(" Fine grid dimension (nx=%d, ny=%d, nz=%d)\n", nx, ny, nz);
-
-//	c----dimension check
-	if (nx > nxm) {
-		printf("nx is too large.\n");
-		assert(0);
-	}
-	if (ny > nym) {
-		printf("ny is too large.\n");
-		assert(0);
-	}
-	if (nz > nzm) {
-		printf("nz is too large.\n");
-		assert(0);
-	}
-
 // c---If dq and df have not been specified, { make them so that the
 // c   interval at the surface is equal to h
 // c   First Convert geographic latitude to geocentric colatitude
 	if(DEBUG_PRINT)
 		printf(" Origin:  x0=%.14lf\t\ty0=%.14lf\t\tz0=%.14lf\n", x0, y[0], z0);
-	x00 = x0;
-	y00 = y[0];
+	y[0] = y00;
 	y[0] *= degrad;
 //   y[0] = hpi - glat(y[0]);
 	double z0r;
 	y[0] = hpi - glath(y[0], z0, &z0r);
-	x0 *= degrad;
-	dq *= degrad;
-	df *= degrad;
-	if (dq == 0)
-		dq = h / rearth;
-	if (df == 0)
-		df = fabs(h / (rearth * sin(y[0])));
-	if(DEBUG_PRINT) {
-		printf(" Origin:  %.14lf\t%.14lf\t%.14lf\n", x0, y[0] / degrad, z0r);
-		printf(" Radial Spacing: %lf\n", h);
-		printf(" Latitude Spacing: %.17E\n", dq);
-		printf(" Longitude Spacing: %.17E\n", df);
-	}
+
 	char logfile[80 + 1];
 	sprintf(logfile, "sphfdloc.log%d", ittnum);
 	FILE *fp_log = fopen(logfile, "w");
@@ -508,7 +463,6 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 			}
 			strcpy(stn[iuse], sta[i]);
 			pha[iuse] = phs[i];
-			j = iuse;
 		}
 		if(DEBUG_PRINT)
 			printf(" Current ntread = %d\n", ntread);
@@ -665,7 +619,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					double xp = x0i + ddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta);
+						find_time(xp, yp, zp, &tp, is, indsta, spec.grid);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -779,7 +733,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					double xp = x0i + dddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta);
+						find_time(xp, yp, zp, &tp, is, indsta, spec.grid);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -1061,7 +1015,11 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	return str_data;
 }
 
-void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
+void find_time(double x, double yy, double z, double *tp, int is, int *indsta, GRID grid) {
+	int nxc = grid.nxc, nyc = grid.nyc, nzc = grid.nzc, nx = grid.nx,
+	    ny = grid.ny, nz = grid.nz;
+	double h = grid.h, x0 = grid.x0, *y = grid.y, 
+	z0 = grid.z0, dq = grid.dq, df = grid.df, x00 = grid.x00, y00 = grid.y00;
 	int i = ((int) ((x - x0) / df));
 	int j = ((int) ((yy - y[0]) / dq));
 	int k = ((int) ((z - z0) / h));
@@ -1072,12 +1030,12 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta) {
 	if (k < 0)
 		k = 0;
 
-	if (i > nx)
-		i = nx;
-	if (j > ny)
-		i = ny;
-	if (k > nz)
-		i = nz;
+	if (i > nx - 2)
+		i = nx - 2;
+	if (j > ny - 2)
+		j = ny - 2;
+	if (k > nz - 2)
+		k = nz - 2;
 
 	double xi = x0 + df * i;
 	double yj = y[0] + dq * j;
