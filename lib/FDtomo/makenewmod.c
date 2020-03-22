@@ -871,9 +871,9 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	trim(fmodfil);
 
 	memcpy(MAKENEWMOD->hdr, hdr, strlen(hdr)+1);
-	memcpy(MAKENEWMOD->igridx, igridx, sizeof(spec.grid.igridx));
-	memcpy(MAKENEWMOD->igridy, igridy, sizeof(spec.grid.igridy));
-	memcpy(MAKENEWMOD->igridz, igridz, sizeof(spec.grid.igridz));
+	memcpy(MAKENEWMOD->igridx, igridx, sizeof(igridx[0]) * (nxc - 1));
+	memcpy(MAKENEWMOD->igridy, igridy, sizeof(igridy[0]) * (nyc - 1));
+	memcpy(MAKENEWMOD->igridz, igridz, sizeof(igridz[0]) * (nzc - 1));
 	MAKENEWMOD->vn = vn;
 
 // c---compute a 1D average for the elements that were hit
