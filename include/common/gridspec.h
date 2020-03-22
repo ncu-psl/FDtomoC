@@ -10,9 +10,10 @@ typedef struct {
     int *igridx, *igridy, *igridz;
     float *gx, *gy, *gz;
     double dx, dy, dz;
+    double xSpace, ySpace, zSpace;
 }GRID;
 
 void moveGrid(GRID *);
-void coordinateCheck(GRID *, int);
+void coordinateCheck(GRID *, int, int);
 void dimensionCheck(GRID);
 #endif // GRIDSPEC
