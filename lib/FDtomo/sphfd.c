@@ -142,7 +142,7 @@
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
 #include "FDtomo/sphfd.h"
-#include "sphfd/vhead.h"
+#include "common/vhead.h"
 #define MAXSTRLEN 132
 #define MAXNUMPAR 2000
 #define PI 3.141592654
