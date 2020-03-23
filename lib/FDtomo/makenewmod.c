@@ -373,20 +373,21 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	}
 
 //c---read in old velocity model
-	char hdr[nhbyte];
+	char hdr[120];
 	FILE *fp_cor = fopen(oldvfil, "r");
 	if (!fp_cor) {
 		printf("file open error: %s\n", nstafil);
 		assert(0);
 	}
-	fread(hdr, sizeof(hdr[0]), nhbyte, fp_cor);
+	struct vhead headin;
+	fread(&headin, sizeof(char), nhbyte, fp_cor);
 
 	char head[5], type[5], syst[5];
 	char quant[5];
 	char flatten[5];
-	char hcomm[125];
+	char hcomm[100];
 	{
-		char *offset = hdr;
+		char *offset = headin.header;
 		sscanf(offset, "%4s", head);
 		offset += strlen(head);
 		sscanf(offset, "%4s", type);
@@ -397,7 +398,7 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		offset += strlen(quant);
 		sscanf(offset, "%4s", flatten);
 		offset += strlen(flatten);
-		sscanf(offset, "%124s", hcomm);
+		sscanf(offset, "%100s", hcomm);
 	}
 
 // c---see if this is a valid header
@@ -419,21 +420,20 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		strcpy(syst, "CART");
 		strcpy(quant, "BMOD");
 		strcpy(flatten, "NOFL");
-		clath = spec.clat;
-		clonh = spec.clon;
-		czh = spec.cz;
-		azh = spec.azmod;
+		clath = headin.clat;
+		clonh = headin.clon;
+		czh = headin.cz;
+		azh = headin.az;
 		h = spec.grid.h;
-		axo = spec.grid.x0;
-		ayo = spec.grid.y[0];
-		azo = spec.grid.z0;
-		
-		dx = h;
-		dy = h;
-		dz = h;
-		nxh = nxc;
-		nyh = nyc;
-		nzh = nzc;
+		axo = headin.x0;
+		ayo = headin.y0;
+		azo = headin.z0;
+		dx = spec.grid.h;
+		dy = spec.grid.h;
+		dz = spec.grid.h;
+		nxh = headin.nx;
+		nyh = headin.ny;
+		nzh = headin.nz;
 
 // c-----Grid specs
 		int ib = 0, ie = 0, lenv = 0, nvl = 0;
@@ -869,8 +869,29 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	// if (iz2d==1) nzs = 1;
 
 	trim(fmodfil);
+	
+	struct vhead headout;
+	headout.fxs = fxs;
+	headout.fys = fys;
+	headout.fzs = fzs;
+	headout.clat = clath;
+	headout.clon = clonh;
+	headout.cz = czh;
+	headout.x0 = axo;
+	headout.y0 = ayo;
+	headout.z0 = azo;
+	headout.dx = dx;
+	headout.dy = dy;
+	headout.dz = dz;
+	headout.az = azh;
+	headout.nx = nxh;
+	headout.ny = nyh;
+	headout.nz = nzh;
 
-	memcpy(MAKENEWMOD->hdr, hdr, strlen(hdr)+1);
+	sprintf(hcomm, "Output from makenewmod.c Version %s using %s", VERSION, oldvfil);
+	hdr_appender(headout.header, 120,head,type,syst,quant,flatten,hcomm);
+
+	memcpy(&MAKENEWMOD->head, &headout, nhbyte);
 	memcpy(MAKENEWMOD->igridx, igridx, sizeof(igridx[0]) * (nxc - 1));
 	memcpy(MAKENEWMOD->igridy, igridy, sizeof(igridy[0]) * (nyc - 1));
 	memcpy(MAKENEWMOD->igridz, igridz, sizeof(igridz[0]) * (nzc - 1));
@@ -929,7 +950,7 @@ int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *MAKENEWMOD, SPEC spec){
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
-	fwrite(MAKENEWMOD->hdr, sizeof(MAKENEWMOD->hdr[0]), nhbyte, fp_nmd);
+	fwrite(&MAKENEWMOD->head, sizeof(char), nhbyte, fp_nmd);
 	fwrite(MAKENEWMOD->igridx, sizeof(MAKENEWMOD->igridx[0]), nxc - 1, fp_nmd);
 	fwrite(MAKENEWMOD->igridy, sizeof(MAKENEWMOD->igridy[0]), nyc - 1, fp_nmd);
 	fwrite(MAKENEWMOD->igridz, sizeof(MAKENEWMOD->igridz[0]), nzc - 1, fp_nmd);
