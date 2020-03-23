@@ -72,6 +72,7 @@ c		    change so that dx = df and dy = df.
 #include "common/geographic_method.h"
 #include "common/string_process.h"
 #include "common/shared_variables.h"
+#include "common/vhead.h"
 #include "FDtomo/make1d.h"
 #define MAX1D 1000
 #define MAXSTRLEN 132
@@ -105,7 +106,7 @@ double fxs = 0.0, fys = 0.0, fzs = 0.0;
 double axo, ayo, azo;
 int nxh, nyh, nzh;
 //--------------------------------------
-char hdr[nhbyte + 1];
+char hdr[120];
 
 int lenhead = nhbyte;
 
@@ -408,13 +409,29 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	}
 
 	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
+	struct vhead *headout = &make1d_data->head;
+	headout->fxs = fxs;
+	headout->fys = fys;
+	headout->fzs = fzs;
+	headout->clat = clat;
+	headout->clon = clon;
+	headout->cz = cz;
+	headout->x0 = axo;
+	headout->y0 = ayo;
+	headout->z0 = azo;
+	headout->dx = dx;
+	headout->dy = dy;
+	headout->dz = dz;
+	headout->az = az;
+	headout->nx = nxh;
+	headout->ny = nyh;
+	headout->nz = nzh;
+	strncpy(headout->header, hdr, 120);
 
-	memcpy(make1d_data->hdr, hdr, strlen(hdr)+1);
 	memcpy(make1d_data->igridx, igridx, 4 * (nxc - 1));
 	memcpy(make1d_data->igridy, igridy, 4 * (nyc - 1));
 	memcpy(make1d_data->igridz, igridz, 4 * (nzc - 1));
 	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
-	printf("%f\n", make1d_data->vsave[19403]);
 
 	fclose(fp_log);
 	fclose(fp_one);
@@ -458,7 +475,7 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
-	fwrite(maked1d_data->hdr, sizeof(maked1d_data->hdr[0]), nhbyte, fp_cor);
+	fwrite(&maked1d_data->head, sizeof(char), nhbyte, fp_cor);
 	fwrite(maked1d_data->igridx, sizeof(maked1d_data->igridx[0]), nxc - 1, fp_cor);
 	fwrite(maked1d_data->igridy, sizeof(maked1d_data->igridy[0]), nyc - 1, fp_cor);
 	fwrite(maked1d_data->igridz, sizeof(maked1d_data->igridz[0]), nzc - 1, fp_cor);

@@ -244,7 +244,7 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 // c	enddo
 	
 	
-	char *offset = MAKE1D->hdr;
+	char *offset = MAKE1D->head.header;
 	sscanf(offset, "%4s", head);
 	offset += strlen(head);
 	sscanf(offset, "%4s", type);
