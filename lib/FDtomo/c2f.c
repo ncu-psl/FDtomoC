@@ -73,7 +73,7 @@ double axo, ayo, azo, dxh, dyh, dzh;
 float azh;
 int nxh, nyh, nzh;
 
-char hdr[nhbyte + 1];
+char hdr[120];
 
 int len_head = nhbyte;
 
@@ -244,7 +244,7 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 // c	enddo
 	
 	
-	char *offset = MAKE1D->hdr;
+	char *offset = MAKE1D->head.header;
 	sscanf(offset, "%4s", head);
 	offset += strlen(head);
 	sscanf(offset, "%4s", type);
@@ -261,6 +261,7 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 		vsave[i] = 0.;
 
 //c---verify that this is a valid header
+	struct vhead *headin = &MAKE1D->head;
 	int len_rec;
 	if (strcmp(head, "HEAD") != 0) {
 		printf(
@@ -275,19 +276,19 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 		strcpy(syst, "CART");
 		strcpy(quant, "BMOD");
 		strcpy(flatten, "NOFL");
-		clath = clat;
-		clonh = clon;
-		czh = cz;
-		azh = azmod;
-		axo = x0;
-		ayo = y[0];
-		azo = z0;
-		dxh = h;
-		dyh = h;
-		dzh = h;
-		nxh = nxc;
-		nyh = nyc;
-		nzh = nzc;
+		clath = headin->clat;
+		clonh = headin->clon;
+		czh = headin->cz;
+		azh = headin->az;
+		axo = headin->x0;
+		ayo = headin->y0;
+		azo = headin->z0;
+		dxh = headin->dx;
+		dyh = headin->dy;
+		dzh = headin->dz;
+		nxh = headin->nx;
+		nyh = headin->ny;
+		nzh = headin->nz;
 	} else {
 		if (strcmp(type, "CORS") != 0) {
 			printf(" WARNING: input mesh does not appear to be COARSE: %s\n",
@@ -388,6 +389,23 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 
 	sprintf(vpfile, "%s.pvel", ffile);
 	sprintf(vsfile, "%s.svel", ffile);
+	struct vhead headout;
+	headout.fxs = fxs;
+	headout.fys = fys;
+	headout.fzs = fzs;
+	headout.clat = clat;
+	headout.clon = clon;
+	headout.cz = cz;
+	headout.x0 = x0;
+	headout.y0 = y[0];
+	headout.z0 = z0;
+	headout.dx = h;
+	headout.dy = h;
+	headout.dz = h;
+	headout.az = azmod;
+	headout.nx = nxc;
+	headout.ny = nyc;
+	headout.nz = nzc;
 
 	FILE *fp_fnw = fopen(ffile, "wb");
 	if (!fp_fnw) {
@@ -395,20 +413,19 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 		assert(0);
 	}
 	printf("Writing out file 1... \n");
-	hdr_appender(hdr, nhbyte, head, type, syst, "BMOD", flatten, hcomm);
-	
-	fwrite(hdr, sizeof(hdr[0]), nhbyte, fp_fnw);
+	hdr_appender(headout.header, 120, head, type, syst, "BMOD", flatten, hcomm);
+
+	fwrite(&headout, sizeof(char), nhbyte, fp_fnw);
 	fwrite(vsave, sizeof(vsave[0]), nxyz2, fp_fnw);
 
-
-	hdr_appender(hdr, nhbyte, head, type, syst, "VPMD", flatten, hcomm);
+	hdr_appender(headout.header, 120, head, type, syst, "VPMD", flatten, hcomm);
 	memcpy(c2f_data->vpfile->filename, vpfile, strlen(vpfile)+1);
-	memcpy(c2f_data->vpfile->hdr, hdr, strlen(hdr)+1);
+	memcpy(&c2f_data->vpfile->head, &headout, nhbyte);
 	memcpy(c2f_data->vpfile->vsave, vsave, sizeof(vsave[0])*nxyz);
 
-	hdr_appender(hdr, nhbyte, head, type, syst, "VSMD", flatten, hcomm);
+	hdr_appender(headout.header, 120, head, type, syst, "VSMD", flatten, hcomm);
 	memcpy(c2f_data->vsfile->filename, vsfile, strlen(vsfile)+1);
-	memcpy(c2f_data->vsfile->hdr, hdr, strlen(hdr)+1);
+	memcpy(&c2f_data->vsfile->head, &headout, nhbyte);
 	memcpy(c2f_data->vsfile->vsave, vsave + nxyz, sizeof(vsave[0]) * (nxyz2 - nxyz));
 
 	a65: 
@@ -491,7 +508,7 @@ OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
 		assert(0);
 	}
 	printf("Writing out file 2... \n");
-	fwrite(c2f_data->vpfile->hdr, sizeof(c2f_data->vpfile->hdr[0]), nhbyte, fp_fnp);
+	fwrite(&c2f_data->vpfile->head, sizeof(char), nhbyte, fp_fnp);
 	fwrite(c2f_data->vpfile->vsave, sizeof(c2f_data->vpfile->vsave[0]), nxyz, fp_fnp);
 	
 	FILE *fp_fns = fopen(c2f_data->vsfile->filename, "wb");
@@ -500,7 +517,7 @@ OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
 		assert(0);
 	}
 	printf("Writing out file 3... \n");
-	fwrite(c2f_data->vsfile->hdr, sizeof(c2f_data->vsfile->hdr[0]), nhbyte, fp_fns);
+	fwrite(&c2f_data->vsfile->head, sizeof(char), nhbyte, fp_fns);
 	fwrite(c2f_data->vsfile->vsave, sizeof(c2f_data->vsfile->vsave[0]), nxyz2 - nxyz, fp_fns);
 
 

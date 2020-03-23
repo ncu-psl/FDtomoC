@@ -1,11 +1,12 @@
 #ifndef MAKE1D_H_
 #define MAKE1D_H_
 #include "common/read_spec.h"
+#include "common/vhead.h"
 #include "parameter.h"
 #define nhbyte 58 * 4
 
 typedef struct{
-    char hdr[nhbyte + 1];
+    struct vhead head;
     int igridx[nxcm1], igridy[nycm1], igridz[nzcm1];
     float vsave[nxyzcm2];
 

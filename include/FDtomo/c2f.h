@@ -4,7 +4,7 @@
 #include "FDtomo/make1d.h"
 typedef struct{
     char filename[MAXSTRLEN + 1];
-    char hdr[nhbyte + 1];
+    struct vhead head;    
     float vsave[nxyzm2];
 }VELFILE;
 

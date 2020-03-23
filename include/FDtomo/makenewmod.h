@@ -4,7 +4,7 @@
 #define nhbyte 58 * 4
 
 typedef struct{
-    char hdr[nhbyte + 1];
+    struct vhead head;
     int igridx[nxcm1], igridy[nycm1], igridz[nzcm1];
     float *vn;
 

@@ -142,7 +142,7 @@
 #include "common/shared_variables.h"
 #include "common/read_spec.h"
 #include "FDtomo/sphfd.h"
-#include "sphfd/vhead.h"
+#include "common/vhead.h"
 #define MAXSTRLEN 132
 #define MAXNUMPAR 2000
 #define PI 3.141592654
@@ -621,11 +621,11 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	//read(vfint, &headin, 232);
 	if (!strcmp(velfile, "VP.mod"))
 	{
-		strcpy(headin.header, C2F->vpfile->hdr);
+		strcpy(&headin, &C2F->vpfile->head);
 	}
 	else if(!strcmp(velfile, "VS.mod"))
 	{
-		strcpy(headin.header, C2F->vsfile->hdr);
+		strcpy(&headin, &C2F->vsfile->head);
 	} 
 	else
 	{
