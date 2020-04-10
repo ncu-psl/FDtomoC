@@ -405,3 +405,51 @@ void read_error(char *name, char *type, FILE *fp_spc){
 	fclose(fp_spc);
 
 }
+
+SPEC create_spec(char *specFile){
+	SPEC spec; //(SPEC*)malloc(sizeof(SPEC));
+	//set default value
+
+	//GRID
+	spec.grid.igridx = (int *)malloc(sizeof(int) * nxcm1);
+	spec.grid.igridy = (int *)malloc(sizeof(int) * nycm1);
+	spec.grid.igridz = (int *)malloc(sizeof(int) * nzcm1);
+	spec.grid.gx = (float *)malloc(sizeof(float) * nxcm);
+	spec.grid.gy = (float *)malloc(sizeof(float) * nycm);
+	spec.grid.gz = (float *)malloc(sizeof(float) * nzcm);
+
+	//c2f initialization 
+	spec.vs1d = 1;
+	spec.iflat = 0;
+	spec.isph = 0;
+
+	//sphfdloc initialization 
+	strcpy(spec.timedir, "./ttimes\0");
+	strcpy(spec.eqkdir, "./eqkdir/\0");
+	spec.iread = 0;
+	spec.ivs = 1;
+	spec.vpvs = 1.78;
+	spec.nthres = 8;
+	spec.resthres = .5;
+	spec.resthrep = 5.0;
+	spec.stdmax = 15.0;
+	spec.kmin = 2;
+	spec.grid.x0 = 0;
+	spec.grid.y[0] = 0;
+	spec.grid.z0 = 0;
+	spec.grid.dq = 0;
+	spec.grid.df = 0;
+	spec.ndiv = 20;
+	spec.ndiv2 = 20;
+	spec.ittnum = 1;
+	spec.total_earthquakes = 0;
+
+	//sphrayderv initialization
+
+
+	read_variables(specFile, &spec);
+	read_files(specFile, &spec);
+	read_grid(specFile, &spec);
+
+	return spec;
+}

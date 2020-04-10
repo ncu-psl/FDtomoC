@@ -71,4 +71,5 @@ void read_variables(char *spec_file, SPEC *spec);
 void read_files(char *spec_file, SPEC *file_identifier);
 void read_grid(char *spec_file, SPEC *spec);
 void read_error(char *name, char *type, FILE *fp_spc);
+SPEC create_spec(char *specFile);
 #endif
