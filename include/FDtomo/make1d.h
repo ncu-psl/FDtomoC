@@ -2,7 +2,7 @@
 #define MAKE1D_H_
 #include "common/read_spec.h"
 #include "common/vhead.h"
-#include "parameter.h"
+#include "common/parameter.h"
 #define nhbyte 58 * 4
 
 typedef struct{
