@@ -13,5 +13,6 @@ typedef struct{
 }MAKE1D_DATA;
 MAKE1D_DATA *make1d(SPEC);
 int OUTPUT_MAKE1D(MAKE1D_DATA *, SPEC);
+int LOG_MAKE1D(SPEC);
 
 #endif
