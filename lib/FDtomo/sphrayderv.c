@@ -144,8 +144,6 @@ int jsave[maxkbl];
 int istn[maxobs];
 int i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
 
-char logfile[80];
-
 char filen[80], rayfile[80];
 char evid[10];
 char sta[maxobs][6], stn[maxsta][6], stt[maxlst][6];
@@ -251,110 +249,7 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		printf("  Longitude Spacing: %25.16E  degrees\n", df / degrad);
 		printf("  nxc, nyc, nzc: %12d%12d%12d\n", nxc, nyc, nzc);
 	}
-	sprintf(logfile, "sphrayderv.log%d", ittnum);
-	FILE* fp_log = fopen(logfile, "w");
-	if (!fp_log) {
-		printf("create %s file error.\n", logfile);
-		assert(0);
-	}
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-		" *************************************************************** \n");
-	fprintf(fp_log, "          Parameters Set For This Run of Sphrayderv \n");
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Sphrayderv VERSION: %s\n", VERSION);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n", spec.specfile);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, "  Iteration counter: %18d\n", ittnum);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, "  Longitude origin (x0) :  %12.6lf    \n", x00);
-	fprintf(fp_log, "  Latitude origin  (y0) :  %12.7lf    \n", y00);
-	fprintf(fp_log, "  Depth origin     (z0) :  %21.16lf     \n", z0);
-	{
-		char tmp[MAXSTRLEN];
-		dtoa(tmp, h, 18);
-		fprintf(fp_log, "  Fine Radial Spacing   :   %s       km\n", tmp);
-	}
-	fprintf(fp_log, "  Fine Latitude Spacing :  %24.16E  degrees\n", dq / degrad);
-	fprintf(fp_log, "  Fine Longitude Spacing:  %24.16E  degrees\n", df / degrad);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", nxc);
-	fprintf(fp_log, "  X coarse grid node spacing: \n");
-	for (i = 0; i < nxc - 1; i++) {
-		fprintf(fp_log, "% 4d", igridx[i]);
-		if (i % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
-	fprintf(fp_log, "  Y coarse grid node spacing: \n");
-	for (i = 0; i < nyc - 1; i++) {
-		fprintf(fp_log, "% 4d", igridy[i]);
-		if (i % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
-	fprintf(fp_log, "  Z coarse grid node spacing: \n");
-	for (i = 0; i < nzc - 1; i++) {
-		fprintf(fp_log, "% 4d", igridz[i]);
-		if (i % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, "\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nx);
-	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", ny);
-	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nz);
-	fprintf(fp_log, " \n");
-
-	fprintf(fp_log, " Travel Time Table Directory: %-40s\n", timedir);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Input file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Input station list:           %-60s\n", stafile);
-	fprintf(fp_log, " Local Earthquake data file:   %-60s\n", locdfil);
-	if (idoshot)
-		fprintf(fp_log, " Local Shot data file: %s\n", shotfil);
-
-	if (idotel) {
-		fprintf(fp_log, " Teleseismic data file: %s\n", telefil);
-		fprintf(fp_log, " P base travel time file: %s\n", pbasfil);
-		fprintf(fp_log, " S base travel time file: %s\n", sbasfil);
-		fprintf(fp_log, " Ellipticity correction file: %s\n", elipfil);
-	}
-	if (ivpvs)
-		fprintf(fp_log, " Old coarse scale model: %s\n", oldvfil);
-	if (istacor)
-		fprintf(fp_log, " Station correction dervs: %s\n", stcfile);
-
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Output file attachments:\n");
-	fprintf(fp_log, " \n");
-	if (iraystat)
-		fprintf(fp_log, " Ray Statistics file:          %s\n", raystat);
-	fprintf(fp_log, " Error Summary file:           %s\n", telrerr);
-	fprintf(fp_log, " dt/ds file:                   %s\n", dtdsfil);
-	fprintf(fp_log, " Residuals file:               %s\n", resfile);
-	fprintf(fp_log, " Hit file:                     %s\n", hitfile);
-	fprintf(fp_log, " Hypo derivatives file:        %s\n", dtdhfil);
-	fprintf(fp_log, " Book keeping file:            %s\n", bookfil);
-	if (idatout) {
-		fprintf(fp_log, " Data Output file:             %s\n", dotfile);
-		fprintf(fp_log, " Header Output file:           %s\n", headfil);
-	}
-	if (nomat) {
-		fprintf(fp_log, " Tele Entry Point file: %s\n", entfile);
-	}
-	fprintf(fp_log, " Current index vector: %s\n", sclefil);
-	fprintf(fp_log, " \n");
-
+	
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
@@ -368,42 +263,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		printf("  ymax = %21.15f       degrees\n", ymax / degrad);
 		printf("  zmax = %13.6lf      km\n", zmax);
 	}
-
-	fprintf(fp_log, "  Total Number of fine grid nodes:   %12d\n", nxyz);
-	fprintf(fp_log, "  Total Number of coarse grid nodes: %12d\n", nxyzc);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  X Max:    %18.14lf       degrees\n", xmax / degrad);
-	fprintf(fp_log, "  Y Max:    %18.15lf       degrees (colatitude)\n", ymax / degrad);
-	fprintf(fp_log, "  Y Max:    %18.15lf       degrees (latitude)\n", 90. - ymax / degrad);
-	fprintf(fp_log, "  Z Max:  %12.7lf      km\n", zmax);
-	fprintf(fp_log, " \n");
-
-	char doo[2][10] = { " not", "" };
-	fprintf(fp_log, "  Sphrayderv will%s do teleseisms (idotel = %d)\n", doo[idotel], idotel);
-	fprintf(fp_log, "  Sphrayderv will%s do shots (idoshot = %d)\n", doo[idoshot], idoshot);
-	fprintf(fp_log, "  Sphrayderv will%s demean shot residuals (idmean=%d)\n", doo[idmean], idmean);
-	fprintf(fp_log, "  Station corrections are%s variable (istacor = %d)\n", doo[istacor], istacor);
-	if (ivpvs) {
-		fprintf(fp_log, "  Vp/Vs is solved for (ivpvs = 1)\n");
-		//clzw
-		fprintf(fp_log, "  Vp/Vs is scaling by vpvsscale=%f", vpvsscale);
-	}
-	else {
-		fprintf(fp_log, "  Shear slowness is solved for (ivpvs = 0)\n");
-	}
-	strcpy(doo[0], " does not");
-	strcpy(doo[1], "");
-	fprintf(fp_log, "  Sphrayderv%s output raypaths (iray = %d)\n", doo[iray], iray);
-	fprintf(fp_log, "  Sphrayderv%s outputs ray stats (iraystat = %d)\n", doo[iraystat], iraystat);
-
-	fprintf(fp_log, "  Sphrayderv%s creates data file (idatout = %d)\n", doo[idatout], idatout);
-	if (idatout)
-		fprintf(fp_log, "  Residuals are flagged if more than %12.8f\n", resflag);
-	fprintf(fp_log, "  Sphrayderv %s makes matrices (nomat = %d)\n", doo[!nomat], nomat);
-	strcpy(doo[0], "3D");
-	strcpy(doo[1], "1D");
-	fprintf(fp_log, "  Sphrayderv will do a %s inversion (do1d = %d)\n", doo[ido1d], ido1d);
-	fprintf(fp_log, " \n");
 
 	//c---- - m1 and m2 are used in bookkeeping to notify the makehyps program of the presence of a "non-earthquake"
 	//c     which requires an adjustment only to origin time(in the case of m1) or nothing at all(m2).Often
@@ -536,7 +395,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		}
 		if (nstr >= maxlst) {
 			printf(" Error: too many stations in list.. aborting\n");
-			fprintf(fp_log, " Error: too many stations in list.. aborting\n");
 			assert(0);
 		}
 		//
@@ -693,7 +551,6 @@ a3: ;
 	for (nsta = 0; sscanf(evetmp, "%[^\n]", str_inp); nsta++) {
 		if (nsta >= maxobs) {
 			printf("Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
-			fprintf(fp_log, "Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
 			assert(0);
 		}
 		char str_inp_trimed[100];
@@ -740,7 +597,6 @@ a3: ;
 
 		if (nsta > maxobs) {
 			printf(" Error: too many observations!\n");
-			fprintf(fp_log, " Error: too many observations!\n");
 			assert(0);
 		}
 		evetmp = evetmp + strlen(str_inp) + 1;
@@ -780,7 +636,6 @@ a3: ;
 		}
 		if (kn == nstr + 1 ) {
 			printf(" Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
-			fprintf(fp_log, " Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
 			isgood[i] = 0;
 			goto a200;
 			// continue; // for(i=0;i<nsta;i++) {...}
@@ -1199,7 +1054,6 @@ a3: ;
 			if (i1 == -1) {
 				printf(" Error xm = %lf is out of bounds!\n", xm);
 				fprintf(fp_err, " Error xm = %lf is out of bounds!\n", xm);
-				fprintf(fp_log, " Error xm = %lf is out of bounds!\n", xm);
 				assert(0);
 			}
 			for (int iii = 1; iii < nyc; iii++) {
@@ -1211,7 +1065,6 @@ a3: ;
 			if (j1 == -1) {
 				printf(" Error ym = %lf is out of bounds!\n", ym);
 				fprintf(fp_err, " Error ym = %lf is out of bounds!\n", ym);
-				fprintf(fp_log, " Error ym = %lf is out of bounds!\n", ym);
 				assert(0);
 			}
 			for (int iii = 1; iii < nzc; iii++) {
@@ -1223,7 +1076,6 @@ a3: ;
 			if (k1 == -1) {
 				printf(" Error zm = %lf is out of bounds!\n", zm);
 				fprintf(fp_err, " Error zm = %lf is out of bounds!\n", zm);
-				fprintf(fp_log, " Error zm = %lf is out of bounds!\n", zm);
 				assert(0);
 			}
 			float hx = gx[i1] - gx[i1 - 1];
@@ -1358,7 +1210,6 @@ a3: ;
 						nbk++;
 						if (nbk > maxnbk) {
 							printf(" Error: nbk too large, stopping\n");
-							fprintf(fp_log, " Error: nbk too large, stopping\n");
 							assert(0);
 						}
 
@@ -1370,7 +1221,6 @@ a3: ;
 							kbl++;
 							if (kbl > maxkbl) {
 								printf(" Error: kbl=%d\n", kbl);
-								fprintf(fp_log, " Error: kbl=%d\n", kbl);
 								assert(0);
 							}
 						}
@@ -1380,7 +1230,6 @@ a3: ;
 							mbl++;
 							if (mbl > maxmbl) {
 								printf(" Error: mbl too large, stopping\n");
-								fprintf(fp_log, " Error: mbl too large, stopping\n");
 								assert(0);
 							}
 						}
@@ -1410,7 +1259,6 @@ a3: ;
 							if (nbk > maxnbk) {
 								printf(" Error: nbk too large, stopping\n");
 								fprintf(fp_err, " Error: nbk too large, stopping\n");
-								fprintf(fp_log, " Error: nbk too large, stopping\n");
 								assert(0);
 							}
 
@@ -1427,7 +1275,6 @@ a3: ;
 								if (kbl > maxkbl) {
 									printf(" Error: kbl=%d\n", kbl);
 									fprintf(fp_err, " Error: kbl=%d\n", kbl);
-									fprintf(fp_log, " Error: kbl=%d\n", kbl);
 									assert(0);
 								}
 							}
@@ -1439,7 +1286,6 @@ a3: ;
 								if (mbl > maxmbl) {
 									printf(" Error: mbl too large, stopping\n");
 									fprintf(fp_err, " Error: mbl=%d\n", mbl);
-									fprintf(fp_log, " Error: mbl too large, stopping\n");
 									assert(0);
 								}
 							}
@@ -1823,7 +1669,6 @@ a3: ;
 		if (i1 == -1) {
 			printf(" Error xm = %lf is out of bounds!\n", xm);
 			fprintf(fp_err, " Error xm = %lf is out of bounds!\n", xm);
-			fprintf(fp_log, " Error xm = %lf is out of bounds!\n", xm);
 			assert(0);
 		}
 		for (int iii = 1; iii < nyc; iii++) {
@@ -1835,7 +1680,6 @@ a3: ;
 		if (j1 == -1) {
 			printf(" Error ym = %lf is out of bounds!\n", ym);
 			fprintf(fp_err, " Error ym = %lf is out of bounds!\n", ym);
-			fprintf(fp_log, " Error ym = %lf is out of bounds!\n", ym);
 			assert(0);
 		}
 		for (int iii = 1; iii < nzc; iii++) {
@@ -1847,7 +1691,6 @@ a3: ;
 		if (k1 == -1) {
 			printf(" Error zm = %lf is out of bounds!\n", zm);
 			fprintf(fp_err, " Error zm = %lf is out of bounds!\n", zm);
-			fprintf(fp_log, " Error zm = %lf is out of bounds!\n", zm);
 			assert(0);
 		}
 
@@ -2329,15 +2172,11 @@ a60:
 		strcat(form, "       Number of Shots :  %6d\n");
 		printf(form, deb, std, rms, avres, avwt, sqrtf(rsq) / knobs, knobs, nev, ntel, nshot);
 		fprintf(fp_err, form, deb, std, rms, avres, avwt, sqrtf(rsq) / knobs, knobs, nev, ntel, nshot);
-		fprintf(fp_log, form, deb, std, rms, avres, avwt, sqrtf(rsq) / knobs, knobs, nev, ntel, nshot);
 
 		printf("\n");
 		fprintf(fp_err, "\n");
-		fprintf(fp_log, "\n");
 		fprintf(fp_err, "  \n");
-		fprintf(fp_log, "  \n");
 		fprintf(fp_err, "  No. Stn    Phs Average St.Dev. Nobs\n");
-		fprintf(fp_log, "  No. Stn    Phs Average St.Dev. Nobs\n");
 
 		for (kn = 0; kn < nstr; kn++) {
 			for (iph = 0; iph < 2; iph++) {
@@ -2356,7 +2195,6 @@ a60:
 					std = 0.;
 				}
 				fprintf(fp_err, "%5d %s %4d %8.3f %8.3f %4d\n", kn + 1, stt[kn], iph + 1, avres, std, jnobs);
-				fprintf(fp_log, "%5d %s %4d %8.3f %8.3f %4d\n", kn + 1, stt[kn], iph + 1, avres, std, jnobs);
 			}
 		}
 
@@ -2414,4 +2252,155 @@ int OUTPUT_SPHFRAYDERV(SPHRAYDERV_DATA *SPHRAYDERV, SPEC spec){
 	fwrite(SPHRAYDERV->mat->jndx, sizeof(int), SPHRAYDERV->mat->number_columns, fp_dts);
 
 	fclose(fp_dts);
+}
+
+int LOG_SPHFRAYDERV(SPEC spec){
+	char logfile[80];
+	
+	float xmax = spec.grid.x0 + (spec.grid.nx - 1) * spec.grid.df;
+	float ymax = spec.grid.y[0] + (spec.grid.ny - 1) * spec.grid.dq;
+	float zmax = spec.grid.z0 + (spec.grid.nz - 1) * spec.grid.h;
+
+	sprintf(logfile, "sphrayderv.log%d", spec.ittnum);
+	FILE* fp_log = fopen(logfile, "w");
+	if (!fp_log) {
+		printf("create %s file error.\n", logfile);
+		assert(0);
+	}
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+		" *************************************************************** \n");
+	fprintf(fp_log, "          Parameters Set For This Run of Sphrayderv \n");
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Sphrayderv VERSION: %s\n", VERSION);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Current parameter specification file: %-40s\n", spec.specfile);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, "  Iteration counter: %18d\n", spec.ittnum);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, "  Longitude origin (x0) :  %12.6lf    \n", spec.grid.x00);
+	fprintf(fp_log, "  Latitude origin  (y0) :  %12.7lf    \n", spec.grid.y00);
+	fprintf(fp_log, "  Depth origin     (z0) :  %21.16lf     \n", spec.grid.z0);
+	{
+		char tmp[MAXSTRLEN];
+		dtoa(tmp, spec.grid.h, 18);
+		fprintf(fp_log, "  Fine Radial Spacing   :   %s       km\n", tmp);
+	}
+	fprintf(fp_log, "  Fine Latitude Spacing :  %24.16E  degrees\n", spec.grid.dq / degrad);
+	fprintf(fp_log, "  Fine Longitude Spacing:  %24.16E  degrees\n", spec.grid.df / degrad);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", spec.grid.nxc);
+	fprintf(fp_log, "  X coarse grid node spacing: \n");
+	for (i = 0; i < spec.grid.nxc - 1; i++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridx[i]);
+		if (i % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", spec.grid.nyc);
+	fprintf(fp_log, "  Y coarse grid node spacing: \n");
+	for (i = 0; i < spec.grid.nyc - 1; i++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridy[i]);
+		if (i % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", spec.grid.nzc);
+	fprintf(fp_log, "  Z coarse grid node spacing: \n");
+	for (i = 0; i < spec.grid.nzc - 1; i++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridz[i]);
+		if (i % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, "\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", spec.grid.nx);
+	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", spec.grid.ny);
+	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", spec.grid.nz);
+	fprintf(fp_log, " \n");
+
+	fprintf(fp_log, " Travel Time Table Directory: %-40s\n", spec.timedir);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Input file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Input station list:           %-60s\n", spec.stafile);
+	fprintf(fp_log, " Local Earthquake data file:   %-60s\n", spec.locdfil);
+	if (spec.idoshot)
+		fprintf(fp_log, " Local Shot data file: %s\n", spec.shotfil);
+
+	if (spec.idotel) {
+		fprintf(fp_log, " Teleseismic data file: %s\n", spec.telefil);
+		fprintf(fp_log, " P base travel time file: %s\n", spec.pbasfil);
+		fprintf(fp_log, " S base travel time file: %s\n", spec.sbasfil);
+		fprintf(fp_log, " Ellipticity correction file: %s\n", spec.elipfil);
+	}
+	if (spec.ivpvs)
+		fprintf(fp_log, " Old coarse scale model: %s\n", spec.oldvfil);
+	if (spec.istacor)
+		fprintf(fp_log, " Station correction dervs: %s\n", spec.stcfile);
+
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Output file attachments:\n");
+	fprintf(fp_log, " \n");
+	if (spec.iraystat)
+		fprintf(fp_log, " Ray Statistics file:          %s\n", spec.raystat);
+	fprintf(fp_log, " Error Summary file:           %s\n", spec.telrerr);
+	fprintf(fp_log, " dt/ds file:                   %s\n", spec.dtdsfil);
+	fprintf(fp_log, " Residuals file:               %s\n", spec.resfile);
+	fprintf(fp_log, " Hit file:                     %s\n", spec.hitfile);
+	fprintf(fp_log, " Hypo derivatives file:        %s\n", spec.dtdhfil);
+	fprintf(fp_log, " Book keeping file:            %s\n", spec.bookfil);
+	if (spec.idatout) {
+		fprintf(fp_log, " Data Output file:             %s\n", spec.dotfile);
+		fprintf(fp_log, " Header Output file:           %s\n", spec.headfil);
+	}
+	if (spec.nomat) {
+		fprintf(fp_log, " Tele Entry Point file: %s\n", spec.entfile);
+	}
+	fprintf(fp_log, " Current index vector: %s\n", spec.sclefil);
+	fprintf(fp_log, " \n");
+
+	fprintf(fp_log, "  Total Number of fine grid nodes:   %12d\n", spec.grid.nx * spec.grid.ny * spec.grid.nz);
+	fprintf(fp_log, "  Total Number of coarse grid nodes: %12d\n", spec.grid.nxc * spec.grid.nyc * spec.grid.nzc);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  X Max:    %18.14lf       degrees\n", xmax / degrad);
+	fprintf(fp_log, "  Y Max:    %18.15lf       degrees (colatitude)\n", ymax / degrad);
+	fprintf(fp_log, "  Y Max:    %18.15lf       degrees (latitude)\n", 90. - ymax / degrad);
+	fprintf(fp_log, "  Z Max:  %12.7lf      km\n", zmax);
+	fprintf(fp_log, " \n");
+
+	char doo[2][10] = { " not", "" };
+	fprintf(fp_log, "  Sphrayderv will%s do teleseisms (idotel = %d)\n", doo[spec.idotel], spec.idotel);
+	fprintf(fp_log, "  Sphrayderv will%s do shots (idoshot = %d)\n", doo[spec.idoshot], spec.idoshot);
+	fprintf(fp_log, "  Sphrayderv will%s demean shot residuals (idmean=%d)\n", doo[spec.idmean], spec.idmean);
+	fprintf(fp_log, "  Station corrections are%s variable (istacor = %d)\n", doo[spec.istacor], spec.istacor);
+	if (spec.ivpvs) {
+		fprintf(fp_log, "  Vp/Vs is solved for (ivpvs = 1)\n");
+		//clzw
+		fprintf(fp_log, "  Vp/Vs is scaling by vpvsscale=%f", spec.vpvsscale);
+	}
+	else {
+		fprintf(fp_log, "  Shear slowness is solved for (ivpvs = 0)\n");
+	}
+	strcpy(doo[0], " does not");
+	strcpy(doo[1], "");
+	fprintf(fp_log, "  Sphrayderv%s output raypaths (iray = %d)\n", doo[spec.iray], spec.iray);
+	fprintf(fp_log, "  Sphrayderv%s outputs ray stats (iraystat = %d)\n", doo[spec.iraystat], spec.iraystat);
+
+	fprintf(fp_log, "  Sphrayderv%s creates data file (idatout = %d)\n", doo[spec.idatout], spec.idatout);
+	if (spec.idatout)
+		fprintf(fp_log, "  Residuals are flagged if more than %12.8f\n", spec.resflag);
+	fprintf(fp_log, "  Sphrayderv %s makes matrices (nomat = %d)\n", doo[!spec.nomat], spec.nomat);
+	strcpy(doo[0], "3D");
+	strcpy(doo[1], "1D");
+	fprintf(fp_log, "  Sphrayderv will do a %s inversion (do1d = %d)\n", doo[spec.ido1d], spec.ido1d);
+	fprintf(fp_log, " \n");
+
+	fclose(fp_log);
+	return 0;
 }

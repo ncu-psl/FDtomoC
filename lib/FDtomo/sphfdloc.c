@@ -121,95 +121,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	double z0r;
 	y[0] = hpi - glath(y[0], z0, &z0r);
 
-	char logfile[80 + 1];
-	sprintf(logfile, "sphfdloc.log%d", ittnum);
-	FILE *fp_log = fopen(logfile, "w");
-	if (!fp_log) {
-		printf("create %s file error.\n", logfile);
-		assert(0);
-	}
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
-	fprintf(fp_log, "          Parameters Set For This Run of Sphfdloc.f\n");
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, "Sphfdloc VERSION: %s\n", VERSION);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec.spec_file);
-	fprintf(fp_log, "  \n");
-	{
-		char tmp[MAXSTRLEN];
-		dtoa(tmp, ittnum, 18);
-		fprintf(fp_log, " Iteration counter:          %s     \n", tmp);
-		fprintf(fp_log, "\n");
-
-		dtoa(tmp, x00, 18);
-		fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", tmp);
-		dtoa(tmp, y00, 18);
-		fprintf(fp_log, "  Cartesian Y origin (y0):   %s     \n", tmp);
-		dtoa(tmp, z0, 18);
-		fprintf(fp_log, "  Cartesian Z origin (z0):   %s     \n", tmp);
-		dtoa(tmp, h, 18);
-		fprintf(fp_log, "  Fine Radial Spacing     :   %s km  \n", tmp);
-		dtoa(tmp, dq / degrad, 18);
-		fprintf(fp_log, "  Fine Radial Spacing     :   %s degrees \n", tmp);
-		dtoa(tmp, df / degrad, 18);
-		fprintf(fp_log, "  Fine Radial Spacing     :   %s degrees \n", tmp);
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", nxc);
-	fprintf(fp_log, "  X coarse grid node spacing: \n");
-	for (int iii = 0; iii < nxc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridx[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
-	fprintf(fp_log, "  Y coarse grid node spacing: \n");
-	for (int iii = 0; iii < nyc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridy[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
-	fprintf(fp_log, "  Z coarse grid node spacing: \n");
-	for (int iii = 0; iii < nzc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridz[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, "\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nx);
-	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", ny);
-	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nz);
-	fprintf(fp_log, " \n");
-
-	fprintf(fp_log, "  1st stage grid search division: %12d\n", ndiv);
-	fprintf(fp_log, "  2nd stage grid search division: %12d\n", ndiv2);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Input file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Local Earthquake data file: %s\n", leqsfil);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Output file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Statistics Summary file: %s\n", fsumfil);
-	fprintf(fp_log, " Outlier file: %s\n", outlfil);
-	fprintf(fp_log, " New Header file: %s\n", fhedfil);
-	fprintf(fp_log, " New Data file: %s\n", fdatfil);
-	fprintf(fp_log, " \n");
-
-	fprintf(fp_log, " Travel Time Table Directory: %s\n", timedir);
-	fprintf(fp_log, " \n");
-
+	
 	if(DEBUG_PRINT) {
 		printf(" Origin:  x0=%.14lf y0=%.14lf z0=%.14lf\n", x0, y[0], z0r);
 		printf(" Spacing:  h=%lf\n", h);
@@ -221,44 +133,9 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	int nxy = nx * ny;
 	int nxyz = nxy * nz;
 
-
 	float xmax = x0 + (nx - 1) * df;
 	float ymax = y[0] + (ny - 1) * dq;
 	float zmax = z0 + (nz - 1) * h;
-	fprintf(fp_log, " Total Number of fine grid nodes:%13d\n", nxyz);
-	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", nxyzc);
-	fprintf(fp_log, "\n");
-
-	fprintf(fp_log, " X Max:%22.14lf\n", xmax/degrad);
-	fprintf(fp_log, " Y Max:%22.14lf\n", ymax/degrad);
-	fprintf(fp_log, " Z Max:%22.14lf\n", zmax);
-	fprintf(fp_log, "\n");
-
-//---write out some reminders so we know what's going on:
-	fprintf(fp_log, " Current settings: \n");
-	if (iread == 1) {
-		fprintf(fp_log,
-				" Test of data read only; no probability execution (iread = 1) \n");
-	} else {
-		fprintf(fp_log, " Data read as in normal execution (iread = 0)\n");
-	}
-	if (ivs == 1) {
-		fprintf(fp_log, " Ts calculated explicitly (ivs = 1).\n");
-	} else {
-		fprintf(fp_log, " Ts calculated as Tp*vpvs (ivs = 0). vpvs = %lf\n",
-				vpvs);
-	}
-	fprintf(fp_log, " Default value for Vp/Vs = %lf\n", vpvs);
-	fprintf(fp_log, " Number of Phases Threshold    : %d\n", nthres);
-	fprintf(fp_log, " Absolute Residual Threshold   : %lf\n", resthres);
-	fprintf(fp_log, " Percentage Residual Threshold : %lf\n", resthrep);
-	fprintf(fp_log, " Standard Deviation Threshold  : %lf\n", stdmax);
-	fprintf(fp_log, " Beginning Depth grid          : %d\n", kmin + 1);
-	fprintf(fp_log, "\n");
-	fprintf(fp_log,
-			"*************************************************************** \n");
-	fprintf(fp_log, "\n");
-
 //---START LOOP OVER EVENTS
 //   read in event header
 	if(total_earthquakes == 0) {
@@ -1258,5 +1135,137 @@ int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **SPHFDLOC, SPEC spec){
 
 	fclose(fp_fdt);
 
+	return 0;
+}
+
+int LOG_SPHFDLOC(SPEC spec){
+	float xmax = spec.grid.x0 + (spec.grid.nx - 1) * spec.grid.df;
+	float ymax = spec.grid.y[0] + (spec.grid.ny - 1) * spec.grid.dq;
+	float zmax = spec.grid.z0 + (spec.grid.nz - 1) * spec.grid.h;
+
+	char logfile[80 + 1];
+	sprintf(logfile, "sphfdloc.log%d", spec.ittnum);
+	FILE *fp_log = fopen(logfile, "w");
+	if (!fp_log) {
+		printf("create %s file error.\n", logfile);
+		assert(0);
+	}
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+	fprintf(fp_log, "          Parameters Set For This Run of Sphfdloc.f\n");
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, "Sphfdloc VERSION: %s\n", VERSION);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Current parameter specification file: %-40s\n",
+			spec.spec_file);
+	fprintf(fp_log, "  \n");
+	{
+		char tmp[MAXSTRLEN];
+		dtoa(tmp, spec.ittnum, 18);
+		fprintf(fp_log, " Iteration counter:          %s     \n", tmp);
+		fprintf(fp_log, "\n");
+
+		dtoa(tmp, spec.grid.x00, 18);
+		fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", tmp);
+		dtoa(tmp, spec.grid.y00, 18);
+		fprintf(fp_log, "  Cartesian Y origin (y0):   %s     \n", tmp);
+		dtoa(tmp, spec.grid.z0, 18);
+		fprintf(fp_log, "  Cartesian Z origin (z0):   %s     \n", tmp);
+		dtoa(tmp, spec.grid.h, 18);
+		fprintf(fp_log, "  Fine Radial Spacing     :   %s km  \n", tmp);
+		dtoa(tmp, spec.grid.dq / degrad, 18);
+		fprintf(fp_log, "  Fine Radial Spacing     :   %s degrees \n", tmp);
+		dtoa(tmp, spec.grid.df / degrad, 18);
+		fprintf(fp_log, "  Fine Radial Spacing     :   %s degrees \n", tmp);
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", spec.grid.nxc);
+	fprintf(fp_log, "  X coarse grid node spacing: \n");
+	for (int iii = 0; iii < spec.grid.nxc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridx[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", spec.grid.nyc);
+	fprintf(fp_log, "  Y coarse grid node spacing: \n");
+	for (int iii = 0; iii < spec.grid.nyc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridy[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", spec.grid.nzc);
+	fprintf(fp_log, "  Z coarse grid node spacing: \n");
+	for (int iii = 0; iii < spec.grid.nzc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridz[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, "\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", spec.grid.nx);
+	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", spec.grid.ny);
+	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", spec.grid.nz);
+	fprintf(fp_log, " \n");
+
+	fprintf(fp_log, "  1st stage grid search division: %12d\n", spec.ndiv);
+	fprintf(fp_log, "  2nd stage grid search division: %12d\n", spec.ndiv2);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Input file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Local Earthquake data file: %s\n", spec.leqsfil);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Output file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Statistics Summary file: %s\n", spec.fsumfil);
+	fprintf(fp_log, " Outlier file: %s\n", spec.outlfil);
+	fprintf(fp_log, " New Header file: %s\n", spec.fhedfil);
+	fprintf(fp_log, " New Data file: %s\n", spec.fdatfil);
+	fprintf(fp_log, " \n");
+
+	fprintf(fp_log, " Travel Time Table Directory: %s\n", spec.timedir);
+	fprintf(fp_log, " \n");
+
+	fprintf(fp_log, " Total Number of fine grid nodes:%13d\n", spec.grid.nx * spec.grid.ny * spec.grid.nz);
+	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", spec.grid.nxc * spec.grid.nyc * spec.grid.nzc);
+	fprintf(fp_log, "\n");
+
+	fprintf(fp_log, " X Max:%22.14lf\n", xmax/degrad);
+	fprintf(fp_log, " Y Max:%22.14lf\n", ymax/degrad);
+	fprintf(fp_log, " Z Max:%22.14lf\n", zmax);
+	fprintf(fp_log, "\n");
+
+//---write out some reminders so we know what's going on:
+	fprintf(fp_log, " Current settings: \n");
+	if (spec.iread == 1) {
+		fprintf(fp_log,
+				" Test of data read only; no probability execution (iread = 1) \n");
+	} else {
+		fprintf(fp_log, " Data read as in normal execution (iread = 0)\n");
+	}
+	if (spec.ivs == 1) {
+		fprintf(fp_log, " Ts calculated explicitly (ivs = 1).\n");
+	} else {
+		fprintf(fp_log, " Ts calculated as Tp*vpvs (ivs = 0). vpvs = %lf\n",
+				spec.vpvs);
+	}
+	fprintf(fp_log, " Default value for Vp/Vs = %lf\n", spec.vpvs);
+	fprintf(fp_log, " Number of Phases Threshold    : %d\n", spec.nthres);
+	fprintf(fp_log, " Absolute Residual Threshold   : %lf\n", spec.resthres);
+	fprintf(fp_log, " Percentage Residual Threshold : %lf\n", spec.resthrep);
+	fprintf(fp_log, " Standard Deviation Threshold  : %lf\n", spec.stdmax);
+	fprintf(fp_log, " Beginning Depth grid          : %d\n", spec.kmin + 1);
+	fprintf(fp_log, "\n");
+	fprintf(fp_log,
+			"*************************************************************** \n");
+	fprintf(fp_log, "\n");
+
+	fclose(fp_log);
 	return 0;
 }

@@ -10,5 +10,5 @@ typedef struct{
 
 RUNLSQR_DATA *runlsqr(SPEC, SPHRAYDERV_DATA *);
 int OUTPUT_RUNLSQR(RUNLSQR_DATA *, SPEC);
-
+int LOG_RUNLSQR(SPEC);
 #endif

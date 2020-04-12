@@ -157,112 +157,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	int lengrd = 4 * (nxc + nyc + nzc - 3);
 	int lenrec = lenhead + lengrd + 4 * nxyzc2;
 
-	fp_log = fopen("make1d.log", "w");
-	if(!fp_log) {
-		printf("(Error in make1d.c)create fp_log file error.\n");
-		assert(fp_log);
-	}
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
-
-	fprintf(fp_log, "          Parameters Set For This Run of make1d.f\n");
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " VERSION: %s\n", VERSION);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec_file);
-	fprintf(fp_log, "  \n");
-	char out_str[MAXSTRLEN];
-	dtoa(out_str, clat, 18);
-	fprintf(fp_log, "  Latitude origin  (clat):   %s     \n", out_str);
-	dtoa(out_str, clon, 18);
-	fprintf(fp_log, "  Longitude origin (clon):   %s     \n", out_str);
-	dtoa(out_str, cz, 18);
-	fprintf(fp_log, "  Depth of  origin (cz)  :   %s     \n", out_str);
-	dtoa(out_str, az, 10);
-	fprintf(fp_log, "  Clockwise rotation (az):   %s    \n", out_str);
-	fprintf(fp_log, "  \n");
-	dtoa(out_str, x0, 18);
-	fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", out_str);
-	dtoa(out_str, y[0], 18);
-	fprintf(fp_log, "  Cartesian Y origin (y0):   %s     \n", out_str);
-	dtoa(out_str, z0, 18);
-	fprintf(fp_log, "  Cartesian Z origin (z0):   %s     \n", out_str);
-	if (isph == 0) {
-		fprintf(fp_log, "  Coordinate system is CARTESIAN \n");
-		fprintf(fp_log, "  Fine grid spacing: %lf\n", h);
-	} else {
-		fprintf(fp_log, "  Coordinate system is SPHERICAL \n");
-		fprintf(fp_log, "  Fine Longitude spacing (df):   %.17E\n", dx);
-		fprintf(fp_log, "  Fine Latidtude spacing (dq):   %.17E\n", dy);
-		dtoa(out_str, h, 18);
-		fprintf(fp_log, "  Fine Radial spacing    (dz):   %s     \n", out_str);
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", nxc);
-	fprintf(fp_log, "  X coarse grid node spacing: \n");
-	for (int iii = 0; iii < nxc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridx[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
-	fprintf(fp_log, "  Y coarse grid node spacing: \n");
-	for (int iii = 0; iii < nyc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridy[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
-	fprintf(fp_log, "  Z coarse grid node spacing: \n");
-	for (int iii = 0; iii < nzc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridz[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, "\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nx);
-	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", ny);
-	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nz);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Total Number of coarse grid nodes:%13d\n", nxyzc);
-	fprintf(fp_log, "  Total Number of fine grid nodes:%13d\n", nxyz);
-	fprintf(fp_log, " \n");
-	if (iflat == 1) {
-		fprintf(fp_log, "  Speeds and Depths are flattened (iflat = 1) \n");
-	} else {
-		fprintf(fp_log, "  Speeds and Depths are not flattened (iflat = 0) \n");
-	}
-	if (vs1d == 1) {
-		fprintf(fp_log, "  Vs column treated as S wavespeed (vs1d = 1) \n");
-	} else {
-		fprintf(fp_log, "  Vs column treated as Vp/Vs (vs1d = 0) \n");
-	}
-
-	fprintf(fp_log, " \n");
-
-	fprintf(fp_log, "  Length of header  (bytes): %12d\n", lenhead + lengrd);
-	fprintf(fp_log, "  Length of outfile (bytes): %12d\n", lenrec);
-
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Input file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " One-D ASCII model file: %-40s\n", spec.onedfil);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Output file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " New Wavespeed model file: %-40s\n", spec.oldvfil);
-	fprintf(fp_log, " \n");
-
 //---generate the header
 	strcpy(head, "HEAD");
 	head[4] = '\0';
@@ -360,10 +254,7 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	a2: 
 	for (int n = 0; n <= 1; n++) {
 		int noff = nxyzc * n;
-		fprintf(fp_log, " \n");
 		printf(" \n");
-		fprintf(fp_log,
-				"  Lay   Dep      D1      D2      V1      V2      V      ZFL     VFL\n");
 		printf(
 				"  Lay   Dep      D1      D2      V1      V2      V      ZFL     VFL\n");
 		for (k = 0; k < nzc; k++) {
@@ -393,9 +284,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 				zfl = zg;
 				vfl = v;
 			}
-			fprintf(fp_log, "%4d%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n",
-					(k + 1), zg, z[ik], z[ik + 1], vp[ik][n], vp[ik + 1][n], v,
-					zfl, vfl);
 			printf("%4d%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", (k + 1), zg,
 					z[ik], z[ik + 1], vp[ik][n], vp[ik + 1][n], v, zfl, vfl);
 			int j;
@@ -433,7 +321,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	memcpy(make1d_data->igridz, igridz, 4 * (nzc - 1));
 	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
 
-	fclose(fp_log);
 	fclose(fp_one);
 	return make1d_data;
 }
@@ -481,5 +368,127 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 	fwrite(maked1d_data->igridz, sizeof(maked1d_data->igridz[0]), nzc - 1, fp_cor);
 	fwrite(maked1d_data->vsave, sizeof(maked1d_data->vsave[0]), nxyzc2, fp_cor);
 	return 0;
+}
+
+int LOG_MAKE1D(SPEC spec){
+	int nxyc = spec.grid.nxc * spec.grid.nyc;
+	int nxyzc = nxyc * spec.grid.nzc;
+	int nxyzc2 = nxyzc * 2;
+
+	int nxy = spec.grid.nx * spec.grid.ny;
+	int nxyz = nxy * spec.grid.nz;
+
+	int lengrd = 4 * (spec.grid.nxc + spec.grid.nyc + spec.grid.nzc - 3);
+	int lenrec = lenhead + lengrd + 4 * nxyzc2;
+
+	fp_log = fopen("make1d.log", "w");
+	if(!fp_log) {
+		printf("(Error in make1d.c)create fp_log file error.\n");
+		assert(fp_log);
+	}
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+
+	fprintf(fp_log, "          Parameters Set For This Run of make1d.f\n");
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " VERSION: %s\n", VERSION);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Current parameter specification file: %-40s\n",
+			spec.spec_file);
+	fprintf(fp_log, "  \n");
+	char out_str[MAXSTRLEN];
+	dtoa(out_str, spec.clat, 18);
+	fprintf(fp_log, "  Latitude origin  (clat):   %s     \n", out_str);
+	dtoa(out_str, spec.clon, 18);
+	fprintf(fp_log, "  Longitude origin (clon):   %s     \n", out_str);
+	dtoa(out_str, spec.cz, 18);
+	fprintf(fp_log, "  Depth of  origin (cz)  :   %s     \n", out_str);
+	dtoa(out_str, spec.az, 10);
+	fprintf(fp_log, "  Clockwise rotation (az):   %s    \n", out_str);
+	fprintf(fp_log, "  \n");
+	dtoa(out_str, spec.grid.x0, 18);
+	fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", out_str);
+	dtoa(out_str, spec.grid.y[0], 18);
+	fprintf(fp_log, "  Cartesian Y origin (y0):   %s     \n", out_str);
+	dtoa(out_str, spec.grid.z0, 18);
+	fprintf(fp_log, "  Cartesian Z origin (z0):   %s     \n", out_str);
+	if (spec.isph == 0) {
+		fprintf(fp_log, "  Coordinate system is CARTESIAN \n");
+		fprintf(fp_log, "  Fine grid spacing: %lf\n", spec.grid.h);
+	} else {
+		fprintf(fp_log, "  Coordinate system is SPHERICAL \n");
+		fprintf(fp_log, "  Fine Longitude spacing (df):   %.17E\n", spec.grid.dx);
+		fprintf(fp_log, "  Fine Latidtude spacing (dq):   %.17E\n", spec.grid.dy);
+		dtoa(out_str, spec.grid.h, 18);
+		fprintf(fp_log, "  Fine Radial spacing    (dz):   %s     \n", out_str);
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", spec.grid.nxc);
+	fprintf(fp_log, "  X coarse grid node spacing: \n");
+	for (int iii = 0; iii < spec.grid.nxc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridx[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", spec.grid.nyc);
+	fprintf(fp_log, "  Y coarse grid node spacing: \n");
+	for (int iii = 0; iii < spec.grid.nyc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridy[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", spec.grid.nzc);
+	fprintf(fp_log, "  Z coarse grid node spacing: \n");
+	for (int iii = 0; iii < spec.grid.nzc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridz[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, "\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", spec.grid.nx);
+	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", spec.grid.ny);
+	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", spec.grid.nz);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Total Number of coarse grid nodes:%13d\n", nxyzc);
+	fprintf(fp_log, "  Total Number of fine grid nodes:%13d\n", nxyz);
+	fprintf(fp_log, " \n");
+	if (spec.iflat == 1) {
+		fprintf(fp_log, "  Speeds and Depths are flattened (iflat = 1) \n");
+	} else {
+		fprintf(fp_log, "  Speeds and Depths are not flattened (iflat = 0) \n");
+	}
+	if (spec.vs1d == 1) {
+		fprintf(fp_log, "  Vs column treated as S wavespeed (vs1d = 1) \n");
+	} else {
+		fprintf(fp_log, "  Vs column treated as Vp/Vs (vs1d = 0) \n");
+	}
+
+	fprintf(fp_log, " \n");
+
+	fprintf(fp_log, "  Length of header  (bytes): %12d\n", lenhead + lengrd);
+	fprintf(fp_log, "  Length of outfile (bytes): %12d\n", lenrec);
+
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Input file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " One-D ASCII model file: %-40s\n", spec.onedfil);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Output file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " New Wavespeed model file: %-40s\n", spec.oldvfil);
+	fprintf(fp_log, " \n");
+
+	fclose(fp_log);
+	return 0;
+
 }
 

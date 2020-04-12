@@ -15,4 +15,5 @@ typedef struct{
 
 C2F_DATA *c2f(SPEC, MAKE1D_DATA *);
 int OUTPUT_C2F(C2F_DATA *, SPEC);
+int LOG_C2F(SPEC);
 #endif
