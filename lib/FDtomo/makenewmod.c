@@ -157,79 +157,7 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
 
-	char logfile[80 + 1];
-	sprintf(logfile, "sphfdloc.log%d", ittnum);
-	FILE *fp_log = fopen(logfile, "w");
-	if (!fp_log) {
-		printf("create %s file error.\n", logfile);
-		assert(0);
-	}
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
-	fprintf(fp_log, "          Parameters Set For This Run of Makenewmod.c\n");
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, "Sphfdloc VERSION: %s\n", VERSION);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec.spec_file);
-	fprintf(fp_log, "  \n");
-	{
-		char tmp[MAXSTRLEN];
-		dtoa(tmp, ittnum, 18);
-		fprintf(fp_log, " Iteration counter:          %s     \n", tmp);
-	}
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nxc);
-	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", nyc);
-	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nzc);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nxc);
-	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", nyc);
-	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nzc);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Moving Window Length in X : %12d\n", mavx);
-	fprintf(fp_log, "  Moving Window Length in Y : %12d\n", mavy);
-	fprintf(fp_log, "  Moving Window Length in Z : %12d\n", mavz);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of smoothing passes : %12d\n", nsmooth);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  ivpvs: %12d\n", ivpvs);
-	fprintf(fp_log, " \n");
-
-	if (ipscflg == 1) {
-		fprintf(fp_log, " Perturbations scaled at the outset by : %f", pertscl);
-	} else {
-		fprintf(fp_log, " Perturbations not scaled at the outset (pscflg = 0)");
-	}
-	if (limitu == 1) {
-		fprintf(fp_log, " Maximum Wavespeed Percentage change allowed : %f",
-				dvperc);
-	} else {
-		fprintf(fp_log, " No perturbation limits applied (limitu = 0) ");
-	}
-	if (ido1d == 1) {
-		fprintf(fp_log, " Corrections assumed for 1D model (do1d = 1) ");
-	} else {
-		fprintf(fp_log, " Corrections assumed for 3D model (do1d = 0) ");
-	}
-
-	fprintf(fp_log, " Input file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Arr. Time Wavespeed model: %s\n", oldvfil);
-	fprintf(fp_log, " Perturbation file: %s\n", nmodfil);
-	fprintf(fp_log, " Existing Station List: %s\n", stafile);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Output file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " New Wavespeed Model: %s\n", fmodfil);
-	fprintf(fp_log, " New Station List : %s\n", nstafil);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", nxyzc);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
+	
 	int ima = mavx;
 	int jma = mavy;
 	int kma = mavz;
@@ -257,8 +185,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 			nstr = nstr + 1;
 			if (nstr > maxlst) {
 				printf("  Error:  too many stations in list.. aborting\n");
-				fprintf(fp_log,
-						"  Error:  too many stations in list.. aborting\n");
 				assert(0);
 			}
 
@@ -269,7 +195,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 // c
 		}
 		printf("  %d stations read in\n", nstr);
-		fprintf(fp_log, "  %d stations read in\n", nstr);
 		fclose(fp_sta);
 	}
 
@@ -285,7 +210,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 
 
 	printf("  %10d perturbations read in\n", nvar);
-	fprintf(fp_log, "  %10d perturbations read in\n", nvar);
 
 //c---scale the corrections if required
 	if (ipscflg == 1) {
@@ -351,11 +275,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		printf("  dupmax, dupmin =   %12.8E %12.8E\n", dupmax, dupmin);
 	if (isets == 1)
 		printf("  dusmax, dusmin =   %12.8E %12.8E\n", dusmax, dusmin);
-	fprintf(fp_log, " Original perturbations from runlsqr file:\n");
-	if (isetp == 1)
-		fprintf(fp_log, "  dupmax, dupmin =   %12.8E %12.8E\n", dupmax, dupmin);
-	if (isets == 1)
-		fprintf(fp_log, "  dusmax, dusmin =   %12.8E %12.8E\n", dusmax, dusmin);
 
 //c---update station corrections
 	if (istacor == 1) {
@@ -405,8 +324,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	if (strcmp(head, "HEAD") != 0) {
 		printf(
 				"File does not contain valid header...attempting headerless read \n");
-		fprintf(fp_log,
-				"File does not contain valid header...attempting headerless read \n");
 		// len_rec = 4 * nxyzc2;
 		rewind(fp_cor);
 		if (!fp_cor) {
@@ -445,15 +362,9 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		if (strcmp(type, "CORS") != 0) {
 			printf("  WARNING: input mesh does not appear to be COARSE: %s\n",
 					type);
-			fprintf(fp_log,
-					"  WARNING: input mesh does not appear to be COARSE: %s\n",
-					type);
 		}
 		if (strcmp(quant, "BMOD") != 0) {
 			printf("  WARNING: file does not appear to be a valid type: %s\n",
-					quant);
-			fprintf(fp_log,
-					"  WARNING: file does not appear to be a valid type: %s\n",
 					quant);
 		}
 
@@ -656,9 +567,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 				}
 				printf("  nsmooth, n, dumax, dumin = %12d%12d %15.8E %15.8E\n",
 						iii + 1, n + 1, dumax, dumin);
-				fprintf(fp_log,
-						" nsmooth, n, dumax, dumin = %12d%12d %15.8E %15.8E\n",
-						iii + 1, n + 1, dumax, dumin);
 			}
 		}
 	}
@@ -760,11 +668,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	printf("  dvpmax, dvpmin = %15.8E %15.8E\n", dv_max, dv_min);
 	printf("  Old Vp max, New Vp max = %12.8f %15.8f\n", v_max_old, v_max_new);
 	printf("  Old Vp min, New Vp min = %12.8f %15.8f\n", v_min_old, v_min_new);
-	fprintf(fp_log, "  dvpmax, dvpmin = %15.8E %15.8E\n", dv_max, dv_min);
-	fprintf(fp_log, "  Old Vp max, New Vp max = %12.8f %15.8f\n", v_max_old,
-			v_max_new);
-	fprintf(fp_log, "  Old Vp min, New Vp min = %12.8f %15.8f\n", v_min_old,
-			v_min_new);
 
 // c---add Vs perturbation to model - recall that vo was changed to Vp/Vs above if ivpvs = 1
 	dv = 0, ddu = 0, vold = 0;
@@ -817,25 +720,13 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 				v_max_new);
 		printf("  Old Vp/Vs min, New Vp/Vs min = %12.8f %15.8f\n", v_min_old,
 				v_min_new);
-		fprintf(fp_log, "  d(vp/vs)max, d(vp/vs)smin = %15.8E %15.8E\n", dv_max,
-				dv_min);
-		fprintf(fp_log, "  Old Vp/Vs max, New Vp/Vs max = %12.8f %15.8f\n",
-				v_max_old, v_max_new);
-		fprintf(fp_log, "  Old Vp/Vs min, New Vp/Vs min = %12.8f %15.8f\n",
-				v_min_old, v_min_new);
 	} else {
 		printf("  dvsmax, dvsmin = %15.8E %15.8E\n", dv_max, dv_min);
 		printf("  Old Vs max, New Vs max = %12.8f %15.8f\n", v_max_old,
 				v_max_new);
 		printf("  Old Vs min, New Vs min = %12.8f %15.8f\n", v_min_old,
 				v_min_new);
-		fprintf(fp_log, "  dvsmax, dvsmin = %15.8E %15.8E\n", dv_max, dv_min);
-		fprintf(fp_log, "  Old Vs max, New Vs max = %12.78 %15.8f\n", v_max_old,
-				v_max_new);
-		fprintf(fp_log, "  Old Vs min, New Vs min = %12.8f %15.8f\n", v_min_old,
-				v_min_new);
 	}
-	fclose(fp_log);
 
 // c---convert Vp/Vs back to Vs if necessary
 	if (ivpvs==1) {
@@ -956,5 +847,84 @@ int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *MAKENEWMOD, SPEC spec){
 	fwrite(MAKENEWMOD->igridz, sizeof(MAKENEWMOD->igridz[0]), nzc - 1, fp_nmd);
 	fwrite(MAKENEWMOD->vn, sizeof(MAKENEWMOD->vn[0]), nxyzc2, fp_nmd);
 
+	return 0;
+}
+
+int LOG_MAKENEWMOD(SPEC spec){
+	char logfile[80 + 1];
+	sprintf(logfile, "sphfdloc.log%d", spec.ittnum);
+	FILE *fp_log = fopen(logfile, "w");
+	if (!fp_log) {
+		printf("create %s file error.\n", logfile);
+		assert(0);
+	}
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+	fprintf(fp_log, "          Parameters Set For This Run of Makenewmod.c\n");
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, "Sphfdloc VERSION: %s\n", VERSION);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Current parameter specification file: %-40s\n",
+			spec.spec_file);
+	fprintf(fp_log, "  \n");
+	{
+		char tmp[MAXSTRLEN];
+		dtoa(tmp, spec.ittnum, 18);
+		fprintf(fp_log, " Iteration counter:          %s     \n", tmp);
+	}
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", spec.grid.nxc);
+	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", spec.grid.nyc);
+	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", spec.grid.nzc);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", spec.grid.nxc);
+	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", spec.grid.nyc);
+	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", spec.grid.nzc);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Moving Window Length in X : %12d\n", spec.mavx);
+	fprintf(fp_log, "  Moving Window Length in Y : %12d\n", spec.mavy);
+	fprintf(fp_log, "  Moving Window Length in Z : %12d\n", spec.mavz);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of smoothing passes : %12d\n", spec.nsmooth);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  ivpvs: %12d\n", spec.ivpvs);
+	fprintf(fp_log, " \n");
+
+	if (spec.ipscflg == 1) {
+		fprintf(fp_log, " Perturbations scaled at the outset by : %f", spec.pertscl);
+	} else {
+		fprintf(fp_log, " Perturbations not scaled at the outset (pscflg = 0)");
+	}
+	if (spec.limitu == 1) {
+		fprintf(fp_log, " Maximum Wavespeed Percentage change allowed : %f",
+				spec.dvperc);
+	} else {
+		fprintf(fp_log, " No perturbation limits applied (limitu = 0) ");
+	}
+	if (spec.ido1d == 1) {
+		fprintf(fp_log, " Corrections assumed for 1D model (do1d = 1) ");
+	} else {
+		fprintf(fp_log, " Corrections assumed for 3D model (do1d = 0) ");
+	}
+
+	fprintf(fp_log, " Input file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Arr. Time Wavespeed model: %s\n", spec.oldvfil);
+	fprintf(fp_log, " Perturbation file: %s\n", spec.nmodfil);
+	fprintf(fp_log, " Existing Station List: %s\n", spec.stafile);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Output file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " New Wavespeed Model: %s\n", spec.fmodfil);
+	fprintf(fp_log, " New Station List : %s\n", spec.nstafil);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Total Number of coarse grid nodes:%13d\n", spec.grid.nxc * spec.grid.nyc * spec.grid.nzc);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+
+	fclose(fp_log);
 	return 0;
 }
