@@ -108,8 +108,8 @@ ffi.set_source("_test",
     grid + spec +head+main,
     #sources = [],
     include_dirs = ['./include'],
-    libraries =[common],
-    library_dirs = ['lib']
+    libraries =['_common'],
+    library_dirs = ['./lib/common']
     )
 #if __name__ == "__main__":
 ffi.compile(verbose=True)

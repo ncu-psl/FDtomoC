@@ -1,4 +1,4 @@
-ADD_LIBRARY(_common
+ADD_LIBRARY(_common SHARED
 	parseprogs.c
 	geographic_method.c
 	string_process.c
