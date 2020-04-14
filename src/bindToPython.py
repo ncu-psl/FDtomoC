@@ -16,8 +16,6 @@ typedef struct {
 }GRID;
 """
 spec = """
-#define MAXSTRLEN 132
-
     typedef struct 
 {
 char spec_file[MAXSTRLEN];
@@ -93,23 +91,38 @@ struct vhead {
 };
 """
 
+parameter = """
+#define MAXSTRLEN 132
+#define nxcm 203
+#define nycm 203
+#define nzcm 105
+"""
+
+MAKE1D_DATA="""
+typedef struct{
+    struct vhead head;
+    int igridx[...], igridy[...], igridz[...];
+    float vsave[...];
+
+}MAKE1D_DATA;
+"""
+
 main = """
 void read_variables(char *spec_file, SPEC *spec);
 void read_files(char *spec_file, SPEC *file_identifier);
 void read_grid(char *spec_file, SPEC *spec);
 void read_error(char *name, char *type, FILE *fp_spc);
 SPEC create_spec(char *specFile);
+MAKE1D_DATA *make1d(SPEC spec);
 """
 
-common = os.getenv("COMMON")
-
-ffi.cdef(grid + spec + head + main)
+ffi.cdef(parameter + grid + spec + head + MAKE1D_DATA + main)
 ffi.set_source("_test",
-    grid + spec +head+main,
+     '#include "FDtomo/make1d.h" ',
     #sources = [],
-    include_dirs = ['./include'],
-    libraries =['_common'],
-    library_dirs = ['./lib/common']
+    include_dirs = ['../include'],
+    libraries =['_common','make1d'],
+    library_dirs = ['./lib/common','./lib/FDtomo']
     )
 #if __name__ == "__main__":
 ffi.compile(verbose=True)
