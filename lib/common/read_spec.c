@@ -455,11 +455,11 @@ void read_error(char *name, char *type, FILE *fp_spc){
 		printf(" Too many layers; maximum now is %d", MAX1D);
 		assert(!(nl >= MAX1D));
 	}
-	model.vp[nl][0] = p;
+	model.vp[nl] = p;
 	if (spec.vs1d == 1) {
-		model.vp[nl][1] = s;
+		model.vs[nl] = s;
 	} else {
-		model.vp[nl][1] = p / s;
+		model.vs[nl] = p / s;
 	}
 //****ONE-TIME CLUDGE TO FORCE A VP/VS
 //   vp(nl,2) = p/1.78

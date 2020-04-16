@@ -7,6 +7,7 @@ ADD_LIBRARY(_common
 	earthquake_file_delimiter.c
 	read_spec.c
 	gridspec.c
+	interpolation.c
 )
 
 include_directories(${MAIN_INCLUDE_DIR})

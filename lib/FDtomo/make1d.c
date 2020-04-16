@@ -73,138 +73,31 @@ c		    change so that dx = df and dy = df.
 #include "common/string_process.h"
 #include "common/shared_variables.h"
 #include "common/vhead.h"
+#include "common/interpolation.h"
 #include "FDtomo/make1d.h"
-#define MAX1D 1000
 #define MAXSTRLEN 132
-
-//--mustv is the number of variables that must be assigned in the parameter
-//      file in order for this program to run correctly.  The names of the
-//      variables are specified in the mvals string array below.
-//--mustf is the number of files that must be attached; see the files array below.
-#define MUSTV  4
-#define MUSTF  2
-
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
-
-//float vsave[nxyzcm2];
-
-char VERSION[10] = "2004.0909\0";
-
-//----header stuff
-char head[5], type[5], syst[5];
-char quant[5];
-char flatten[5];
-char hcomm[101];
-
-//----fxs, fys, and fzs are not used in wavespeed models, so just set to zero
-double fxs = 0.0, fys = 0.0, fzs = 0.0;
-double axo, ayo, azo;
-int nxh, nyh, nzh;
-//--------------------------------------
-char hdr[120];
-
-int lenhead = nhbyte;
-
-FILE *fp_log;
-FILE *fp_one;
 
 float flatvel(float, float);
 float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
-
-MAKE1D_DATA *make1d(SPEC spec, velocity1D model) {
-	MAKE1D_DATA *make1d_data = (MAKE1D_DATA *)malloc(sizeof(MAKE1D_DATA));
-	memset(make1d_data, 0, sizeof(MAKE1D_DATA));
-	double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
-	//initialize variable
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
-	    ny = spec.grid.ny, nz = spec.grid.nz;
-	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
-	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
-	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
-	double dx = spec.grid.dx, dy = spec.grid.dy, dz = spec.grid.dz;
-
-
-	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
-
-	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
-	float az = spec.az, azmod = spec.azmod;
-	int iflat = spec.iflat, isph = spec.isph, vs1d = spec.vs1d;
-	char spec_file[MAXSTRLEN];
-	sscanf(spec.spec_file, "%s", spec_file);
-	
-	int nxyc = nxc * nyc;
-	int nxyzc = nxyc * nzc;
-	int nxyzc2 = nxyzc * 2;
-
-	
-	int nxy = nx * ny;
-	int nxyz = nxy * nz;
-
-	int lengrd = 4 * (nxc + nyc + nzc - 3);
-	int lenrec = lenhead + lengrd + 4 * nxyzc2;
-	
+velocity3D create3DModel(SPEC spec, velocity1D model) {
+	float *gz = spec.grid.gz;
 	//---unflatten the depths if required
-	if (iflat == 1) {
-		for (int i = 0; i < nzc; i++) {
+	if (spec.iflat == 1) {
+		for (int i = 0; i < spec.grid.nzc; i++) {
 			gz[i] = uflatz(gz[i]);
 		}
 	}
-
 //----generate the model
-	a2: 
-	for (int n = 0; n <= 1; n++) {
-		int noff = nxyzc * n;
-		printf(" \n");
-		printf(
-				"  Lay   Dep      D1      D2      V1      V2      V      ZFL     VFL\n");
-		for (int k = 0; k < nzc; k++) {
-			int koff = nxyc * k + noff;
-			float zg = gz[k];
-			int ik;
-			for (ik = 1; ik < model.nl; ik++) {
-				if (model.z[ik] > zg)
-					break;
-			}
-			ik--;
-			float v = 0;
-			if (model.terp[ik] == 'I') {
-				int zk = model.z[ik];
-				int hz = model.z[ik + 1] - zk;
-				float fz = (zg - zk) / hz;
-				v = (1.0f - fz) * model.vp[ik][n] + fz * model.vp[ik + 1][n];
-			} else {
-				v = model.vp[ik][n];
-			}
-//----flatten this wavespeed if necessary
-			float zfl = 0, vfl = 0;
-			if (iflat == 1) {
-				zfl = flatz(zg);
-				vfl = flatvel(v, zfl);
-			} else {
-				zfl = zg;
-				vfl = v;
-			}
-			printf("%4d%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", (k + 1), zg,
-					model.z[ik], model.z[ik + 1], model.vp[ik][n], model.vp[ik + 1][n], v, zfl, vfl);
-			int j;
-			for (j = 0; j < nyc; j++) {
-				int joff = koff + nxc * j;
-				for (int i = 0; i < nxc; i++) {
-					make1d_data->vsave[joff + i] = vfl;
-				}
-			}
-		}
-	}
-
-	memcpy(make1d_data->igridx, igridx, 4 * (nxc - 1));
-	memcpy(make1d_data->igridy, igridy, 4 * (nyc - 1));
-	memcpy(make1d_data->igridz, igridz, 4 * (nzc - 1));
-	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
-
-	return make1d_data;
+	float *vp = (float *)malloc(sizeof(float) * spec.grid.nzc);
+	float *vs = (float *)malloc(sizeof(float) * spec.grid.nzc);
+	vp = linear_interpolation_array(spec.grid.gz, model.z, model.vp, model.nl, spec.grid.nzc, model.terp);
+	vs = linear_interpolation_array(spec.grid.gz, model.z, model.vs, model.nl, spec.grid.nzc, model.terp);
+	velocity3D model3D = generate3DModel(vp, vs, spec.grid);
+	return model3D;
 }
 
 float flatvel(float v, float z) {
@@ -253,15 +146,19 @@ int OUTPUT_MAKE1D(MAKE1D_DATA *maked1d_data, SPEC spec){
 }
 
 int LOG_MAKE1D(SPEC spec){
+	char VERSION[10] = "2004.0909\0";
 	int nxyc = spec.grid.nxc * spec.grid.nyc;
 	int nxyzc = nxyc * spec.grid.nzc;
 	int nxyzc2 = nxyzc * 2;
 
 	int nxy = spec.grid.nx * spec.grid.ny;
 	int nxyz = nxy * spec.grid.nz;
-
+	
+	int lenhead = nhbyte;
 	int lengrd = 4 * (spec.grid.nxc + spec.grid.nyc + spec.grid.nzc - 3);
 	int lenrec = lenhead + lengrd + 4 * nxyzc2;
+
+	FILE *fp_log;
 
 	fp_log = fopen("make1d.log", "w");
 	if(!fp_log) {
@@ -374,3 +271,19 @@ int LOG_MAKE1D(SPEC spec){
 
 }
 
+velocity3D generate3DModel(float *vp, float *vs, GRID grid){
+	velocity3D model3D;
+	memcpy(&model3D.grid, &grid, sizeof(grid));
+	int sizeOfGrid = grid.nxc * grid.nyc * grid.nzc;
+	model3D.vp = (float *)malloc(sizeof(float) * sizeOfGrid);
+	model3D.vs = (float *)malloc(sizeof(float) * sizeOfGrid);
+	for (int i = 0; i < grid.nzc; i++){
+		int nxyc = grid.nxc * grid.nyc;
+		int ioff = nxyc * i;
+		for(int j = 0; j < nxyc; j++){
+			model3D.vp[ioff] = vp[i];
+			model3D.vs[ioff] = vs[i];
+		}
+	}
+	return model3D;
+}

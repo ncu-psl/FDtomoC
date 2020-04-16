@@ -290,6 +290,7 @@ OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
 }
 
 int LOG_C2F(SPEC spec){
+	char VERSION[9] = "2017.1122";
 	char logfile[80 + 1];
 	sprintf(logfile, "c2f.log%d", spec.ittnum);
 	FILE *fp_log = fopen(logfile, "w");

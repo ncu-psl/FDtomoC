@@ -69,7 +69,7 @@ char nstafil[MAXSTRLEN + 1];
 }SPEC;
 
 typedef struct{
-    float vp[MAX1D][2], z[MAX1D];
+    float vp[MAX1D], vs[MAX1D], z[MAX1D];
     char terp[MAX1D + 1];
 	int nl;
 }velocity1D;

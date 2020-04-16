@@ -11,7 +11,16 @@ typedef struct{
     float vsave[nxyzcm2];
 
 }MAKE1D_DATA;
-MAKE1D_DATA *make1d(SPEC, velocity1D);
+
+typedef struct{
+    GRID grid;
+    float *vp, *vs;
+}velocity3D;
+
+
+velocity3D create3DModel(SPEC, velocity1D);
+
+velocity3D generate3DModel(float *, float *, GRID);
 int OUTPUT_MAKE1D(MAKE1D_DATA *, SPEC);
 int LOG_MAKE1D(SPEC);
 
