@@ -81,6 +81,7 @@ void find_time(double, double, double, double *, int, int *, GRID grid);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
+int get_time(int, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **); 
 SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 	//initialize variable
 	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
@@ -142,7 +143,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 		total_earthquakes = earthquake_file_delimiter(leqsfil, eqkdir);
 	}
 	char timefiles[maxsta][MAXSTRLEN + 1];
-	int timefile_counts = get_time(iread, nxyz, timefiles, SPHFD);
+	int timefile_counts = get_time(nxyz, timefiles, SPHFD);
 	if (timefile_counts < 0) {
 		printf("file can not open\n");
 		assert(0);
@@ -1067,7 +1068,7 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], c
 	return i;
 }
 
-int get_time(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **SPHFD) {
+int get_time(int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **SPHFD) {
 
 	int i = -1;
 	t = (float *)malloc(sizeof(float *) * num_parfiles);
@@ -1077,47 +1078,7 @@ int get_time(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_D
 			printf("Error: too many station.\n");
 			assert(0);
 		}
-
-		char head[5], type[5], syst[5];
-		char quant[5];
-		char flatten[5];
-		char hcomm[125];
-
-		char *offset = SPHFD[i]->hdr;
-		sscanf(offset, "%4s", head);
-		offset += strlen(head);
-		sscanf(offset, "%4s", type);
-		offset += strlen(type);
-		sscanf(offset, "%4s", syst);
-		offset += strlen(syst);
-		sscanf(offset, "%4s", quant);
-		offset += strlen(quant);
-		sscanf(offset, "%4s", flatten);
-		offset += strlen(flatten);
-		sscanf(offset, "%124s", hcomm);
-
-//---verify that this is a valid header
-		if (strcmp(head, "HEAD") == 0) {
-			if(DEBUG_PRINT) {
-				printf(" File has a header...\n");
-			}
-			if (strcmp(type, "FINE") != 0) {
-				if(DEBUG_PRINT)
-					printf("WARNING: input mesh does not appear to be FINE: %s\n", type);
-			}
-			if (iread == 0) {
-				t[i] = SPHFD[i]->time0;
-			}
-		} else {
-			if(DEBUG_PRINT) {
-				printf(" File has no header...\n");
-			}
-			if (iread == 0) {
-				t[i] = SPHFD[i]->time0;
-			}
-		}
-		if(DEBUG_PRINT)
-			printf("...Done.\n");
+		t[i] = SPHFD[i]->time0;
 	}
 	return i;
 }
