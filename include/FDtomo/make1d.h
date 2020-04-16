@@ -11,7 +11,7 @@ typedef struct{
     float vsave[nxyzcm2];
 
 }MAKE1D_DATA;
-MAKE1D_DATA *make1d(SPEC);
+MAKE1D_DATA *make1d(SPEC, velocity1D);
 int OUTPUT_MAKE1D(MAKE1D_DATA *, SPEC);
 int LOG_MAKE1D(SPEC);
 

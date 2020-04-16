@@ -87,13 +87,9 @@ c		    change so that dx = df and dy = df.
 //---number of 4 byte words in the header
 #define nhbyte 58 * 4
 
-float vp[MAX1D][2], z[MAX1D];
 //float vsave[nxyzcm2];
 
 char VERSION[10] = "2004.0909\0";
-double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
-
-char terp[MAX1D + 1];
 
 //----header stuff
 char head[5], type[5], syst[5];
@@ -118,10 +114,10 @@ float uflatz(float);
 float flatz(float);
 char * dtoa(char *, double, int);
 
-MAKE1D_DATA *make1d(SPEC spec) {
+MAKE1D_DATA *make1d(SPEC spec, velocity1D model) {
 	MAKE1D_DATA *make1d_data = (MAKE1D_DATA *)malloc(sizeof(MAKE1D_DATA));
 	memset(make1d_data, 0, sizeof(MAKE1D_DATA));
-
+	double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
 	//initialize variable
 	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
 	    ny = spec.grid.ny, nz = spec.grid.nz;
@@ -138,13 +134,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	int iflat = spec.iflat, isph = spec.isph, vs1d = spec.vs1d;
 	char spec_file[MAXSTRLEN];
 	sscanf(spec.spec_file, "%s", spec_file);
-	
-	char aline[MAXSTRLEN + 1];
-    int len, ierr;
-	char pval[MAXSTRLEN + 1];
-
-	int i,k;
-	int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
@@ -190,66 +179,13 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	nyh = nyc;
 	nzh = nzc;
 
-//---unflatten the depths if required
+	//---unflatten the depths if required
 	if (iflat == 1) {
-		for (i = 0; i < nzc; i++) {
+		for (int i = 0; i < nzc; i++) {
 			gz[i] = uflatz(gz[i]);
 		}
 	}
 
-	fp_one = fopen(spec.onedfil, "r");
-	if(!fp_one) {
-        printf("Error on opening fp_one(%s)\n", spec.onedfil);
-        assert(0);
-	}
-//---skip over header
-	get_line(fp_one, aline, &ierr);
-	int nl = 0;
-	a21: get_line(fp_one, aline, &ierr);
-	if (ierr == 1)
-		goto a2;
-	if (ierr != 0)
-		goto a21;
-	ib = 0;
-	//******************************************
-	//      fp_one   or  fp_spc?
-	//******************************************
-	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-	//read(pval(1:nvl),*, err=50) h
-	sscanf(pval, "%lf", &h);
-	ib = ie;
-	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-	float p = 0;
-	sscanf(pval, "%f", &p);
-	ib = ie;
-	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-	float s = 0;
-	sscanf(pval, "%f", &s);
-	ib = ie;
-	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-
-	if (nl >= MAX1D) {
-		printf(" Too many layers; maximum now is %d", MAX1D);
-		assert(!(nl >= MAX1D));
-	}
-	vp[nl][0] = p;
-	if (vs1d == 1) {
-		vp[nl][1] = s;
-	} else {
-		vp[nl][1] = p / s;
-	}
-//****ONE-TIME CLUDGE TO FORCE A VP/VS
-//   vp(nl,2) = p/1.78
-//***********************************
-	z[nl] = h;
-	terp[nl] = pval[0];
-
-//   write(*,500) nl, vp(nl,1), vp(nl,2), z(nl), terp(nl)
-//500    format(i4,3f10.2,2x,a1)
-//   read(*,*) pause
-	nl = nl + 1;
-	goto a21;
-	
 //----generate the model
 	a2: 
 	for (int n = 0; n <= 1; n++) {
@@ -257,23 +193,23 @@ MAKE1D_DATA *make1d(SPEC spec) {
 		printf(" \n");
 		printf(
 				"  Lay   Dep      D1      D2      V1      V2      V      ZFL     VFL\n");
-		for (k = 0; k < nzc; k++) {
+		for (int k = 0; k < nzc; k++) {
 			int koff = nxyc * k + noff;
 			float zg = gz[k];
 			int ik;
-			for (ik = 1; ik < nl; ik++) {
-				if (z[ik] > zg)
+			for (ik = 1; ik < model.nl; ik++) {
+				if (model.z[ik] > zg)
 					break;
 			}
 			ik--;
 			float v = 0;
-			if (terp[ik] == 'I') {
-				int zk = z[ik];
-				int hz = z[ik + 1] - zk;
+			if (model.terp[ik] == 'I') {
+				int zk = model.z[ik];
+				int hz = model.z[ik + 1] - zk;
 				float fz = (zg - zk) / hz;
-				v = (1.0f - fz) * vp[ik][n] + fz * vp[ik + 1][n];
+				v = (1.0f - fz) * model.vp[ik][n] + fz * model.vp[ik + 1][n];
 			} else {
-				v = vp[ik][n];
+				v = model.vp[ik][n];
 			}
 //----flatten this wavespeed if necessary
 			float zfl = 0, vfl = 0;
@@ -285,11 +221,11 @@ MAKE1D_DATA *make1d(SPEC spec) {
 				vfl = v;
 			}
 			printf("%4d%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f%8.2f\n", (k + 1), zg,
-					z[ik], z[ik + 1], vp[ik][n], vp[ik + 1][n], v, zfl, vfl);
+					model.z[ik], model.z[ik + 1], model.vp[ik][n], model.vp[ik + 1][n], v, zfl, vfl);
 			int j;
 			for (j = 0; j < nyc; j++) {
 				int joff = koff + nxc * j;
-				for (i = 0; i < nxc; i++) {
+				for (int i = 0; i < nxc; i++) {
 					make1d_data->vsave[joff + i] = vfl;
 				}
 			}
@@ -321,7 +257,6 @@ MAKE1D_DATA *make1d(SPEC spec) {
 	memcpy(make1d_data->igridz, igridz, 4 * (nzc - 1));
 	//memcpy(make1d_data.vsave, vsave, sizeof(vsave));
 
-	fclose(fp_one);
 	return make1d_data;
 }
 
