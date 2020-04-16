@@ -119,99 +119,21 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	int nxyz2 = nxyz * 2;
 
 	int lenlog;
-
-// c---tempoary output for plotting
-// c	do j = 1, nyc
-// c	  do i = 1, nxc
-// c	    write(23,1234) i, j,  gx(i)*1000.0, gy(j)*1000.0
-// c1234	    format(2i4, ' Q ', 2f12.2)
-// c	  enddo
-// c	enddo
 	
-	
-	char *offset = MAKE1D->head.header;
-	sscanf(offset, "%4s", head);
-	offset += strlen(head);
-	sscanf(offset, "%4s", type);
-	offset += strlen(type);
-	sscanf(offset, "%4s", syst);
-	offset += strlen(syst);
-	sscanf(offset, "%4s", quant);
-	offset += strlen(quant);
-	sscanf(offset, "%4s", flatten);
-	offset += strlen(flatten);
-	sscanf(offset, "%100s", hcomm);
-
 	for (int i = 0; i < nxyzm2; i++)
 		vsave[i] = 0.;
 
 //c---verify that this is a valid header
 	struct vhead *headin = &MAKE1D->head;
 	int len_rec;
-	if (strcmp(head, "HEAD") != 0) {
-		printf(
-				"File does not contain valid header...attempting headerless read \n");
-		len_rec = 4 * nxyzc2;
 
-		vp = MAKE1D->vsave;
-//c---set trial header values
-		strcpy(head, "HEAD");
-		strcpy(syst, "CART");
-		strcpy(quant, "BMOD");
-		strcpy(flatten, "NOFL");
-		clath = headin->clat;
-		clonh = headin->clon;
-		czh = headin->cz;
-		azh = headin->az;
-		axo = headin->x0;
-		ayo = headin->y0;
-		azo = headin->z0;
-		dxh = headin->dx;
-		dyh = headin->dy;
-		dzh = headin->dz;
-		nxh = headin->nx;
-		nyh = headin->ny;
-		nzh = headin->nz;
-	} else {
-		if (strcmp(type, "CORS") != 0) {
-			printf(" WARNING: input mesh does not appear to be COARSE: %s\n",
-					type);
-		}
-		if (strcmp(quant, "BMOD") != 0) {
-			printf(" WARNING: file does not appear to be a valid type: %s\n",
-					quant);
-		}
-
-		printf(" Reading in Coarse Mesh ...");
-		int len_grd = 4 * (nxc + nyc + nzc - 3);
-		len_rec = len_head + len_grd + 4 * nxyzc2;
-
-
-		igridx = MAKE1D->igridx;
-		igridy = MAKE1D->igridy;
-		igridz = MAKE1D->igridz;
-		vp = MAKE1D->vsave;
-	}
+	int len_grd = 4 * (nxc + nyc + nzc - 3);
+	len_rec = len_head + len_grd + 4 * nxyzc2;
+	igridx = MAKE1D->igridx;
+	igridy = MAKE1D->igridy;
+	igridz = MAKE1D->igridz;
+	vp = MAKE1D->vsave;
 	printf(".. Done \n");
-
-// c---tempoary output for plotting
-// c   i1 = 0
-// c   do k = 1, nzc
-// c     do j = 1, nyc
-// c       do i = 1, nxc
-// c       i1 = i1 + 1
-// c       write(24,1244) i, j, gz(k)*1000.0,  vp(i1), vp(i1+nxyzc),
-// c     +       vp(i1)/vp(i1+nxyzc), gx(i)*1000.0, gy(j)*1000.0
-// c1244       format(2i4, f12.2, 3f6.2, 8f12.2)
-// c       enddo
-// c     enddo
-// c   enddo
-
-// c****ONE TIME CLUDGE TO FORCE CONSTANT VPVS
-// c   do i = 1, nxyzc
-// c     vp(i+nxyzc) = vp(i)/1.78
-// c   enddo
-// c*****END****
 
 // c----convert to slowness
 	for (i = 0; i < nxyzc2; i++) {
@@ -242,15 +164,6 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 	}
 	printf(".. Done \n");
 
-//c---redefine mesh type to be "FINE"
-	strcpy(type, "FINE");
-	for (i = 0; i < 100; i++)
-		hcomm[i] = ' ';
-
-	sprintf(hcomm, "Output from c2f.c Version %s using %s", VERSION, spec.oldvfil);
-	nxh = nx;
-	nyh = ny;
-	nzh = nz;
 //c---write out
 
 	char ffile[MAXSTRLEN + 1];
@@ -266,23 +179,7 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 
 	sprintf(vpfile, "%s.pvel", ffile);
 	sprintf(vsfile, "%s.svel", ffile);
-	struct vhead headout;
-	headout.fxs = fxs;
-	headout.fys = fys;
-	headout.fzs = fzs;
-	headout.clat = clat;
-	headout.clon = clon;
-	headout.cz = cz;
-	headout.x0 = x0;
-	headout.y0 = y[0];
-	headout.z0 = z0;
-	headout.dx = h;
-	headout.dy = h;
-	headout.dz = h;
-	headout.az = azmod;
-	headout.nx = nxc;
-	headout.ny = nyc;
-	headout.nz = nzc;
+
 
 	FILE *fp_fnw = fopen(ffile, "wb");
 	if (!fp_fnw) {
@@ -290,19 +187,13 @@ C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
 		assert(0);
 	}
 	printf("Writing out file 1... \n");
-	hdr_appender(headout.header, 120, head, type, syst, "BMOD", flatten, hcomm);
 
-	fwrite(&headout, sizeof(char), nhbyte, fp_fnw);
 	fwrite(vsave, sizeof(vsave[0]), nxyz2, fp_fnw);
 
-	hdr_appender(headout.header, 120, head, type, syst, "VPMD", flatten, hcomm);
 	memcpy(c2f_data->vpfile->filename, vpfile, strlen(vpfile)+1);
-	memcpy(&c2f_data->vpfile->head, &headout, nhbyte);
 	memcpy(c2f_data->vpfile->vsave, vsave, sizeof(vsave[0])*nxyz);
 
-	hdr_appender(headout.header, 120, head, type, syst, "VSMD", flatten, hcomm);
 	memcpy(c2f_data->vsfile->filename, vsfile, strlen(vsfile)+1);
-	memcpy(&c2f_data->vsfile->head, &headout, nhbyte);
 	memcpy(c2f_data->vsfile->vsave, vsave + nxyz, sizeof(vsave[0]) * (nxyz2 - nxyz));
 
 	a65: 

@@ -145,40 +145,7 @@ MAKE1D_DATA *make1d(SPEC spec, velocity1D model) {
 
 	int lengrd = 4 * (nxc + nyc + nzc - 3);
 	int lenrec = lenhead + lengrd + 4 * nxyzc2;
-
-//---generate the header
-	strcpy(head, "HEAD");
-	head[4] = '\0';
-	strcpy(type, "CORS");
-	type[4] = '\0';
-	if (isph == 1) {
-		strcpy(syst, "SPHR");
-		dx = df / degrad;
-		dy = dq / degrad;
-	} else {
-		strcpy(syst, "CART");
-		dx = h;
-		dy = h;
-	}
-	syst[4] = '\0';
-	strcpy(quant, "BMOD");
-	quant[4] = '\0';
-	if (iflat == 1) {
-		strcpy(flatten, "FLAT");
-	} else {
-		strcpy(flatten, "NOFL");
-	}
-	flatten[4] = '\0';
-	sprintf(hcomm, "Output from make1d.c using %s", spec.onedfil);
-	hcomm[100] = '\0';
-	axo = x0;
-	ayo = y[0];
-	azo = z0;
-	dz = h;
-	nxh = nxc;
-	nyh = nyc;
-	nzh = nzc;
-
+	
 	//---unflatten the depths if required
 	if (iflat == 1) {
 		for (int i = 0; i < nzc; i++) {
@@ -231,26 +198,6 @@ MAKE1D_DATA *make1d(SPEC spec, velocity1D model) {
 			}
 		}
 	}
-
-	hdr_appender(hdr, nhbyte, head, type, syst, quant, flatten, hcomm);
-	struct vhead *headout = &make1d_data->head;
-	headout->fxs = fxs;
-	headout->fys = fys;
-	headout->fzs = fzs;
-	headout->clat = clat;
-	headout->clon = clon;
-	headout->cz = cz;
-	headout->x0 = axo;
-	headout->y0 = ayo;
-	headout->z0 = azo;
-	headout->dx = dx;
-	headout->dy = dy;
-	headout->dz = dz;
-	headout->az = az;
-	headout->nx = nxh;
-	headout->ny = nyh;
-	headout->nz = nzh;
-	strncpy(headout->header, hdr, 120);
 
 	memcpy(make1d_data->igridx, igridx, 4 * (nxc - 1));
 	memcpy(make1d_data->igridy, igridy, 4 * (nyc - 1));
