@@ -102,18 +102,22 @@ velocity3D generate3DModel(float *vp, float *vs, Mesh mesh){
 	return model3D;
 }
 
-float getPointVel(Point3D point, velocity3D model, char mode){
+float getPointVp(Point3D point, velocity3D model){
     int index = point.x * model.mesh.numberOfy * model.mesh.numberOfz +
                 point.y * model.mesh.numberOfz +
                 point.z;
-    float vel;
-    if (mode == 'P'){
-        vel = model.vp[index];
-    }else{
-        vel = model.vs[index];
-    }
+    float vel = model.vp[index];
     return vel;
 }
+
+float getPointVs(Point3D point, velocity3D model){
+    int index = point.x * model.mesh.numberOfy * model.mesh.numberOfz +
+                point.y * model.mesh.numberOfz +
+                point.z;
+    float vel = model.vs[index];
+    return vel;
+}
+
 
 velocity3D transform(velocity3D model){
     float xfine = getNumberOfXfine(model.mesh);
@@ -125,11 +129,11 @@ velocity3D transform(velocity3D model){
         for(int j = 0; j < yfine; j++){
             for(int k = 0; k < zfine;k++){
                 Point3D point = {i, j, k};
-                point = getFinePoint(point, model.mesh);
-                Point3D base = searchFineBase(point, model.mesh);
-                //float velocity = trilinear_interpolation(point, );
+                Point3D finePoint = getFinePoint(point, model.mesh);
+                Point3D base = searchFineBase(finePoint, model.mesh);
+                float velocity = trilinear_interpolation_base(point, base, model);
                 index++;
-            }
+            } 
         }
     }
     return;

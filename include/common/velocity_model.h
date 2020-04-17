@@ -21,5 +21,6 @@ velocity1D read_velocity1D(SPEC spec);
 velocity3D create3DModel(Mesh, velocity1D);
 velocity3D generate3DModel(float *, float *, Mesh);
 velocity3D transform(velocity3D);
-float getPointVel(Point3D, velocity3D, char);
+float getPointVp(Point3D, velocity3D);
+float getPointVs(Point3D, velocity3D);
 #endif

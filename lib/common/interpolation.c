@@ -1,4 +1,3 @@
-#include "common/velocity_model.h"
 #include "common/interpolation.h"
 float linear_interpolation(float x, float a, float fa, float b, float fb){
         return (a == b) ? fa : fa + (fb-fa) * (x-a) / (b-a);
@@ -48,17 +47,19 @@ float *linear_interpolation_array(float *c, float *x, float *y, int n, int k, ch
 }
 
 float trilinear_interpolation_base(Point3D point, Point3D base, velocity3D model){
-	base = getFinePoint(base, model.mesh);
-	/*
-    Cell c000 = {base,  model.};
-    Cell c001 = {gx[i], gy[j], gz[k + 1]};
-    Cell c010 = {gx[i], gy[j + 1], gz[k]};
-    Cell c011 = {gx[i], gy[j + 1], gz[k + 1]};
-    Cell c100 = {gx[i + 1], gy[j], gz[k]};
-    Cell c101 = {gx[i + 1], gy[j], gz[k + 1]};
-    Cell c110 = {gx[i + 1], gy[j + 1], gz[k]};
-    Cell c111 = {gx[i + 1], gy[j + 1], gz[k + 1]};
-    Cell cells[2][2][2] = {c000 , c001, c010, c011, c100, c101, c110, c111};
-    float tmp = trilinear_interpolation(point, cells);
-	*/
+	Cell cells[2][2][2];
+	for(int i = 0; i < 2; i++){
+		for(int j = 0; j < 2; j++){
+			for(int k = 0; k < 2; k++){
+				Point3D tmp = base;
+				tmp.x += i;
+				tmp.y += j;
+				tmp.z += k;
+				cells[i][j][k].point = getFinePoint(tmp, model.mesh);
+				cells[i][j][k].value = getPointVp(tmp, model);
+			}
+		}
+	}
+	float vel = trilinear_interpolation(point, cells);
+	return vel;
 }
