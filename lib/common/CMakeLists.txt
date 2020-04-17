@@ -9,6 +9,7 @@ ADD_LIBRARY(_common
 	gridspec.c
 	interpolation.c
 	velocity_model.c
+	grid.c
 )
 
 include_directories(${MAIN_INCLUDE_DIR})
