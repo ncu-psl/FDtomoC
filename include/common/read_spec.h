@@ -68,16 +68,9 @@ char nstafil[MAXSTRLEN + 1];
 
 }SPEC;
 
-typedef struct{
-    float vp[MAX1D], vs[MAX1D], z[MAX1D];
-    char terp[MAX1D + 1];
-	int nl;
-}velocity1D;
-
 void read_variables(char *spec_file, SPEC *spec);
 void read_files(char *spec_file, SPEC *file_identifier);
 void read_grid(char *spec_file, SPEC *spec);
 void read_error(char *name, char *type, FILE *fp_spc);
-velocity1D read_velocity1D(SPEC spec);
 SPEC create_spec(char *specFile);
 #endif

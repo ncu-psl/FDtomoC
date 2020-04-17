@@ -2,7 +2,7 @@
 #define MAKE1D_H_
 #include "common/read_spec.h"
 #include "common/vhead.h"
-#include "parameter.h"
+#include "common/parameter.h"
 #define nhbyte 58 * 4
 
 typedef struct{
@@ -12,15 +12,11 @@ typedef struct{
 
 }MAKE1D_DATA;
 
-typedef struct{
-    GRID grid;
-    float *vp, *vs;
-}velocity3D;
 
-
-velocity3D create3DModel(SPEC, velocity1D);
-
-velocity3D generate3DModel(float *, float *, GRID);
+float flatvel(float, float);
+float uflatz(float);
+float flatz(float);
+char * dtoa(char *, double, int);
 int OUTPUT_MAKE1D(MAKE1D_DATA *, SPEC);
 int LOG_MAKE1D(SPEC);
 
