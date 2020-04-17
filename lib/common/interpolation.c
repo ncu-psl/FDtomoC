@@ -37,7 +37,7 @@ float *linear_interpolation_array(float *c, float *x, float *y, int n, int k, ch
 		}
 		ik--;
 		float v = 0;
-        if (mode[i] == 'I') {
+        if (mode[ik] == 'I') {
 			fc[i] = linear_interpolation(c[i], x[ik], y[ik], x[ik + 1], y[ik + 1]);
 		} else {
 			fc[i] = y[ik];

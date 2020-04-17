@@ -95,8 +95,8 @@ velocity3D generate3DModel(float *vp, float *vs, Mesh mesh){
 		int nxyc = mesh.numberOfx * mesh.numberOfy;
 		int ioff = nxyc * i;
 		for(int j = 0; j < nxyc; j++){
-			model3D.vp[ioff] = vp[i];
-			model3D.vs[ioff] = vs[i];
+			model3D.vp[ioff + j] = vp[i];
+			model3D.vs[ioff + j] = vs[i];
 		}
 	}
 	return model3D;
