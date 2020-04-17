@@ -66,8 +66,8 @@ velocity1D read_velocity1D(SPEC spec){
 	goto a21;
 	
 }
-velocity3D create3DModel(SPEC spec, velocity1D model) {
-	float *gz = spec.grid.gz;
+velocity3D create3DModel(Mesh mesh, velocity1D model) {
+	float *gz = getZMesh(mesh);
 	//---unflatten the depths if required
     /*
 	if (spec.iflat == 1) {
@@ -76,23 +76,23 @@ velocity3D create3DModel(SPEC spec, velocity1D model) {
 		}
 	}*/
 //----generate the model
-	float *vp = (float *)malloc(sizeof(float) * spec.grid.nzc);
-	float *vs = (float *)malloc(sizeof(float) * spec.grid.nzc);
-	vp = linear_interpolation_array(spec.grid.gz, model.z, model.vp, model.nl, spec.grid.nzc, model.terp);
-	vs = linear_interpolation_array(spec.grid.gz, model.z, model.vs, model.nl, spec.grid.nzc, model.terp);
-	velocity3D model3D = generate3DModel(vp, vs, spec.grid);
+	float *vp = (float *)malloc(sizeof(float) * mesh.numberOfz);
+	float *vs = (float *)malloc(sizeof(float) * mesh.numberOfz);
+	vp = linear_interpolation_array(gz, model.z, model.vp, model.nl, mesh.numberOfz, model.terp);
+	vs = linear_interpolation_array(gz, model.z, model.vs, model.nl, mesh.numberOfz, model.terp);
+	velocity3D model3D = generate3DModel(vp, vs, mesh);
 	return model3D;
 }
 
 
-velocity3D generate3DModel(float *vp, float *vs, GRID grid){
+velocity3D generate3DModel(float *vp, float *vs, Mesh mesh){
 	velocity3D model3D;
-	memcpy(&model3D.grid, &grid, sizeof(grid));
-	int sizeOfGrid = grid.nxc * grid.nyc * grid.nzc;
+	memcpy(&model3D.mesh, &mesh, sizeof(mesh));
+	int sizeOfGrid = mesh.numberOfx * mesh.numberOfy * mesh.numberOfz;
 	model3D.vp = (float *)malloc(sizeof(float) * sizeOfGrid);
 	model3D.vs = (float *)malloc(sizeof(float) * sizeOfGrid);
-	for (int i = 0; i < grid.nzc; i++){
-		int nxyc = grid.nxc * grid.nyc;
+	for (int i = 0; i < mesh.numberOfz; i++){
+		int nxyc = mesh.numberOfx * mesh.numberOfy;
 		int ioff = nxyc * i;
 		for(int j = 0; j < nxyc; j++){
 			model3D.vp[ioff] = vp[i];
@@ -100,4 +100,38 @@ velocity3D generate3DModel(float *vp, float *vs, GRID grid){
 		}
 	}
 	return model3D;
+}
+
+float getPointVel(Point3D point, velocity3D model, char mode){
+    int index = point.x * model.mesh.numberOfy * model.mesh.numberOfz +
+                point.y * model.mesh.numberOfz +
+                point.z;
+    float vel;
+    if (mode == 'P'){
+        vel = model.vp[index];
+    }else{
+        vel = model.vs[index];
+    }
+    return vel;
+}
+
+velocity3D transform(velocity3D model){
+    float xfine = getNumberOfXfine(model.mesh);
+    float yfine = getNumberOfYfine(model.mesh);
+    float zfine = getNumberOfZfine(model.mesh);
+
+    int index = 0;
+    for(int i = 0; i < xfine; i++){
+        for(int j = 0; j < yfine; j++){
+            for(int k = 0; k < zfine;k++){
+                Point3D point = {i, j, k};
+                point = getFinePoint(point, model.mesh);
+                Point3D base = searchFineBase(point, model.mesh);
+                //float velocity = trilinear_interpolation(point, );
+                index++;
+            }
+        }
+    }
+    return;
+
 }
