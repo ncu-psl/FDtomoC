@@ -91,12 +91,14 @@ velocity3D generate3DModel(float *vp, float *vs, Mesh mesh){
 	int sizeOfGrid = mesh.numberOfx * mesh.numberOfy * mesh.numberOfz;
 	model3D.vp = (float *)malloc(sizeof(float) * sizeOfGrid);
 	model3D.vs = (float *)malloc(sizeof(float) * sizeOfGrid);
-	for (int i = 0; i < mesh.numberOfz; i++){
-		int nxyc = mesh.numberOfx * mesh.numberOfy;
-		int ioff = nxyc * i;
-		for(int j = 0; j < nxyc; j++){
-			model3D.vp[ioff + j] = vp[i];
-			model3D.vs[ioff + j] = vs[i];
+	for (int k = 0; k < mesh.numberOfz; k++){
+		for(int j = 0; j < mesh.numberOfy; j++){
+			for(int i = 0; i < mesh.numberOfx; i++){
+				int index = i *  mesh.numberOfy * mesh.numberOfz +
+						   j *  mesh.numberOfz + k;
+				model3D.vp[index] = vp[k];
+				model3D.vs[index] = vs[k];
+			}
 		}
 	}
 	return model3D;
@@ -137,5 +139,5 @@ velocity3D transform(velocity3D model){
         }
     }
     return;
-
+	
 }
