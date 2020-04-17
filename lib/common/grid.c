@@ -94,6 +94,20 @@ float *getZMesh(Mesh mesh){
     }
     return points;
 }
+
+Point3D getCoarsePoint(Point3D point, Mesh mesh){
+    float *gx = getXMesh(mesh);
+    float *gy = getYMesh(mesh);
+    float *gz = getZMesh(mesh);
+
+    int x = (int)point.x;
+    int y = (int)point.y;
+    int z = (int)point.z;
+
+    Point3D CoarsePoint = {gx[x], gy[y], gz[z]};
+    return CoarsePoint;
+}
+
 Mesh createMesh(SPEC spec){
     Mesh mesh;
 	mesh.origin.x = spec.grid.x00;
@@ -133,9 +147,9 @@ void change2Sphere(Mesh mesh, int isElevation){
 }
 
 Point3D searchFineBase(Point3D point, Mesh mesh){
-    float *gx = getXFineMesh(mesh);
-    float *gy = getYFineMesh(mesh);
-    float *gz = getZFineMesh(mesh);
+    float *gx = getXMesh(mesh);
+    float *gy = getYMesh(mesh);
+    float *gz = getZMesh(mesh);
 
     int i;
 	for (i = 1; i < mesh.numberOfx; i++) {

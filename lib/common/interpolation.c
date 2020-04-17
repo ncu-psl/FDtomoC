@@ -11,9 +11,9 @@ float trilinear_interpolation(Point3D point, Cell cells[2][2][2]){
 	float z0 = cells[0][0][0].point.z;
 	float z1 = cells[0][0][1].point.z;
 
-	float xd = (point.x - x0) / x1 - x0;
-	float yd = (point.y - y0) / y1 - y0;
-	float zd = (point.z - z0) / z1 - z0;
+	float xd = (point.x - x0) / (x1 - x0);
+	float yd = (point.y - y0) / (y1 - y0);
+	float zd = (point.z - z0) / (z1 - z0);
 
 	float c00 = cells[0][0][0].value * (1 - xd) + cells[1][0][0].value * xd;
 	float c01 = cells[0][0][1].value * (1 - xd) + cells[1][0][1].value * xd;
@@ -55,11 +55,12 @@ float trilinear_interpolation_base(Point3D point, Point3D base, velocity3D model
 				tmp.x += i;
 				tmp.y += j;
 				tmp.z += k;
-				cells[i][j][k].point = getFinePoint(tmp, model.mesh);
+				cells[i][j][k].point = getCoarsePoint(tmp, model.mesh);
 				cells[i][j][k].value = getPointVp(tmp, model);
 			}
 		}
 	}
+	point = getCoarsePoint(point, model.mesh);
 	float vel = trilinear_interpolation(point, cells);
 	return vel;
 }

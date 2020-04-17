@@ -29,6 +29,7 @@ Point3D getFinePoint(Point3D,Mesh);
 float *getXMesh(Mesh);
 float *getYMesh(Mesh);
 float *getZMesh(Mesh);
+Point3D getCoarsePoint(Point3D point, Mesh mesh);
 Mesh createMesh(SPEC spec);
 void changeCoordinate(Mesh, int);
 Point3D searchFineBase(Point3D, Mesh);

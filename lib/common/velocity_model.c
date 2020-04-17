@@ -122,22 +122,27 @@ float getPointVs(Point3D point, velocity3D model){
 
 
 velocity3D transform(velocity3D model){
+	velocity3D slownessModel;
+	memcpy(&slownessModel.mesh, &model.mesh, sizeof(model.mesh));
     float xfine = getNumberOfXfine(model.mesh);
     float yfine = getNumberOfYfine(model.mesh);
     float zfine = getNumberOfZfine(model.mesh);
+	int sizeOfFine = xfine * yfine * zfine;
+	slownessModel.vp = (float *)(malloc(sizeof(float) * sizeOfFine));
 
     int index = 0;
     for(int i = 0; i < xfine; i++){
         for(int j = 0; j < yfine; j++){
             for(int k = 0; k < zfine;k++){
                 Point3D point = {i, j, k};
-                Point3D finePoint = getFinePoint(point, model.mesh);
+                Point3D finePoint = getCoarsePoint(point, model.mesh);
                 Point3D base = searchFineBase(finePoint, model.mesh);
-                float velocity = trilinear_interpolation_base(point, base, model);
+                float vel = trilinear_interpolation_base(point, base, model);
+				slownessModel.vp[index] = 1.f / vel;
                 index++;
             } 
         }
     }
     return;
-	
+
 }
