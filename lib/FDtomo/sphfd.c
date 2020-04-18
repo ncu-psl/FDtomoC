@@ -195,57 +195,18 @@ int compar();
 double fdsph3d(), fdsphne(), fdsph2d(), fdsphnf(); /*STENCILS */
 double rcent;
 static double z0r;
-SPHFD_DATA *sphfd_exec(int, char **, char *, C2F_DATA *);
 int endian();
 int litend;
-int num_parfiles = 0;
-
+SPHFD_DATA *sphfd_exec(velocity3D, Point3D);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-SPHFD_DATA **sphfd(int argc, char *argv[], SPEC spec, C2F_DATA *C2F)
+SPHFD_DATA **sphfd(velocity3D model, Station *station_list)
 {
-	char parfiles[MAXNUMPAR][MAXSTRLEN + 1], pval[MAXSTRLEN + 1], parlist[MAXSTRLEN + 1];
-	char tmp[MAXSTRLEN + 1];
-	
-	char sphfd_argv[] = "./sphfd\0";
-	FILE *fp_parlist;
-	fp_parlist = fopen(spec.parlist, "r");
-
-	if (fp_parlist == NULL)
-	{
-		printf("Error on opening parlist(%s)\n", spec.parlist);
-		assert(0);
-	}
-
-	for (int i = 0; fgets(tmp, MAXSTRLEN + 1, fp_parlist) != NULL; i++)
-	{
-		if (tmp[0] == '\n')
-			break;
-		strcpy(parfiles[i], tmp);
-		parfiles[i][strlen(parfiles[i]) - 1] = '\0';
-		num_parfiles++;
-		if (num_parfiles > MAXNUMPAR)
-		{
-			printf("number of parfiles exceed index\n");
-			assert(0);
-		}
-	}
-	fclose(fp_parlist);
-
-	SPHFD_DATA **SPHFD_LIST = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA *) * num_parfiles);
-#pragma omp parallel for
-
-	for (int i = 0; i < num_parfiles; i++)
-	{
-		char *fake_av[2];
-		fake_av[0] = sphfd_argv;
-		fake_av[1] = parfiles[i];
-		SPHFD_LIST[i] = sphfd_exec(2, fake_av, spec.timedir, C2F);
-	}
-	return SPHFD_LIST;
+	Point3D location = station_list->location; 
+	sphfd_exec(model, location);
 }
 
-SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
+SPHFD_DATA *sphfd_exec(velocity3D model, Point3D location)
 {
 	SPHFD_DATA *SPHFD = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA));
 	
@@ -371,38 +332,17 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	struct vhead headin, headout, headbox;
 
 	fprintf(stderr, "Starting sphfd: by S. Roecker 2003, RPI\n");
-	/* INITIALIZE PARAMETERS AND ARRAYS */
-	setpar(ac, av);
-	mstpar("nx", "d", &nx);
-	mstpar("ny", "d", &ny);
-	mstpar("nz", "d", &nz);
-	mstpar("h", "F", &h);
-	getpar("dq", "F", &dq);
-	getpar("df", "F", &df);
-	getpar("iminus", "d", &iminus);
-	getpar("iplus", "d", &iplus);
-	getpar("jminus", "d", &jminus);
-	getpar("jplus", "d", &jplus);
-	getpar("kminus", "d", &kminus);
-	getpar("kplus", "d", &kplus);
-	getpar("floatsrc", "d", &floatsrc);
-	getpar("srctype", "d", &srctype);
-	getpar("NCUBE", "d", &NCUBE);
-	getpar("reverse", "d", &reverse);
-	getpar("headpref", "d", &headpref);
-	getpar("maxoff", "f", &maxoff);
-	getpar("x0", "F", &x0);
-	getpar("y0", "F", &y0);
-	getpar("z0", "F", &z0);
-	getpar("parse", "d", &parse);
-	getpar("fill", "d", &fill);
-	getpar("invh", "d", &invh);
-	getpar("invf", "d", &invf);
-	getpar("invq", "d", &invq);
-	getpar("invx0", "d", &invx0);
-	getpar("invy0", "d", &invy0);
-	getpar("invz0", "d", &invz0);
-	getpar("swab", "d", &swab);
+
+	fxs=location.x;
+	fys=location.y;
+	fzs=location.z;
+	nx=getXFineMesh(model.mesh);
+	ny=getYFineMesh(model.mesh);
+	nz=getZFineMesh(model.mesh);
+	x0=model.mesh.origin.x;
+	y0=model.mesh.origin.y;
+	z0=model.mesh.origin.z;
+	h=model.mesh.xSpace;
 
 	if (invh == 1)
 		h = 1. / h;
@@ -455,9 +395,9 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 		{
 			if (savsrc == 1)
 			{
-				mstpar("fxs", "f", &fxs);
-				mstpar("fys", "f", &fys);
-				mstpar("fzs", "f", &fzs);
+				fxs=location.x;
+				fys=location.y;
+				fzs=location.z;
 				fxss = fxs;
 				fyss = fys;
 				fzss = fzs;
@@ -481,9 +421,9 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 		}
 		else
 		{
-			mstpar("fxs", "F", &fxs);
-			mstpar("fys", "F", &fys);
-			mstpar("fzs", "F", &fzs);
+			fxs=location.x;
+			fys=location.y;
+			fzs=location.z;
 			fxs *= degrad;
 			fys *= degrad;
 			/*  Use this to ignore the geocentic converstion to test with Haijiang
@@ -526,13 +466,6 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 	{
 		mstpar("boxfile", "s", boxfile);
 	}
-
-	mstpar("timefile", "s", SPHFD->timefile);
-	strcpy(timefile, output_path);
-	strcat(timefile, "/");
-	strcat(timefile, SPHFD->timefile);
-	mstpar("velfile", "s", velfile);
-	endpar();
 
 	if (xs < 0 || ys < 0 || zs < 0 || xs > nx - 1 || ys > ny - 1 || zs > nz - 1)
 	{
@@ -618,94 +551,8 @@ SPHFD_DATA *sphfd_exec(int ac, char **av, char *output_path, C2F_DATA *C2F)
 		assert(0);
 	}
 	/* READ IN VELOCITY FILE */
-	//read(vfint, &headin, 232);
-	if (!strcmp(velfile, "VP.mod"))
-	{
-		strcpy(&headin, &C2F->vpfile->head);
-	}
-	else if(!strcmp(velfile, "VS.mod"))
-	{
-		strcpy(&headin, &C2F->vsfile->head);
-	} 
-	else
-	{
-		printf("ERROR WHEN READING IN VELOCITY FILE");
-		assert(0);
-	}
-	
-	
+	memcpy(slow0, model.vp, 4 * nxyz);
 
-	if (!strncmp(headin.header, "HEAD", 4))
-	{
-		fprintf(stdout, "File Header Identified\n");
-	}
-	else
-	{
-		fprintf(stdout, "****WARNING: Cannot identify File Header****\n");
-		headin.x0 = x0_save;
-		headin.y0 = y0_save;
-		headin.z0 = z0;
-		headin.dx = df;
-		headin.dy = dq;
-		headin.dz = h;
-		headin.nx = nx;
-		headin.ny = ny;
-		headin.nz = nz;
-		headin.az = 0.;
-		headin.clat = y0_save;
-		headin.clon = x0_save;
-		headin.cz = z0;
-		for (i = 0; i < 144; i++)
-			strcpy(&headin.header[i], " ");
-		/*	  for (i=0; i<124; i++) headin.header[i] = '\0'; */
-		strcpy(&headin.header[0], "H");
-		strcpy(&headin.header[1], "E");
-		strcpy(&headin.header[2], "A");
-		strcpy(&headin.header[3], "D");
-		strcpy(&headin.header[4], "F");
-		strcpy(&headin.header[5], "I");
-		strcpy(&headin.header[6], "N");
-		strcpy(&headin.header[7], "E");
-		strcpy(&headin.header[8], "S");
-		strcpy(&headin.header[9], "P");
-		strcpy(&headin.header[10], "H");
-		strcpy(&headin.header[11], "R");
-		strcpy(&headin.header[12], "V");
-		strcpy(&headin.header[13], "P");
-		strcpy(&headin.header[14], "M");
-		strcpy(&headin.header[15], "D");
-		strcpy(&headin.header[16], "N");
-		strcpy(&headin.header[17], "O");
-		strcpy(&headin.header[18], "F");
-		strcpy(&headin.header[19], "L");
-		strcpy(&headin.header[20], "s");
-		strcpy(&headin.header[21], "p");
-		strcpy(&headin.header[22], "h");
-		strcpy(&headin.header[23], "f");
-		strcpy(&headin.header[24], "d");
-		close(vfint);
-		if ((vfint = open(velfile, O_RDONLY, 0664)) <= 1)
-		{
-			fprintf(stderr, "cannot open %s\n", velfile);
-			assert(0);
-		}
-	}
-
-	//read(vfint, slow0, nxyz * 4);
-	if (!strcmp(velfile, "VP.mod"))
-	{
-		memcpy(slow0, C2F->vpfile->vsave, 4 * nxyz);
-	}
-	else if(!strcmp(velfile, "VS.mod"))
-	{
-		memcpy(slow0, C2F->vsfile->vsave, 4 * nxyz);
-	}
-	else
-	{
-		printf("ERROR WHEN READING IN VELOCITY FILE");
-		assert(0);
-	}
-	close(vfint);
 	/* swap bytes on input if necessary */
 	/*        if ((litend && swab==1) || swab==2) { */
 	if (swab == 1 || swab == 3)
