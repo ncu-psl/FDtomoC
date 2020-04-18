@@ -152,8 +152,8 @@
 #define SQR6 2.449489743
 #define rearth 6371.0
 #define degrad PI / 180.0
-#define tc(x, y, z) time0[nxy * (z) + nx * (y) + (x)]
-#define sc(x, y, z) slow0[nxy * (z) + nx * (y) + (x)]
+#define tc(x, y, z) time0[nyz * (x) + nz * (y) + (z)]
+#define sc(x, y, z) slow0[nyz * (x) + nz * (y) + (z)]
 // olddefine rc(z)   (rearth - (z0 + h*(z)))
 #define rc(z) (z0r - h * (z))
 #define qc(y) (y0 + dq * (y))
