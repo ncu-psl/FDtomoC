@@ -23,4 +23,6 @@ velocity3D generate3DModel(float *, float *, Mesh);
 velocity3D transform(velocity3D);
 float getPointVp(Point3D, velocity3D);
 float getPointVs(Point3D, velocity3D);
+velocity3D change2ColumnMajor(velocity3D);
+void output3DModel(velocity3D, char *);
 #endif

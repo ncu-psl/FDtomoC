@@ -138,11 +138,38 @@ velocity3D transform(velocity3D model){
                 Point3D finePoint = getCoarsePoint(point, model.mesh);
                 Point3D base = searchFineBase(finePoint, model.mesh);
                 float vel = trilinear_interpolation_base(point, base, model);
-				slownessModel.vp[index] = 1.f / vel;
+				slownessModel.vp[index] = vel;
                 index++;
             } 
         }
     }
-    return;
+    return slownessModel;
+}
 
+velocity3D change2ColumnMajor(velocity3D model){
+	velocity3D new_model;
+	memcpy(&new_model.mesh, &model.mesh, sizeof(model.mesh));
+	int x = getNumberOfXfine(model.mesh);
+	int y = getNumberOfYfine(model.mesh);
+	int z = getNumberOfZfine(model.mesh);
+	float *vel = (float *)malloc(sizeof(float) * (x * y * z));
+	int index = 0;
+	for(int k = 0; k < z; k++){
+		for(int j = 0; j < y; j++){
+			for(int i = 0; i < x; i++){
+				int offset = i * y * z +
+							 j * y + 
+							 k;
+				vel[index++]=model.vp[offset];
+			}
+		}
+	}
+	new_model.vp = vel;
+	return new_model;
+}
+
+void output3DModel(velocity3D model, char *filename){
+	FILE *fp_tmp = fopen(filename, "wb");
+	int size = sizeofFine(model.mesh);
+	fwrite(model.vp, sizeof(float), size, fp_tmp);
 }
