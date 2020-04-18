@@ -10,6 +10,7 @@ ADD_LIBRARY(_common
 	interpolation.c
 	velocity_model.c
 	grid.c
+	station.c
 )
 
 include_directories(${MAIN_INCLUDE_DIR})
