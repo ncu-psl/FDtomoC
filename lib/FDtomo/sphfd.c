@@ -197,18 +197,28 @@ double rcent;
 static double z0r;
 int endian();
 int litend;
-SPHFD_DATA *sphfd_exec(velocity3D, Point3D);
+travelTime sphfd_exec(velocity3D, Point3D);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-SPHFD_DATA **sphfd(velocity3D model, Station *station_list)
+travelTime *sphfd(velocity3D model, Station *station_head)
 {
-	Point3D location = station_list->location; 
-	sphfd_exec(model, location);
+	int numOfStations = getStationCount(station_head);
+	travelTime *travle_time_array = (travelTime *)malloc(sizeof(travelTime) * numOfStations);
+	Station *currentStation = station_head;
+
+	int index = 0;
+	while(currentStation != NULL){
+		Point3D location = currentStation->location; 
+		travle_time_array[index++] = sphfd_exec(model, location);
+		currentStation = currentStation->next;
+	}
+
+	return;
 }
 
-SPHFD_DATA *sphfd_exec(velocity3D model, Point3D location)
+travelTime sphfd_exec(velocity3D model, Point3D location)
 {
-	SPHFD_DATA *SPHFD = (SPHFD_DATA *)malloc(sizeof(SPHFD_DATA));
+	travelTime travel_time;
 	
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
@@ -253,7 +263,7 @@ SPHFD_DATA *sphfd_exec(velocity3D model, Point3D location)
 			 Set savsrc to 1 to preserve the true source in the header, and to  0
 			 to redefine it as a grid point */
 
-		reverse = 1,	/* will automatically do up to this number of
+		reverse = 50,	/* will automatically do up to this number of
 			 reverse propagation steps to fix waves that travel
 			 back into expanding cell */
 		headpref = 6,   /* if headpref starts > 0, will determine
@@ -336,9 +346,9 @@ SPHFD_DATA *sphfd_exec(velocity3D model, Point3D location)
 	fxs=location.x;
 	fys=location.y;
 	fzs=location.z;
-	nx=getXFineMesh(model.mesh);
-	ny=getYFineMesh(model.mesh);
-	nz=getZFineMesh(model.mesh);
+	nx=getNumberOfXfine(model.mesh);
+	ny=getNumberOfYfine(model.mesh);
+	nz=getNumberOfZfine(model.mesh);
 	x0=model.mesh.origin.x;
 	y0=model.mesh.origin.y;
 	z0=model.mesh.origin.z;
@@ -6265,10 +6275,9 @@ SPHFD_DATA *sphfd_exec(velocity3D model, Point3D location)
 	fprintf(stdout, "fyss =  %g\n", headout.fys);
 	fprintf(stdout, "fzss =  %g\n", headout.fzs);
 
-	memcpy(SPHFD->hdr, &headout, 232);
-	SPHFD->time0 = time0;
+	travel_time.time = time0;
 	fprintf(stderr, "wavefront done \n");
-	return SPHFD;
+	return travel_time;
 }
 /* -------------------------------------------------------------------------- */
 compar(a, b) struct sorted *a, *b;

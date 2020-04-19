@@ -47,3 +47,13 @@ Station *createStations(char *file, int sph){
     }
     return station_head;
 }
+
+int getStationCount(Station *station_list){
+	int index = 0;
+	Station *current = station_list;
+	while(station_list != NULL){
+		index++;
+		station_list = station_list->next;
+	}
+	return index;
+}
