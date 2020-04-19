@@ -8,7 +8,7 @@ Station *createNewStation(char *name, Point3D location){
 	return new_station;
 }
 
-void addStation(Station *station_head, Station *station) {
+void appendStation(Station *station_head, Station *station) {
 	Station *ptr=station_head;
 	while(ptr->next!=NULL) {
 		ptr=ptr->next;
@@ -17,7 +17,7 @@ void addStation(Station *station_head, Station *station) {
 }
 
 
-Station *createStations(char *file, int sph){
+Station *createStationList(char *file, int sph){
     FILE *fp_sta = fopen(file, "r");
 	if(!fp_sta) {
 		printf("Can not open file: %s\n", file);
@@ -42,7 +42,7 @@ Station *createStations(char *file, int sph){
         if(station_head==NULL){
             station_head = station;
         }else{
-            addStation(station_head, station);
+            appendStation(station_head, station);
         }
     }
     return station_head;

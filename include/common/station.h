@@ -9,7 +9,7 @@ struct station{
 typedef struct station Station;
 
 Station *createNewStation(char *, Point3D);
-void addStation(Station *, Station *);
-Station *createStations(char *file, int sph);
+void appendStation(Station *, Station *);
+Station *createStationList(char *, int);
 int getStationCount(Station *);
 #endif

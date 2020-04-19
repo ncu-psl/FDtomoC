@@ -128,10 +128,9 @@ Mesh createMesh(SPEC spec){
     return mesh;
 }
 
-void change2Sphere(Mesh mesh, int isElevation){
+Mesh change2Sphere(Mesh mesh, int isElevation){
     double z0r;
     double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
-    
     mesh.origin.y *= degrad;
     if(isElevation){
         mesh.origin.y = hpi - glath(mesh.origin.y, mesh.origin.z, &z0r);
@@ -143,7 +142,7 @@ void change2Sphere(Mesh mesh, int isElevation){
     mesh.ySpace = space / rearth / degrad;
     mesh.xSpace = fabs(space / (rearth * sin(mesh.origin.y)));
     mesh.xSpace = mesh.xSpace / degrad;
-
+    return mesh;
 }
 
 Point3D searchFineBase(Point3D point, Mesh mesh){
