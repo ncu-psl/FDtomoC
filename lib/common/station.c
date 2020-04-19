@@ -8,8 +8,12 @@ Station *createNewStation(char *name, Point3D location){
 	return new_station;
 }
 
-void appendStation(Station *station_head, Station *station) {
-	Station *ptr=station_head;
+void appendStation(Station **station_head, Station *station) {
+	if(*station_head == NULL){
+		*station_head = station;
+		return;
+	}
+	Station *ptr=*station_head;
 	while(ptr->next!=NULL) {
 		ptr=ptr->next;
 	}
@@ -42,7 +46,7 @@ Station *createStationList(char *file, int sph){
         if(station_head==NULL){
             station_head = station;
         }else{
-            appendStation(station_head, station);
+            appendStation(&station_head, station);
         }
     }
     return station_head;

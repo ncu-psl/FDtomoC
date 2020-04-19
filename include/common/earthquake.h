@@ -24,7 +24,8 @@ struct event{
 typedef struct event Event;
 
 Time *createNewTime(int, int, int, int, float);
-void appendTime(Time *, Time *);
+void appendTime(Time **, Time *);
 Event *createNewEvent(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], Time *, int);
+void appendEvent(Event **, Event *);
 Event *createEventList(char *);
 #endif
