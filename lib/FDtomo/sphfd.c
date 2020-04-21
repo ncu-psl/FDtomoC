@@ -197,28 +197,31 @@ double rcent;
 static double z0r;
 int endian();
 int litend;
-travelTime sphfd_exec(velocity3D, Point3D);
+travelTimeTable sphfd_exec(velocity3D, Point3D);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-travelTime *sphfd(velocity3D model, Station *station_head)
+travelTimeTable *sphfd(velocity3D model, Station *station_head)
 {
 	int numOfStations = getStationCount(station_head);
-	travelTime *travle_time_array = (travelTime *)malloc(sizeof(travelTime) * numOfStations);
+	travelTimeTable *travle_time_array = (travelTimeTable *)malloc(sizeof(travelTimeTable) * numOfStations);
 	Station *currentStation = station_head;
-
+	travelTimeTable *currentTable = travle_time_array;
 	int index = 0;
-	while(currentStation != NULL){
+	for(int i = 0; i < numOfStations; i++){
 		Point3D location = currentStation->location; 
-		travle_time_array[index++] = sphfd_exec(model, location);
+		*currentTable = sphfd_exec(model, location);
+		strcpy(currentTable->name, currentStation->name);
 		currentStation = currentStation->next;
+		currentTable++;
+		printf("%s\n", travle_time_array[i].name);
 	}
 
-	return;
+	return travle_time_array;
 }
 
-travelTime sphfd_exec(velocity3D model, Point3D location)
+travelTimeTable sphfd_exec(velocity3D model, Point3D location)
 {
-	travelTime travel_time;
+	travelTimeTable travel_time;
 	
 	/* NOTE THAT SEVERAL VARIABLES MUST BE SPECIFIED IN par=xxx FILE,
 	 WHILE OTHERS ARE OPTIONAL:  IF A mstpar STATEMENT READS THE
@@ -263,7 +266,7 @@ travelTime sphfd_exec(velocity3D model, Point3D location)
 			 Set savsrc to 1 to preserve the true source in the header, and to  0
 			 to redefine it as a grid point */
 
-		reverse = 50,	/* will automatically do up to this number of
+		reverse = 1,	/* will automatically do up to this number of
 			 reverse propagation steps to fix waves that travel
 			 back into expanding cell */
 		headpref = 6,   /* if headpref starts > 0, will determine

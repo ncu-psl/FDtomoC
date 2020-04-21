@@ -1,6 +1,7 @@
 #ifndef EARTHQUAKE
 #define EARTHQUAKE
 #include "common/grid.h"
+#include "common/travel_time.h"
 #include "common/station.h"
 struct time{
     int iyr, jday, ihr, imn;
@@ -28,4 +29,5 @@ void appendTime(Time **, Time *);
 Event *createNewEvent(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], Time *, int);
 void appendEvent(Event **, Event *);
 Event *createEventList(char *);
+int *checkTravelTime(Event *, travelTimeTable *, Station *);
 #endif

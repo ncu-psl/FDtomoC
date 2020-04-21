@@ -55,7 +55,7 @@ Station *createStationList(char *file, int sph){
 int getStationCount(Station *station_list){
 	int index = 0;
 	Station *current = station_list;
-	while(station_list != NULL){
+	while(station_list->next != NULL){
 		index++;
 		station_list = station_list->next;
 	}
