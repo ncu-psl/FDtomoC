@@ -26,6 +26,7 @@ Event *createNewEvent(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN +
     Event *new_event = (Event *)malloc(sizeof(Event));
     new_event->observedTime = (Time *)malloc(sizeof(Time) * observationCnt);
 	new_event->earthquake = eqk;
+    new_event->observationCnt = observationCnt;
 	memcpy(new_event->station_name_list, station_name_list, observationCnt * MAXSTRLEN+1);
     memcpy(new_event->observedTime, obstime, sizeof(Time) * observationCnt);
 	new_event->next=NULL;
@@ -134,4 +135,21 @@ Event *createEventList(char *filename){
     }
     fclose(fp_event);
     return event_list;
+}
+
+int *checkTravelTime(Event *event, travelTimeTable *table_list, Station *station_head){
+    int numOfStations = getStationCount(station_head);
+    int *timeIndex = (int *)malloc(sizeof(int) * event->observationCnt);
+    travelTimeTable *current;
+    for(int i = 0; i < event->observationCnt; i++){
+        current = table_list;
+        for (int j = 0; j < numOfStations; j++){
+            if(strcmp(event->station_name_list[i], current->name) == 0){
+                timeIndex[i] = j;
+                break;
+            }
+            current++;
+        }
+    }
+    return timeIndex;
 }
