@@ -12,25 +12,37 @@ typedef struct {
 }Cell;
 
 typedef struct{
-    Point3D origin;
-    int numberOfx,numberOfy, numberOfz;
-    float xSpace, ySpace, zSpace;
-    int *igridx, *igridy, *igridz;
-}Mesh; 
+    int numberOfNode;
+    int space;
+    int *igrid;
+}Mesh1D; 
 
-int getNumberOfXfine(Mesh);
-int getNumberOfYfine(Mesh);
-int getNumberOfZfine(Mesh);
-int sizeofFine(Mesh);
-float *getXFineMesh(Mesh);
-float *getYFineMesh(Mesh);
-float *getZFineMesh(Mesh);
-Point3D getFinePoint(Point3D,Mesh);
-float *getXMesh(Mesh);
-float *getYMesh(Mesh);
-float *getZMesh(Mesh);
-Point3D getCoarsePoint(Point3D point, Mesh mesh);
-Mesh createMesh(SPEC spec);
-Mesh change2Sphere(Mesh, int);
-Point3D searchFineBase(Point3D, Mesh);
+typedef struct{
+    Point3D numberOfNode;
+    Point3D space;
+    int *igridx;
+    int *igridy;
+    int *igridz;
+}Mesh3D;
+
+typedef struct{
+    Mesh1D mesh1d;
+    int unit;
+    int origin;
+}Coordinate1D;
+
+typedef struct{
+    Mesh3D mesh;
+    Point3D space;
+    Point3D origin;
+}Coordinate3D;
+
+int sizeOfMesh3D(Mesh3D);
+float *getXAxis(Coordinate3D);
+float *getYAxis(Coordinate3D);
+float *getZAxis(Coordinate3D);
+Point3D getPoint3D(Point3D, Coordinate3D);
+Mesh1D createMesh1D(int, int, int*);
+Coordinate3D change2Sphere(Coordinate3D, int);
+Point3D searchFineBase(Point3D, Coordinate3D);
 #endif

@@ -1,65 +1,41 @@
 #include "common/grid.h"
-int getNumberOfXfine(Mesh mesh){
-    int sum = 1;
-    for(int i = 1; i < mesh.numberOfx; i++){
-        sum += mesh.igridx[i - 1];
-    }
-    return sum;
+int sizeOfMesh3D(Mesh3D mesh){
+    return mesh.numberOfNode.x * mesh.numberOfNode.y * mesh.numberOfNode.z;
 }
 
-int getNumberOfYfine(Mesh mesh){
-    int sum = 1;
-    for(int i = 1; i < mesh.numberOfy; i++){
-        sum += mesh.igridy[i - 1];
-    }
-    return sum;
-}
-
-int getNumberOfZfine(Mesh mesh){
-    int sum = 1;
-    for(int i = 1; i < mesh.numberOfz; i++){
-        sum += mesh.igridz[i - 1];
-    }
-    return sum;
-}
-
-int sizeofFine(Mesh mesh){
-    return getNumberOfXfine(mesh) * getNumberOfYfine(mesh) * getNumberOfZfine(mesh);
-}
-
-float *getXFineMesh(Mesh mesh){
-    int numberOfPoints = getNumberOfXfine(mesh);
+float *getXAxis(Coordinate3D coordinate){
+    int numberOfPoints = coordinate.mesh.numberOfNode.x;
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
-    points[0] = mesh.origin.x;
+    points[0] = coordinate.origin.x;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * mesh.xSpace;
+        points[i] = points[i - 1] + i * coordinate.mesh.space.x;
     }
     return points;
 }
-float *getYFineMesh(Mesh mesh){
-    int numberOfPoints = getNumberOfYfine(mesh);
+float *getYAxis(Coordinate3D coordinate){
+    int numberOfPoints = coordinate.mesh.numberOfNode.y;
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
-    points[0] = mesh.origin.y;
+    points[0] = coordinate.origin.y;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * mesh.ySpace;
+        points[i] = points[i - 1] + i * coordinate.mesh.space.y;
     }
     return points;
 }
 
-float *getZFineMesh(Mesh mesh){
-    int numberOfPoints = getNumberOfZfine(mesh);
+float *getZAxis(Coordinate3D coordinate){
+    int numberOfPoints = coordinate.mesh.numberOfNode.z;
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
-    points[0] = mesh.origin.z;
+    points[0] = coordinate.origin.z;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * mesh.zSpace;
+        points[i] = points[i - 1] + i * coordinate.mesh.space.z;
     }
     return points;
 }
 
-Point3D getFinePoint(Point3D point, Mesh mesh){
-    float *gx = getXFineMesh(mesh);
-    float *gy = getYFineMesh(mesh);
-    float *gz = getZFineMesh(mesh);
+Point3D getPoint3D(Point3D point, Coordinate3D coordinate){
+    float *gx = getXAxis(coordinate);
+    float *gy = getYAxis(coordinate);
+    float *gz = getZAxis(coordinate);
 
     int x = (int)point.x;
     int y = (int)point.y;
@@ -69,111 +45,61 @@ Point3D getFinePoint(Point3D point, Mesh mesh){
     return finePoint;
 }
 
-float *getXMesh(Mesh mesh){
-    float *points = (float *)malloc(sizeof(float) * mesh.numberOfx);
-    points[0] = mesh.origin.x;
-    for(int i = 1; i < mesh.numberOfx; i++){
-        points[i] = points[i - 1] + mesh.igridx[i - 1] * mesh.xSpace;
-    }
-    return points;
-}
-float *getYMesh(Mesh mesh){
-    float *points = (float *)malloc(sizeof(float) * mesh.numberOfy);
-    points[0] = mesh.origin.y;
-    for(int i = 1; i < mesh.numberOfy; i++){
-        points[i] = points[i - 1] + mesh.igridy[i - 1] * mesh.ySpace;
-    }
-    return points;
-}
-
-float *getZMesh(Mesh mesh){
-    float *points = (float *)malloc(sizeof(float) * mesh.numberOfz);
-    points[0] = mesh.origin.z;
-    for(int i = 1; i < mesh.numberOfz; i++){
-        points[i] = points[i - 1] + mesh.igridz[i - 1] * mesh.zSpace;
-    }
-    return points;
-}
-
-Point3D getCoarsePoint(Point3D point, Mesh mesh){
-    float *gx = getXMesh(mesh);
-    float *gy = getYMesh(mesh);
-    float *gz = getZMesh(mesh);
-
-    int x = (int)point.x;
-    int y = (int)point.y;
-    int z = (int)point.z;
-
-    Point3D CoarsePoint = {gx[x], gy[y], gz[z]};
-    return CoarsePoint;
-}
-
-Mesh createMesh(SPEC spec){
-    Mesh mesh;
-	mesh.origin.x = spec.grid.x00;
-    mesh.origin.y = spec.grid.y00;
-    mesh.origin.z = spec.grid.z0;
-    mesh.numberOfx = spec.grid.nxc;
-    mesh.numberOfy = spec.grid.nyc;
-    mesh.numberOfz = spec.grid.nzc;
-    mesh.xSpace = mesh.ySpace = mesh.zSpace = spec.grid.h;
-
-	mesh.igridx = (float *)malloc(sizeof(float)*spec.grid.nxc);
-	mesh.igridy = (float *)malloc(sizeof(float)*spec.grid.nyc);
-    mesh.igridz = (float *)malloc(sizeof(float)*spec.grid.nzc);
-    memcpy(mesh.igridx, spec.grid.igridx, spec.grid.nxc * sizeof(float));
-    memcpy(mesh.igridy, spec.grid.igridy, spec.grid.nyc * sizeof(float));
-    memcpy(mesh.igridz, spec.grid.igridz, spec.grid.nzc * sizeof(float));
-
+Mesh1D createMesh1D(int numberOfNode, int space, int *igrid){
+    Mesh1D mesh;
+    mesh.numberOfNode = numberOfNode;
+    mesh.space = space;
+    mesh.igrid = (int *)malloc(sizeof(int) * numberOfNode);
+    memcpy(mesh.igrid, igrid, numberOfNode);
     return mesh;
 }
 
-Mesh change2Sphere(Mesh mesh, int isElevation){
+Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     double z0r;
     double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
-    mesh.origin.y *= degrad;
+    coordinate.origin.y *= degrad;
     if(isElevation){
-        mesh.origin.y = hpi - glath(mesh.origin.y, mesh.origin.z, &z0r);
+        coordinate.origin.y = hpi - glath(coordinate.origin.y, coordinate.origin.z, &z0r);
     } else {
-        mesh.origin.y = hpi - glat(mesh.origin.y);
+        coordinate.origin.y = hpi - glat(coordinate.origin.y);
     }
-    mesh.origin.x = mesh.origin.x * degrad;
-    int space = mesh.xSpace; 
-    mesh.ySpace = space / rearth / degrad;
-    mesh.xSpace = fabs(space / (rearth * sin(mesh.origin.y)));
-    mesh.xSpace = mesh.xSpace / degrad;
-    return mesh;
+    coordinate.origin.x = coordinate.origin.x * degrad;
+    int space = coordinate.space.x; 
+    coordinate.space.y = space / rearth / degrad;
+    coordinate.space.x = fabs(space / (rearth * sin(coordinate.origin.y)));
+    coordinate.space.x = coordinate.space.x / degrad;
+    return coordinate;
 }
 
-Point3D searchFineBase(Point3D point, Mesh mesh){
-    float *gx = getXMesh(mesh);
-    float *gy = getYMesh(mesh);
-    float *gz = getZMesh(mesh);
+Point3D searchFineBase(Point3D point, Coordinate3D coordinate){
+    float *gx = getXAxis(coordinate);
+    float *gy = getYAxis(coordinate);
+    float *gz = getZAxis(coordinate);
 
     int i;
-	for (i = 1; i < mesh.numberOfx; i++) {
+	for (i = 1; i < coordinate.mesh.numberOfNode.x; i++) {
 		if (gx[i] > point.x)
 			break;
 	}
-	if (i == mesh.numberOfx)
+	if (i == coordinate.mesh.numberOfNode.x)
 		i--;
 	i--;
 
     int j;
-	for (j = 1; j < mesh.numberOfy; j++) {
+	for (j = 1; j < coordinate.mesh.numberOfNode.y; j++) {
 		if (gy[j] > point.y)
 			break;
 	}
-	if (j == mesh.numberOfy)
+	if (j == coordinate.mesh.numberOfNode.y)
 		j--;
 	j--;
 
     int k;
-	for (k = 1; k < mesh.numberOfz; k++) {
+	for (k = 1; k < coordinate.mesh.numberOfNode.z; k++) {
 		if (gz[k] > point.z)
 			break;
 	}
-	if (k == mesh.numberOfz)
+	if (k == coordinate.mesh.numberOfNode.z)
 		k--;
 	k--;
 
