@@ -1,3 +1,4 @@
+ADD_SUBDIRECTORY(vec)
 ADD_LIBRARY(_common
 	parseprogs.c
 	geographic_method.c
@@ -14,4 +15,5 @@ ADD_LIBRARY(_common
 	earthquake.c
 )
 
+TARGET_LINK_LIBRARIES(_common vec)
 include_directories(${MAIN_INCLUDE_DIR})

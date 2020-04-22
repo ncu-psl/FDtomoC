@@ -1,5 +1,6 @@
 #ifndef GRID_H_
 #define GRID_H_
+#include "vec/vec.h"
 #include "common/read_spec.h"
 
 typedef struct {
@@ -14,7 +15,7 @@ typedef struct {
 typedef struct{
     int numberOfNode;
     int space;
-    int *igrid;
+    vec_int_t igrid;
 }Mesh1D; 
 
 typedef struct{

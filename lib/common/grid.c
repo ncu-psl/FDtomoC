@@ -47,10 +47,9 @@ Point3D getPoint3D(Point3D point, Coordinate3D coordinate){
 
 Mesh1D createMesh1D(int numberOfNode, int space, int *igrid){
     Mesh1D mesh;
+    vec_init(&mesh.igrid);
     mesh.numberOfNode = numberOfNode;
     mesh.space = space;
-    mesh.igrid = (int *)malloc(sizeof(int) * numberOfNode);
-    memcpy(mesh.igrid, igrid, numberOfNode);
     return mesh;
 }
 
