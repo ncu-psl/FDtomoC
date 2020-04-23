@@ -73,4 +73,9 @@ void read_files(char *spec_file, SPEC *file_identifier);
 void read_grid(char *spec_file, SPEC *spec);
 void read_error(char *name, char *type, FILE *fp_spc);
 SPEC create_spec(char *specFile);
+int getNumberOfXfine(SPEC);
+int getNumberOfYfine(SPEC);
+int getNumberOfZfine(SPEC);
+
+
 #endif

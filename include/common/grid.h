@@ -1,11 +1,15 @@
 #ifndef GRID_H_
 #define GRID_H_
-#include "vec/vec.h"
+#include "common/vec/vec.h"
 #include "common/read_spec.h"
 
 typedef struct {
     float x, y, z;
 }Point3D; 
+
+typedef struct {
+    double x, y, z;
+}Point3DDouble;
 
 typedef struct {
     Point3D point;
@@ -20,10 +24,12 @@ typedef struct{
 
 typedef struct{
     Point3D numberOfNode;
-    Point3D space;
-    int *igridx;
-    int *igridy;
-    int *igridz;
+    double xspace;
+    double yspace;
+    double zspace;
+    vec_int_t igridx;
+    vec_int_t igridy;
+    vec_int_t igridz;
 }Mesh3D;
 
 typedef struct{
@@ -34,8 +40,8 @@ typedef struct{
 
 typedef struct{
     Mesh3D mesh;
-    Point3D space;
-    Point3D origin;
+    Point3DDouble space;
+    Point3DDouble origin;
 }Coordinate3D;
 
 int sizeOfMesh3D(Mesh3D);
@@ -44,6 +50,10 @@ float *getYAxis(Coordinate3D);
 float *getZAxis(Coordinate3D);
 Point3D getPoint3D(Point3D, Coordinate3D);
 Mesh1D createMesh1D(int, int, int*);
+Mesh3D readFineMesh3D(SPEC);
+Mesh3D readCoarseMesh3D(SPEC);
+Coordinate3D readFineCoordinate(SPEC);
+Coordinate3D readCoarseCoordinate(SPEC);
 Coordinate3D change2Sphere(Coordinate3D, int);
 Point3D searchFineBase(Point3D, Coordinate3D);
 #endif

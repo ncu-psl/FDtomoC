@@ -453,3 +453,27 @@ SPEC create_spec(char *specFile){
 
 	return spec;
 }
+
+int getNumberOfXfine(SPEC spec){
+	int sum = 1;
+    for(int i = 1; i < spec.grid.nxc; i++){
+        sum += spec.grid.igridx[i - 1];
+    }
+    return sum;
+}
+
+int getNumberOfYfine(SPEC spec){
+	int sum = 1;
+    for(int i = 1; i < spec.grid.nyc; i++){
+        sum += spec.grid.igridy[i - 1];
+    }
+    return sum;
+}
+
+int getNumberOfZfine(SPEC spec){
+	int sum = 1;
+    for(int i = 1; i < spec.grid.nzc; i++){
+        sum += spec.grid.igridz[i - 1];
+    }
+    return sum;
+}

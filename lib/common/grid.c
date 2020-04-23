@@ -8,7 +8,7 @@ float *getXAxis(Coordinate3D coordinate){
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
     points[0] = coordinate.origin.x;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh.space.x;
+        points[i] = points[i - 1] + i * coordinate.mesh.xspace;
     }
     return points;
 }
@@ -17,7 +17,7 @@ float *getYAxis(Coordinate3D coordinate){
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
     points[0] = coordinate.origin.y;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh.space.y;
+        points[i] = points[i - 1] + i * coordinate.mesh.yspace;
     }
     return points;
 }
@@ -27,7 +27,7 @@ float *getZAxis(Coordinate3D coordinate){
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
     points[0] = coordinate.origin.z;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh.space.z;
+        points[i] = points[i - 1] + i * coordinate.mesh.zspace;
     }
     return points;
 }
@@ -51,6 +51,53 @@ Mesh1D createMesh1D(int numberOfNode, int space, int *igrid){
     mesh.numberOfNode = numberOfNode;
     mesh.space = space;
     return mesh;
+}
+
+Mesh3D readFineMesh3D(SPEC spec){
+    Mesh3D mesh;
+    mesh.numberOfNode.x = getNumberOfXfine(spec);
+    mesh.numberOfNode.y = getNumberOfYfine(spec);
+    mesh.numberOfNode.z = getNumberOfZfine(spec);
+    mesh.xspace = spec.grid.xSpace;
+    mesh.yspace = spec.grid.ySpace;
+    mesh.zspace = spec.grid.zSpace;
+    vec_init(&mesh.igridx);
+    vec_init(&mesh.igridy);
+    vec_init(&mesh.igridz);
+
+    for(int i = 1; i < spec.grid.nxc; i++){
+        vec_push(&mesh.igridx, spec.grid.igridx[i - 1]);
+    }
+    for(int i = 1; i < spec.grid.nyc; i++){
+        vec_push(&mesh.igridy, spec.grid.igridy[i - 1]);
+    }
+    for(int i = 1; i < spec.grid.nzc; i++){
+        vec_push(&mesh.igridz, spec.grid.igridz[i - 1]);
+    }
+
+    return mesh;
+}
+
+Mesh3D readCoarseMesh3D(SPEC spec){
+    Mesh3D mesh;
+    mesh.numberOfNode.x = spec.grid.nxc;
+    mesh.numberOfNode.y = spec.grid.nyc;
+    mesh.numberOfNode.z = spec.grid.nzc;
+}
+
+Coordinate3D readFineCoordinate(SPEC spec){
+    Coordinate3D coordinate;
+    coordinate.mesh = readFineMesh3D(spec);
+    coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
+    coordinate.space = (Point3DDouble){spec.grid.xSpace, spec.grid.ySpace, spec.grid.zSpace};
+    return coordinate;
+}
+
+Coordinate3D readCoarseCoordinate(SPEC spec){
+    Coordinate3D coordinate;
+    coordinate.mesh = readCoarseMesh3D(spec);
+    coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
+    return coordinate;
 }
 
 Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
