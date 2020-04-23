@@ -45,13 +45,15 @@ typedef struct{
 }Coordinate3D;
 
 int sizeOfMesh3D(Mesh3D);
+float *getAxis(Coordinate1D);
 float *getXAxis(Coordinate3D);
 float *getYAxis(Coordinate3D);
 float *getZAxis(Coordinate3D);
 Point3D getPoint3D(Point3D, Coordinate3D);
-Mesh1D createMesh1D(int, int, int*);
+Mesh1D createMesh1D(int, int, vec_int_t);
 Mesh3D readFineMesh3D(SPEC);
 Mesh3D readCoarseMesh3D(SPEC);
+Coordinate1D createCoordinate(Mesh1D, int, int);
 Coordinate3D readFineCoordinate(SPEC);
 Coordinate3D readCoarseCoordinate(SPEC);
 Coordinate3D change2Sphere(Coordinate3D, int);

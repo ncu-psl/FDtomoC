@@ -3,6 +3,17 @@ int sizeOfMesh3D(Mesh3D mesh){
     return mesh.numberOfNode.x * mesh.numberOfNode.y * mesh.numberOfNode.z;
 }
 
+float *getAxis(Coordinate1D coordinate){
+    int numberOfPoints = coordinate.mesh1d.numberOfNode;
+    float *points = (float *)malloc(sizeof(float) * numberOfPoints);
+    points[0] = coordinate.origin;
+    for(int i = 1; i < numberOfPoints; i++){
+        points[i] = points[i - 1] + i * coordinate.mesh1d.space;
+    }
+    return points;
+}
+
+
 float *getXAxis(Coordinate3D coordinate){
     int numberOfPoints = coordinate.mesh.numberOfNode.x;
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
@@ -45,11 +56,12 @@ Point3D getPoint3D(Point3D point, Coordinate3D coordinate){
     return finePoint;
 }
 
-Mesh1D createMesh1D(int numberOfNode, int space, int *igrid){
+Mesh1D createMesh1D(int numberOfNode, int space, vec_int_t igrid){
     Mesh1D mesh;
     vec_init(&mesh.igrid);
     mesh.numberOfNode = numberOfNode;
     mesh.space = space;
+    vec_extend(&mesh.igrid, &igrid);
     return mesh;
 }
 
@@ -58,13 +70,23 @@ Mesh3D readFineMesh3D(SPEC spec){
     mesh.numberOfNode.x = getNumberOfXfine(spec);
     mesh.numberOfNode.y = getNumberOfYfine(spec);
     mesh.numberOfNode.z = getNumberOfZfine(spec);
+    vec_init(&mesh.igridx);
+    vec_init(&mesh.igridy);
+    vec_init(&mesh.igridz);
+    return mesh;
+}
+
+Mesh3D readCoarseMesh3D(SPEC spec){
+    Mesh3D mesh;
+    mesh.numberOfNode.x = spec.grid.nxc;
+    mesh.numberOfNode.y = spec.grid.nyc;
+    mesh.numberOfNode.z = spec.grid.nzc;
     mesh.xspace = spec.grid.xSpace;
     mesh.yspace = spec.grid.ySpace;
     mesh.zspace = spec.grid.zSpace;
     vec_init(&mesh.igridx);
     vec_init(&mesh.igridy);
     vec_init(&mesh.igridz);
-
     for(int i = 1; i < spec.grid.nxc; i++){
         vec_push(&mesh.igridx, spec.grid.igridx[i - 1]);
     }
@@ -74,15 +96,14 @@ Mesh3D readFineMesh3D(SPEC spec){
     for(int i = 1; i < spec.grid.nzc; i++){
         vec_push(&mesh.igridz, spec.grid.igridz[i - 1]);
     }
-
-    return mesh;
 }
 
-Mesh3D readCoarseMesh3D(SPEC spec){
-    Mesh3D mesh;
-    mesh.numberOfNode.x = spec.grid.nxc;
-    mesh.numberOfNode.y = spec.grid.nyc;
-    mesh.numberOfNode.z = spec.grid.nzc;
+Coordinate1D createCoordinate(Mesh1D mesh, int unit, int origin){
+    Coordinate1D coordinate;
+    coordinate.mesh1d = mesh;
+    coordinate.unit = unit;
+    coordinate.origin = origin;
+    return coordinate;
 }
 
 Coordinate3D readFineCoordinate(SPEC spec){
