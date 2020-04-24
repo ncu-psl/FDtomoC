@@ -27,16 +27,15 @@ float trilinear_interpolation(Point3D point, Cell cells[2][2][2]){
 	return c;
 }
 
-float *linear_interpolation_array(float *c, float *x, float *y, int n, int k, char *mode){
-    float *fc = (float *)malloc(sizeof(float) * k);
-    for(int i = 0;i < k; i++){
+float *linear_interpolation_array(float *c, float *x, float *y, int csize, int xsize, char *mode){
+    float *fc = (float *)malloc(sizeof(float) * csize);
+    for(int i = 0;i < csize; i++){
         int ik;
-		for (ik = 1; ik < n; ik++) {
+		for (ik = 1; ik < xsize; ik++) {
 			if (x[ik] > c[i])
 				break;
 		}
 		ik--;
-		float v = 0;
         if (mode[ik] == 'I') {
 			fc[i] = linear_interpolation(c[i], x[ik], y[ik], x[ik + 1], y[ik + 1]);
 		} else {
@@ -44,23 +43,4 @@ float *linear_interpolation_array(float *c, float *x, float *y, int n, int k, ch
 		}
     }
     return fc;
-}
-
-float trilinear_interpolation_base(Point3D point, Point3D base, velocity3D model){
-	Cell cells[2][2][2];
-	for(int i = 0; i < 2; i++){
-		for(int j = 0; j < 2; j++){
-			for(int k = 0; k < 2; k++){
-				Point3D tmp = base;
-				tmp.x += i;
-				tmp.y += j;
-				tmp.z += k;
-				cells[i][j][k].point = getCoarsePoint(tmp, model.mesh);
-				cells[i][j][k].value = getPointVp(tmp, model);
-			}
-		}
-	}
-	point = getCoarsePoint(point, model.mesh);
-	float vel = trilinear_interpolation(point, cells);
-	return vel;
 }
