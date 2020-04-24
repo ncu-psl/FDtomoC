@@ -1,39 +1,32 @@
-#include "common/interpolation.h"
 #include "common/velocity_model.h"
 
-velocity1D read_velocity1D(SPEC spec){
-	velocity1D model;
-	
+void readVelocityModel1D(SPEC spec, velocityModel1D *vpModel, velocityModel1D *vsModel, char *interp){
 	FILE *fp_one;
 	fp_one = fopen(spec.onedfil, "r");
 	if(!fp_one) {
         printf("Error on opening fp_one(%s)\n", spec.onedfil);
         assert(0);
 	}
-
+	vpModel->velocity = (float *)calloc(MAX1D, sizeof(float));
+	vsModel->velocity = (float *)calloc(MAX1D, sizeof(float));
 	char aline[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
 
-	double h;
+	double h, tmp = 0;
     int len, ierr;
 	int ib = 0, ie = 0, lenv = 0, nvl = 0;
-//---skip over header
+	int count = 0;
 	get_line(fp_one, aline, &ierr);
-	int nl = 0;
-	a21: get_line(fp_one, aline, &ierr);
-	if (ierr == 1){
-		model.nl = nl;
-		fclose(fp_one);
-		return model;
-	}
+
+	while(1){
+	//---skip over header
+	get_line(fp_one, aline, &ierr);
+	if (ierr == 1)
+		break;
 	if (ierr != 0)
-		goto a21;
+		continue;	
 	ib = 0;
-	//******************************************
-	//      fp_one   or  fp_spc?
-	//******************************************
 	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
-	//read(pval(1:nvl),*, err=50) h
 	sscanf(pval, "%lf", &h);
 	ib = ie;
 	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
@@ -46,106 +39,153 @@ velocity1D read_velocity1D(SPEC spec){
 	ib = ie;
 	get_field(fp_one, aline, ib, &ie, pval, &nvl, &ierr);
 
-	if (nl >= MAX1D) {
+	if (count >= MAX1D) {
 		printf(" Too many layers; maximum now is %d", MAX1D);
-		assert(!(nl >= MAX1D));
+		assert(0);
 	}
-	model.vp[nl] = p;
+	vpModel->velocity[count] = p;
 	if (spec.vs1d == 1) {
-		model.vs[nl] = s;
+		vsModel->velocity[count] = s;
 	} else {
-		model.vs[nl] = p / s;
+		vsModel->velocity[count] = p/s;
 	}
-//****ONE-TIME CLUDGE TO FORCE A VP/VS
-//   vp(nl,2) = p/1.78
-//***********************************
-	model.z[nl] = h;
-	model.terp[nl] = pval[0];
-
-	nl = nl + 1;
-	goto a21;
+	
+	if(count == 0){
+		vpModel->coordinate.origin = h;
+	}else{
+		vec_push(&vpModel->coordinate.mesh1d.igrid, h - tmp);
+	}
+	tmp = h;
+	interp[count] = pval[0];
+	count++;
+	}
+	vpModel->coordinate.unit = 1;
+	vpModel->coordinate.mesh1d.numberOfNode = count;
+	vsModel->coordinate.mesh1d.numberOfNode = count;
+	fclose(fp_one);
 	
 }
-velocity3D create3DModel(Mesh mesh, velocity1D model) {
-	float *gz = getZMesh(mesh);
+
+void transform1D(Coordinate1D coordinate, velocityModel1D *model, char *mode){
+	int size = coordinate.mesh1d.numberOfNode;
+	int vsize = model->coordinate.mesh1d.numberOfNode;
+	float *points = getAxis(coordinate);
+	float *vpoints = getAxis(model->coordinate);
+	float *velocity = (float *)calloc(size, sizeof(float));
+	model->coordinate = coordinate;
+	velocity = linear_interpolation_array(points, vpoints, model->velocity, size, vsize, mode);
+	free(model->velocity);
+	model->velocity = velocity;
+	free(points);
+	free(vpoints);
+}
+
+velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
+	int meshSize3D = sizeOfMesh3D(coordinate.mesh);
+	int axisSize1D = model.coordinate.mesh1d.numberOfNode;
+	int axisSize3D = coordinate.mesh.numberOfNode.z;
+	
+	if(axisSize1D != axisSize3D){
+		printf("Size Of coordinate mismatch with 1D velocity model!\n");
+		assert(0);
+	}
+	/*
 	//---unflatten the depths if required
-    /*
+    
 	if (spec.iflat == 1) {
 		for (int i = 0; i < spec.grid.nzc; i++) {
 			gz[i] = uflatz(gz[i]);
 		}
 	}*/
-//----generate the model
-	float *vp = (float *)malloc(sizeof(float) * mesh.numberOfz);
-	float *vs = (float *)malloc(sizeof(float) * mesh.numberOfz);
-	vp = linear_interpolation_array(gz, model.z, model.vp, model.nl, mesh.numberOfz, model.terp);
-	vs = linear_interpolation_array(gz, model.z, model.vs, model.nl, mesh.numberOfz, model.terp);
-	velocity3D model3D = generate3DModel(vp, vs, mesh);
-	return model3D;
-}
+//----generate the mode
 
-
-velocity3D generate3DModel(float *vp, float *vs, Mesh mesh){
-	velocity3D model3D;
-	memcpy(&model3D.mesh, &mesh, sizeof(mesh));
-	int sizeOfGrid = mesh.numberOfx * mesh.numberOfy * mesh.numberOfz;
-	model3D.vp = (float *)malloc(sizeof(float) * sizeOfGrid);
-	model3D.vs = (float *)malloc(sizeof(float) * sizeOfGrid);
-	for (int k = 0; k < mesh.numberOfz; k++){
-		for(int j = 0; j < mesh.numberOfy; j++){
-			for(int i = 0; i < mesh.numberOfx; i++){
-				int index = i *  mesh.numberOfy * mesh.numberOfz +
-						   j *  mesh.numberOfz + k;
-				model3D.vp[index] = vp[k];
-				model3D.vs[index] = vs[k];
+	velocityModel3D model3D;
+	int xsize = coordinate.mesh.numberOfNode.x;
+	int ysize = coordinate.mesh.numberOfNode.y;
+	int zsize = coordinate.mesh.numberOfNode.z;
+	model3D.velocity = (float *)calloc(meshSize3D, sizeof(float));
+	
+	for (int k = 0; k < zsize; k++){
+		for(int j = 0; j < ysize; j++){
+			for(int i = 0; i < xsize; i++){
+				int index = i *  ysize * zsize +
+						   j *  zsize + k;
+				model3D.velocity[index] = model.velocity[k];
 			}
 		}
 	}
+	model3D.coordinate = coordinate;
 	return model3D;
 }
 
-float getPointVp(Point3D point, velocity3D model){
-    int index = point.x * model.mesh.numberOfy * model.mesh.numberOfz +
-                point.y * model.mesh.numberOfz +
+float getPointVel(Point3D point, velocityModel3D *model){
+    int index = point.x * model->coordinate.mesh.numberOfNode.y * model->coordinate.mesh.numberOfNode.z +
+                point.y * model->coordinate.mesh.numberOfNode.z +
                 point.z;
-    float vel = model.vp[index];
+    float vel = model->velocity[index];
     return vel;
 }
 
-float getPointVs(Point3D point, velocity3D model){
-    int index = point.x * model.mesh.numberOfy * model.mesh.numberOfz +
-                point.y * model.mesh.numberOfz +
-                point.z;
-    float vel = model.vs[index];
-    return vel;
+Point3D getPoint3DModel(Point3D point, velocityModel3D *model){
+	float *gx = getXAxis(model->coordinate);
+    float *gy = getYAxis(model->coordinate);
+    float *gz = getZAxis(model->coordinate);
+
+    int x = (int)point.x;
+    int y = (int)point.y;
+    int z = (int)point.z;
+
+    Point3D modelPoint = {gx[x], gy[y], gz[z]};
+    return modelPoint;
+}
+
+float trilinear_interpolation_base(Point3D point, Point3D base, velocityModel3D *model){
+	Cell cells[2][2][2];
+	for(int i = 0; i < 2; i++){
+		for(int j = 0; j < 2; j++){
+			for(int k = 0; k < 2; k++){
+				Point3D tmp = base;
+				tmp.x += i;
+				tmp.y += j;
+				tmp.z += k;
+				cells[i][j][k].point = getPoint3DModel(tmp, model);
+				cells[i][j][k].value = getPointVel(tmp, model);
+			}
+		}
+	}
+	point = getPoint3D(point, model->coordinate);
+	float vel = trilinear_interpolation(point, cells);
+	return vel;
 }
 
 
-velocity3D transform(velocity3D model){
-	velocity3D slownessModel;
-	memcpy(&slownessModel.mesh, &model.mesh, sizeof(model.mesh));
-    float xfine = getNumberOfXfine(model.mesh);
-    float yfine = getNumberOfYfine(model.mesh);
-    float zfine = getNumberOfZfine(model.mesh);
-	int sizeOfFine = xfine * yfine * zfine;
-	slownessModel.vp = (float *)(malloc(sizeof(float) * sizeOfFine));
+
+void transform3D(Coordinate3D coordinate, velocityModel3D *model){
+	int meshSize3D = sizeOfMesh3D(coordinate.mesh);
+	int vMeshSize3D = sizeOfMesh3D(model->coordinate.mesh);
+	float xSize = coordinate.mesh.numberOfNode.x;
+    float ySize = coordinate.mesh.numberOfNode.y;
+    float zSize = coordinate.mesh.numberOfNode.z;
+	float *velocity = (float *)calloc(meshSize3D, sizeof(float));
 
     int index = 0;
-    for(int i = 0; i < xfine; i++){
-        for(int j = 0; j < yfine; j++){
-            for(int k = 0; k < zfine;k++){
+    for(int i = 0; i < xSize; i++){
+        for(int j = 0; j < ySize; j++){
+            for(int k = 0; k < zSize;k++){
                 Point3D point = {i, j, k};
-                Point3D finePoint = getCoarsePoint(point, model.mesh);
-                Point3D base = searchFineBase(finePoint, model.mesh);
+                Point3D location = getPoint3D(point, coordinate);
+                Point3D base = searchFineBase(location, model->coordinate);
                 float vel = trilinear_interpolation_base(point, base, model);
-				slownessModel.vp[index] = vel;
+				velocity[index] = vel;
                 index++;
             } 
         }
     }
-    return slownessModel;
+	model->coordinate = coordinate;
+	free(model->velocity);
+	model->velocity = velocity;
 }
-
+/*
 velocity3D change2ColumnMajor(velocity3D model){
 	velocity3D new_model;
 	memcpy(&new_model.mesh, &model.mesh, sizeof(model.mesh));
@@ -173,3 +213,4 @@ void output3DModel(velocity3D model, char *filename){
 	int size = sizeofFine(model.mesh);
 	fwrite(model.vp, sizeof(float), size, fp_tmp);
 }
+*/

@@ -1,28 +1,32 @@
 #ifndef VELOCITY_MODEL
 #define VELOCITY_MODEL
 #include "read_spec.h"
+#include "common/vec/vec.h"
 #include "common/grid.h"
+#include "common/parameter.h"
+#include "common/interpolation.h"
 #include "FDtomo/make1d.h"
 
 #define MAX1D 1000
+typedef struct velocityModel1D_{
+    Coordinate1D coordinate;
+    float *velocity;
+}velocityModel1D;
 
-typedef struct{
-    float vp[MAX1D], vs[MAX1D], z[MAX1D];
-    char terp[MAX1D + 1];
-	int nl;
-}velocity1D;
+typedef struct velocityModel3D_{
+    Coordinate3D coordinate;
+    float *velocity;
+}velocityModel3D;
 
-typedef struct{
-    Mesh mesh;
-    float *vp, *vs;
-}velocity3D;
+void readVelocityModel1D(SPEC spec, velocityModel1D *, velocityModel1D *, char *);
+void transform1D(Coordinate1D, velocityModel1D *,char *);
+velocityModel3D create3DModel(Coordinate3D, velocityModel1D);
+velocityModel3D generate3DModel(float *, float *, Mesh3D);
+void transform3D(Coordinate3D, velocityModel3D *);
+float getPointVel(Point3D, velocityModel3D *);
+Point3D getPoint3DModel(Point3D, velocityModel3D *);
+float trilinear_interpolation_base(Point3D , Point3D, velocityModel3D *);
+velocityModel3D change2ColumnMajor(velocityModel3D);
+void output3DModel(velocityModel3D, char *);
 
-velocity1D read_velocity1D(SPEC spec);
-velocity3D create3DModel(Mesh, velocity1D);
-velocity3D generate3DModel(float *, float *, Mesh);
-velocity3D transform(velocity3D);
-float getPointVp(Point3D, velocity3D);
-float getPointVs(Point3D, velocity3D);
-velocity3D change2ColumnMajor(velocity3D);
-void output3DModel(velocity3D, char *);
 #endif
