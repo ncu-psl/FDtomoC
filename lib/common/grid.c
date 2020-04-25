@@ -8,7 +8,7 @@ float *getAxis(Coordinate1D coordinate){
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
     points[0] = coordinate.origin;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh1d.space;
+        points[i] = points[i - 1] + coordinate.unit * coordinate.mesh1d.igrid.data[i - 1];
     }
     return points;
 }
@@ -16,29 +16,30 @@ float *getAxis(Coordinate1D coordinate){
 
 float *getXAxis(Coordinate3D coordinate){
     int numberOfPoints = coordinate.mesh.numberOfNode.x;
-    float *points = (float *)malloc(sizeof(float) * numberOfPoints);
+    float *points = (float *)calloc(numberOfPoints, sizeof(float));
+
     points[0] = coordinate.origin.x;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh.xspace;
+        points[i] = points[i - 1] + coordinate.space.x * coordinate.mesh.igridx.data[i - 1];
     }
     return points;
 }
 float *getYAxis(Coordinate3D coordinate){
     int numberOfPoints = coordinate.mesh.numberOfNode.y;
-    float *points = (float *)malloc(sizeof(float) * numberOfPoints);
+    float *points = (float *)calloc(numberOfPoints, sizeof(float));
     points[0] = coordinate.origin.y;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh.yspace;
+        points[i] = points[i - 1] + coordinate.space.y * coordinate.mesh.igridy.data[i - 1];
     }
     return points;
 }
 
 float *getZAxis(Coordinate3D coordinate){
     int numberOfPoints = coordinate.mesh.numberOfNode.z;
-    float *points = (float *)malloc(sizeof(float) * numberOfPoints);
+    float *points = (float *)calloc(numberOfPoints, sizeof(float));
     points[0] = coordinate.origin.z;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + i * coordinate.mesh.zspace;
+        points[i] = points[i - 1] + coordinate.space.z * coordinate.mesh.igridz.data[i - 1];
     }
     return points;
 }
@@ -53,6 +54,9 @@ Point3D getPoint3D(Point3D point, Coordinate3D coordinate){
     int z = (int)point.z;
 
     Point3D finePoint = {gx[x], gy[y], gz[z]};
+    free(gx);
+    free(gy);
+    free(gz);
     return finePoint;
 }
 
@@ -73,6 +77,15 @@ Mesh3D readFineMesh3D(SPEC spec){
     vec_init(&mesh.igridx);
     vec_init(&mesh.igridy);
     vec_init(&mesh.igridz);
+    for(int i = 1; i < mesh.numberOfNode.x; i++){
+        vec_push(&mesh.igridx, 1);
+    }
+    for(int i = 1; i < mesh.numberOfNode.y; i++){
+        vec_push(&mesh.igridy, 1);
+    }
+    for(int i = 1; i < mesh.numberOfNode.z; i++){
+        vec_push(&mesh.igridz, 1);
+    }
     return mesh;
 }
 
@@ -96,6 +109,7 @@ Mesh3D readCoarseMesh3D(SPEC spec){
     for(int i = 1; i < spec.grid.nzc; i++){
         vec_push(&mesh.igridz, spec.grid.igridz[i - 1]);
     }
+    return mesh;
 }
 
 Coordinate1D createCoordinate(Mesh1D mesh, int unit, int origin){
@@ -110,7 +124,7 @@ Coordinate3D readFineCoordinate(SPEC spec){
     Coordinate3D coordinate;
     coordinate.mesh = readFineMesh3D(spec);
     coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
-    coordinate.space = (Point3DDouble){spec.grid.xSpace, spec.grid.ySpace, spec.grid.zSpace};
+    coordinate.space = (Point3DDouble){spec.grid.h, spec.grid.h, spec.grid.h};
     return coordinate;
 }
 
@@ -120,7 +134,7 @@ Coordinate3D readCoarseCoordinate(SPEC spec){
     coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
     return coordinate;
 }
-
+/*
 Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     double z0r;
     double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
@@ -136,7 +150,7 @@ Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     coordinate.space.x = fabs(space / (rearth * sin(coordinate.origin.y)));
     coordinate.space.x = coordinate.space.x / degrad;
     return coordinate;
-}
+}*/
 
 Point3D searchFineBase(Point3D point, Coordinate3D coordinate){
     float *gx = getXAxis(coordinate);
@@ -171,5 +185,8 @@ Point3D searchFineBase(Point3D point, Coordinate3D coordinate){
 	k--;
 
     Point3D base = {i, j, k};
+    free(gx);
+    free(gy);
+    free(gz);
     return base;
 }

@@ -107,9 +107,12 @@ velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
 	
 	for (int k = 0; k < zsize; k++){
 		for(int j = 0; j < ysize; j++){
-			for(int i = 0; i < zsize; i++){
-				model3D.velocity[index] = model.velocity[k];
-				index++;
+			for(int i = 0; i < xsize; i++){
+				model3D.velocity[index++] = model.velocity[k];
+				if(index > meshSize3D){
+					printf("Error happens while getting velocity!\n");
+					assert(0);
+				}
 			}
 		}
 	}
