@@ -98,7 +98,7 @@ velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
 		}
 	}*/
 //----generate the mode
-
+	int index = 0;
 	velocityModel3D model3D;
 	int xsize = coordinate.mesh.numberOfNode.x;
 	int ysize = coordinate.mesh.numberOfNode.y;
@@ -107,10 +107,9 @@ velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
 	
 	for (int k = 0; k < zsize; k++){
 		for(int j = 0; j < ysize; j++){
-			for(int i = 0; i < xsize; i++){
-				int index = i *  ysize * zsize +
-						   j *  zsize + k;
+			for(int i = 0; i < zsize; i++){
 				model3D.velocity[index] = model.velocity[k];
+				index++;
 			}
 		}
 	}
@@ -136,6 +135,9 @@ Point3D getPoint3DModel(Point3D point, velocityModel3D *model){
     int z = (int)point.z;
 
     Point3D modelPoint = {gx[x], gy[y], gz[z]};
+	free(gx);
+    free(gy);
+    free(gz);
     return modelPoint;
 }
 
@@ -184,14 +186,15 @@ void transform3D(Coordinate3D coordinate, velocityModel3D *model){
 	model->coordinate = coordinate;
 	free(model->velocity);
 	model->velocity = velocity;
+	velocity = NULL;
 }
-/*
-velocity3D change2ColumnMajor(velocity3D model){
-	velocity3D new_model;
-	memcpy(&new_model.mesh, &model.mesh, sizeof(model.mesh));
-	int x = getNumberOfXfine(model.mesh);
-	int y = getNumberOfYfine(model.mesh);
-	int z = getNumberOfZfine(model.mesh);
+
+velocityModel3D change2ColumnMajor(velocityModel3D model){
+	velocityModel3D new_model;
+	new_model.coordinate = model.coordinate;
+	int x = model.coordinate.mesh.numberOfNode.x;
+	int y = model.coordinate.mesh.numberOfNode.y;
+	int z = model.coordinate.mesh.numberOfNode.z;
 	float *vel = (float *)malloc(sizeof(float) * (x * y * z));
 	int index = 0;
 	for(int k = 0; k < z; k++){
@@ -200,17 +203,22 @@ velocity3D change2ColumnMajor(velocity3D model){
 				int offset = i * y * z +
 							 j * y + 
 							 k;
-				vel[index++]=model.vp[offset];
+				vel[index++]=model.velocity[offset];
 			}
 		}
 	}
-	new_model.vp = vel;
+	new_model.velocity = vel;
 	return new_model;
 }
 
-void output3DModel(velocity3D model, char *filename){
+void output3DModel(velocityModel3D model, char *filename){
 	FILE *fp_tmp = fopen(filename, "wb");
-	int size = sizeofFine(model.mesh);
-	fwrite(model.vp, sizeof(float), size, fp_tmp);
+	if(!fp_tmp){
+		printf("Error happens while output model !\n");
+		assert(0);
+	}
+	int size = sizeOfMesh3D(model.coordinate.mesh);
+	fwrite(model.velocity, sizeof(float), size, fp_tmp);
+	fclose(fp_tmp);
 }
-*/
+
