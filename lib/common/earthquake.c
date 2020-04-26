@@ -45,7 +45,7 @@ int getTimeCount(TimeNode *time_list){
 }
 
 EventNode *createEventNode(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *obstime){
-    EventNode *new_event_node = (EventNode *)malloc(sizeof(Event));
+    EventNode *new_event_node = (EventNode *)malloc(sizeof(EventNode));
     int observationCnt = getTimeCount(obstime);
     if (observationCnt != 0){
         memcpy(new_event_node->event.station_name_list, station_name_list, observationCnt * (MAXSTRLEN+1));
