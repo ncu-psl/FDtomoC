@@ -1,55 +1,78 @@
 #include "common/earthquake.h"
-Time *createNewTime(int iyr, int jday, int ihr, int imn, float sec){
-    Time *new_time = (Time *)malloc(sizeof(Time));
-    new_time->iyr = iyr;
-    new_time->jday = jday;
-    new_time->ihr = ihr;
-    new_time->imn = imn;
-    new_time->sec = sec;
-    new_time->next = NULL;
-    return new_time;
+TimeNode *createTimeNode(int iyr, int jday, int ihr, int imn, float sec){
+    TimeNode *new_time_node = (TimeNode *)malloc(sizeof(TimeNode));
+    new_time_node->time.iyr = iyr;
+    new_time_node->time.jday = jday;
+    new_time_node->time.ihr = ihr;
+    new_time_node->time.imn = imn;
+    new_time_node->time.sec = sec;
+    new_time_node->next = NULL;
+    return new_time_node;
 }
 
-void appendTime(Time **time_head, Time *new_time){
+void insertTime(TimeNode *time_head, Time time){
+    TimeNode *current = time_head;
+	while(current->next!=NULL) {
+		current=current->next;
+	}
+	current->time = time;
+	current->next = NULL;
+}
+
+
+void appendTimeNode(TimeNode **time_head, TimeNode *new_time_node){
     if(*time_head == NULL){
-        *time_head = new_time;
+        *time_head = new_time_node;
         return;
     }
-    Time *current = *time_head;
+    TimeNode *current = *time_head;
     while(current->next != NULL){
         current = current->next;
     }
-    current->next = new_time;
+    current->next = new_time_node;
 }
 
-Event *createNewEvent(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], Time *obstime, int observationCnt){
-    Event *new_event = (Event *)malloc(sizeof(Event));
-    new_event->observedTime = (Time *)malloc(sizeof(Time) * observationCnt);
-	new_event->earthquake = eqk;
-    new_event->observationCnt = observationCnt;
-	memcpy(new_event->station_name_list, station_name_list, observationCnt * MAXSTRLEN+1);
-    memcpy(new_event->observedTime, obstime, sizeof(Time) * observationCnt);
-	new_event->next=NULL;
-	return new_event;
+int getTimeCount(TimeNode *time_list){
+    if (time_list == NULL)  
+        return 0;
+	int index = 1;
+	TimeNode *current = time_list;
+	while(time_list->next != NULL){
+		index++;
+		time_list = time_list->next;
+	}
+	return index;
 }
 
-void appendEvent(Event **event_head, Event *new_event){
+EventNode *createEventNode(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *obstime){
+    EventNode *new_event_node = (EventNode *)malloc(sizeof(Event));
+    int observationCnt = getTimeCount(obstime);
+    if (observationCnt != 0){
+        memcpy(new_event_node->event.station_name_list, station_name_list, observationCnt * (MAXSTRLEN+1));
+        new_event_node->event.observedTimeList = obstime;
+    }else {
+        new_event_node->event.observedTimeList = NULL;
+    }
+	new_event_node->event.earthquake = eqk;
+	new_event_node->next=NULL;
+	return new_event_node;
+}
+
+void appendEventNode(EventNode **event_head, EventNode *new_event_node){
     if(*event_head == NULL){
-        *event_head = new_event;
+        *event_head = new_event_node;
         return;
     }
-    Event *current =  *event_head;
+    EventNode *current =  *event_head;
     while (current->next != NULL){
         current = current->next;
     }
-    current->next = new_event;
+    current->next = new_event_node;
 }
 
 
-Event *createEventList(char *filename){
-    Event *event_list;
-    Event *event = NULL;
-
+EventNode *createEventList(char *filename){
+    EventNode *event_head = NULL;
     FILE *fp_event = fopen(filename, "r");
     if(!fp_event){
 		printf("Error on reading %s\n", filename);
@@ -58,11 +81,13 @@ Event *createEventList(char *filename){
 
     int eventCnt;
     for(eventCnt = 1; !feof(fp_event); eventCnt++){
-        char str_eqk[100];
+        char str_eqk[MAXSTRLEN];
         if (fgets(str_eqk, sizeof(str_eqk), fp_event) == 0) {
-            if(str_eqk[0] == '\n')
-                break;
+            break;
+        }else if(str_eqk[0] == '\n'){
+            break;
         }
+
         if(strlen(str_eqk) > sizeof(str_eqk)) {
             printf("str_eqk is too long: %s\n", str_eqk);
             assert(0);
@@ -86,7 +111,7 @@ Event *createEventList(char *filename){
         int isgood[maxobs];
         char usemark;
         int nsta;
-        Time *obstimeList;
+        TimeNode *obstimeList = NULL;
         for(nsta = 0; fgets(str_eqk, sizeof(str_eqk), fp_event); nsta++) {
             if(str_eqk[0] == '\n')
                 break;
@@ -107,12 +132,12 @@ Event *createEventList(char *filename){
                 assert(0);
             }
 
-            char str_tmp[100];
-            sscanf(str_eqk, "%s %d %d %d %d %f %99[^\n]\n", station_name[nsta], &iyr,
+            char str_tmp[MAXSTRLEN];
+            sscanf(str_eqk, "%s %d %d %d %d %f %[^\n]\n", station_name[nsta], &iyr,
                     &jday, &ihr, &imn, &sec, str_tmp);
 
-            Time *time = createNewTime(iyr, jday, ihr, imn, sec);
-            appendTime(&obstimeList, time);
+            TimeNode *new_time_node = createTimeNode(iyr, jday, ihr, imn, sec);
+            appendTimeNode(&obstimeList, new_time_node);
 
             isgood[nsta] = 1;
             if (str_tmp[0] == '*') {
@@ -130,21 +155,22 @@ Event *createEventList(char *filename){
             }
             pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
         }
-        event = createNewEvent(earthquake, station_name, obstimeList, nsta);
-        appendEvent(&event_list, event);
+        EventNode *new_event_node = createEventNode(earthquake, station_name, obstimeList);
+        appendEventNode(&event_head, new_event_node);
     }
     fclose(fp_event);
-    return event_list;
+    return event_head;
 }
 
-int *checkTravelTime(Event *event, travelTimeTable *table_list, Station *station_head){
+int *checkTravelTime(EventNode *event_head, travelTimeTable *table_list, StationNode *station_head){
     int numOfStations = getStationCount(station_head);
-    int *timeIndex = (int *)malloc(sizeof(int) * event->observationCnt);
-    travelTimeTable *current;
-    for(int i = 0; i < event->observationCnt; i++){
+    int numbOfObservation = getTimeCount(event_head->event.observedTimeList);
+    int *timeIndex = (int *)malloc(sizeof(int) * numbOfObservation);
+    travelTimeTable *current = NULL;
+    for(int i = 0; i < numbOfObservation; i++){
         current = table_list;
         for (int j = 0; j < numOfStations; j++){
-            if(strcmp(event->station_name_list[i], current->name) == 0){
+            if(strcmp(event_head->event.station_name_list[i], current->name) == 0){
                 timeIndex[i] = j;
                 break;
             }

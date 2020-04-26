@@ -3,31 +3,43 @@
 #include "common/grid.h"
 #include "common/travel_time.h"
 #include "common/station.h"
-struct time{
+
+typedef struct{
     int iyr, jday, ihr, imn;
     float sec;
-    struct time *next;
+}Time; 
+
+struct TimeNode_{
+    Time time;
+    struct TimeNode_ *next;
 }; 
-typedef struct time Time;
+
+typedef struct TimeNode_ TimeNode;
 
 typedef struct {
     Point3D location;
     Time time;
 }Earthquake;
 
-struct event{
+typedef struct {
     Earthquake earthquake;
-    Time *observedTime;
+    TimeNode *observedTimeList;
     char station_name_list[maxobs][MAXSTRLEN + 1];
-    int eventId, observationCnt;
-    struct event *next; 
-};
-typedef struct event Event;
+}Event;
 
-Time *createNewTime(int, int, int, int, float);
-void appendTime(Time **, Time *);
-Event *createNewEvent(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], Time *, int);
-void appendEvent(Event **, Event *);
-Event *createEventList(char *);
-int *checkTravelTime(Event *, travelTimeTable *, Station *);
+struct EventNode_{
+    Event event;
+    struct EventNode_ *next;
+};
+typedef struct EventNode_ EventNode;
+
+TimeNode *createTimeNode(int, int, int, int, float);
+void insertTime(TimeNode *, Time);
+void appendTimeNode(TimeNode **, TimeNode *);
+int getTimeCount(TimeNode *);
+EventNode *createEventNode(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *);
+void appendEventNode(EventNode **, EventNode *);
+EventNode *createEventList(char *);
+int *checkTravelTime(EventNode *, travelTimeTable *, StationNode *);
+
 #endif
