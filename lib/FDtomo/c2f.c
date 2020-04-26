@@ -81,360 +81,6 @@ int nxyc, nxyzc, nxyzc2;
 
 void find_vel(float, float, float, float *, int, GRID grid);
 
-C2F_DATA *c2f(SPEC spec, MAKE1D_DATA *MAKE1D) {
-	C2F_DATA *c2f_data = (C2F_DATA *)malloc(sizeof(C2F_DATA));
-	c2f_data->vpfile = (VELFILE *)malloc(sizeof(VELFILE));
-	c2f_data->vsfile = (VELFILE *)malloc(sizeof(VELFILE));
-
-
-
-	//initialize variable
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
-	    ny = spec.grid.ny, nz = spec.grid.nz;
-	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
-	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
-	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
-
-	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
-
-	double clat = spec.clat, clon = spec.clon, cz = spec.cz;
-	float az = spec.az, azmod = spec.azmod;
-	int iflat = spec.iflat, isph = spec.isph, vs1d = spec.vs1d;
-	int ittnum = spec.ittnum;
-	double rearth = 6371.0, degrad = 0.017453292, hpi = 1.570796;
-
-	char spec_file[MAXSTRLEN];
-	sscanf(spec.spec_file, "%s", spec_file);
-	char VERSION[10] = "2005.0809\0";
-
-	int len, ierr;
-	int i = 0, k;
-
-	nxyc = nxc * nyc;
-	nxyzc = nxyc * nzc;
-	nxyzc2 = nxyzc * 2;
-	
-	int nxy = nx * ny;
-	int nxyz = nxy * nz;
-	int nxyz2 = nxyz * 2;
-
-	int lenlog;
-	char logfile[80 + 1];
-	sprintf(logfile, "c2f.log%d", ittnum);
-	FILE *fp_log = fopen(logfile, "w");
-	if (!fp_log) {
-		printf("create %s file error.\n", logfile);
-		assert(0);
-	}
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
-
-	fprintf(fp_log, "          Parameters Set For This Run of c2f.c\n");
-
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " c2f VERSION: %s\n", VERSION);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec.spec_file);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, "  Iteration counter:%19d\n", ittnum);
-	fprintf(fp_log, "  \n");
-	char out_str[MAXSTRLEN];
-	dtoa(out_str, x0, 18);
-	fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", out_str);
-	dtoa(out_str, y[0], 18);
-	fprintf(fp_log, "  Cartesian Y origin (y0):   %s     \n", out_str);
-	dtoa(out_str, z0, 18);
-	fprintf(fp_log, "  Cartesian Z origin (z0):   %s     \n", out_str);
-	dtoa(out_str, h, 18);
-	fprintf(fp_log, "  Fine grid spacing:   %s     \n", out_str);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", nxc);
-	fprintf(fp_log, "  X coarse grid node spacing: \n");
-	//write(lout, "(10i4)")(igridx(i), i = 1, nxc - 1)
-	for (int iii = 0; iii < nxc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridx[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, "\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", nyc);
-	fprintf(fp_log, "  Y coarse grid node spacing: \n");
-//write(lout,"(10i4)") (igridy(i),i=1,nyc-1)
-	for (int iii = 0; iii < nyc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridy[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, "\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", nzc);
-	fprintf(fp_log, "  Z coarse grid node spacing: \n");
-//write(lout,"(10i4)") (igridz(i),i=1,nzc-1)
-	for (int iii = 0; iii < nzc - 1; iii++) {
-		fprintf(fp_log, "% 4d", igridz[iii]);
-		if (iii % 10 == 9) {
-			fprintf(fp_log, "\n");
-		}
-	}
-	fprintf(fp_log, "\n");
-	fprintf(fp_log, " \n");
-	//fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nx+1);
-	//fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", ny+1);
-	//fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nz+1);
-	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nx);
-	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", ny);
-	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nz);
-	fprintf(fp_log, " \n");
-	//fprintf(fp_log, "  Total Number of fine grid nodes:%15d\n", (nx+1)*(ny+1)*(nz+1));
-	fprintf(fp_log, "  Total Number of fine grid nodes:%15d\n", nx * ny * nz);
-	fprintf(fp_log, "  Total Number of coarse grid nodes:%13d\n", nxyzc);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Input file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Current Wavespeed model file: %-40s\n", spec.oldvfil);
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Output file attachments:\n");
-	fprintf(fp_log, " \n");
-	fprintf(fp_log, " Grid output file:             %-40s\n", spec.tgrdfil);
-	fprintf(fp_log, " P&S fine model:               %-40s\n", spec.finevel);
-	fprintf(fp_log, " P only fine model (*.pvel):   %-40s\n", spec.finevel);
-	fprintf(fp_log, " S only fine model (*.svel):   %-40s\n", spec.finevel);
-	fprintf(fp_log, " \n");
-//c---temporary output of grid for testing.  This will not be coorect
-//c   for spherical coordinates.
-	FILE *fp_tgd = fopen(spec.tgrdfil, "w");
-	if (!fp_tgd) {
-		printf("(Error in c2f.c)create file error.\n");
-		assert(0);
-	}
-	for (i = 0; i < nxc; i++) {
-		dtoa(out_str, gx[i], 10);
-		fprintf(fp_tgd, "  %s    ", out_str);
-		dtoa(out_str, gy[0], 10);
-		fprintf(fp_tgd, "  %s    \n", out_str);
-		dtoa(out_str, gx[i], 10);
-		fprintf(fp_tgd, "  %s    ", out_str);
-		dtoa(out_str, gy[nyc - 1], 10);
-		fprintf(fp_tgd, "  %s    \n", out_str);
-	}
-
-	for (i = 0; i < nyc; i++) {
-		dtoa(out_str, gx[0], 10);
-		fprintf(fp_tgd, "  %s    ", out_str);
-		dtoa(out_str, gy[i], 10);
-		fprintf(fp_tgd, "  %s    \n", out_str);
-		dtoa(out_str, gx[nxc - 1], 10);
-		fprintf(fp_tgd, "  %s    ", out_str);
-		dtoa(out_str, gy[i], 10);
-		fprintf(fp_tgd, "  %s    \n", out_str);
-	}
-
-// c---tempoary output for plotting
-// c	do j = 1, nyc
-// c	  do i = 1, nxc
-// c	    write(23,1234) i, j,  gx(i)*1000.0, gy(j)*1000.0
-// c1234	    format(2i4, ' Q ', 2f12.2)
-// c	  enddo
-// c	enddo
-	
-	
-	char *offset = MAKE1D->head.header;
-	sscanf(offset, "%4s", head);
-	offset += strlen(head);
-	sscanf(offset, "%4s", type);
-	offset += strlen(type);
-	sscanf(offset, "%4s", syst);
-	offset += strlen(syst);
-	sscanf(offset, "%4s", quant);
-	offset += strlen(quant);
-	sscanf(offset, "%4s", flatten);
-	offset += strlen(flatten);
-	sscanf(offset, "%100s", hcomm);
-
-	for (int i = 0; i < nxyzm2; i++)
-		vsave[i] = 0.;
-
-//c---verify that this is a valid header
-	struct vhead *headin = &MAKE1D->head;
-	int len_rec;
-	if (strcmp(head, "HEAD") != 0) {
-		printf(
-				"File does not contain valid header...attempting headerless read \n");
-		fprintf(fp_log,
-				"File does not contain valid header...attempting headerless read \n");
-		len_rec = 4 * nxyzc2;
-
-		vp = MAKE1D->vsave;
-//c---set trial header values
-		strcpy(head, "HEAD");
-		strcpy(syst, "CART");
-		strcpy(quant, "BMOD");
-		strcpy(flatten, "NOFL");
-		clath = headin->clat;
-		clonh = headin->clon;
-		czh = headin->cz;
-		azh = headin->az;
-		axo = headin->x0;
-		ayo = headin->y0;
-		azo = headin->z0;
-		dxh = headin->dx;
-		dyh = headin->dy;
-		dzh = headin->dz;
-		nxh = headin->nx;
-		nyh = headin->ny;
-		nzh = headin->nz;
-	} else {
-		if (strcmp(type, "CORS") != 0) {
-			printf(" WARNING: input mesh does not appear to be COARSE: %s\n",
-					type);
-			fprintf(fp_log,
-					" WARNING: input mesh does not appear to be COARSE: %s\n",
-					type);
-		}
-		if (strcmp(quant, "BMOD") != 0) {
-			printf(" WARNING: file does not appear to be a valid type: %s\n",
-					quant);
-			fprintf(fp_log,
-					" WARNING: file does not appear to be a valid type: %s\n",
-					quant);
-		}
-
-		printf(" Reading in Coarse Mesh ...");
-		int len_grd = 4 * (nxc + nyc + nzc - 3);
-		len_rec = len_head + len_grd + 4 * nxyzc2;
-
-
-		igridx = MAKE1D->igridx;
-		igridy = MAKE1D->igridy;
-		igridz = MAKE1D->igridz;
-		vp = MAKE1D->vsave;
-	}
-	printf(".. Done \n");
-
-// c---tempoary output for plotting
-// c   i1 = 0
-// c   do k = 1, nzc
-// c     do j = 1, nyc
-// c       do i = 1, nxc
-// c       i1 = i1 + 1
-// c       write(24,1244) i, j, gz(k)*1000.0,  vp(i1), vp(i1+nxyzc),
-// c     +       vp(i1)/vp(i1+nxyzc), gx(i)*1000.0, gy(j)*1000.0
-// c1244       format(2i4, f12.2, 3f6.2, 8f12.2)
-// c       enddo
-// c     enddo
-// c   enddo
-
-// c****ONE TIME CLUDGE TO FORCE CONSTANT VPVS
-// c   do i = 1, nxyzc
-// c     vp(i+nxyzc) = vp(i)/1.78
-// c   enddo
-// c*****END****
-
-// c----convert to slowness
-	for (i = 0; i < nxyzc2; i++) {
-		vp[i] = 1. / vp[i];
-	}
-
-	printf("Interpolating ...");
-// c----interpolation
-	int iph, joff, nk2, ij = -1;
-	float z, yy, x, v;
-	for (int n = 0; n <= 1; n++) {
-		iph = n;
-		joff = ny * nz * n;
-		for (k = 0; k < nz; k++) {
-			z = z0 + k * h;
-			nk2 = k * ny + joff;
-			for (int j = 0; j < ny; j++) {
-				yy = y[0] + j * h;
-				for (i = 0; i < nx; i++) {
-					x = x0 + i * h;
-					find_vel(x, yy, z, &v, iph, spec.grid);
-//c-----convert back to velocity
-					ij++;
-					vsave[ij] = 1.f / v;
-				}
-			}
-		}
-	}
-	printf(".. Done \n");
-
-//c---redefine mesh type to be "FINE"
-	strcpy(type, "FINE");
-	for (i = 0; i < 100; i++)
-		hcomm[i] = ' ';
-
-	sprintf(hcomm, "Output from c2f.c Version %s using %s", VERSION, spec.oldvfil);
-	nxh = nx;
-	nyh = ny;
-	nzh = nz;
-//c---write out
-
-	char ffile[MAXSTRLEN + 1];
-	strcpy(ffile, spec.finevel);
-	int leng_thp = strlen(ffile);
-	for (int i = 0; i < strlen(ffile); i++) {
-		if (ffile[i] == ' ') {
-			leng_thp = i;
-			break;
-		}
-	}
-	ffile[leng_thp] = '\0';
-
-	sprintf(vpfile, "%s.pvel", ffile);
-	sprintf(vsfile, "%s.svel", ffile);
-	struct vhead headout;
-	headout.fxs = fxs;
-	headout.fys = fys;
-	headout.fzs = fzs;
-	headout.clat = clat;
-	headout.clon = clon;
-	headout.cz = cz;
-	headout.x0 = x0;
-	headout.y0 = y[0];
-	headout.z0 = z0;
-	headout.dx = h;
-	headout.dy = h;
-	headout.dz = h;
-	headout.az = azmod;
-	headout.nx = nxc;
-	headout.ny = nyc;
-	headout.nz = nzc;
-
-	FILE *fp_fnw = fopen(ffile, "wb");
-	if (!fp_fnw) {
-		printf("(Error in c2f.c)write file error.\n");
-		assert(0);
-	}
-	printf("Writing out file 1... \n");
-	hdr_appender(headout.header, 120, head, type, syst, "BMOD", flatten, hcomm);
-
-	fwrite(&headout, sizeof(char), nhbyte, fp_fnw);
-	fwrite(vsave, sizeof(vsave[0]), nxyz2, fp_fnw);
-
-	hdr_appender(headout.header, 120, head, type, syst, "VPMD", flatten, hcomm);
-	memcpy(c2f_data->vpfile->filename, vpfile, strlen(vpfile)+1);
-	memcpy(&c2f_data->vpfile->head, &headout, nhbyte);
-	memcpy(c2f_data->vpfile->vsave, vsave, sizeof(vsave[0])*nxyz);
-
-	hdr_appender(headout.header, 120, head, type, syst, "VSMD", flatten, hcomm);
-	memcpy(c2f_data->vsfile->filename, vsfile, strlen(vsfile)+1);
-	memcpy(&c2f_data->vsfile->head, &headout, nhbyte);
-	memcpy(c2f_data->vsfile->vsave, vsave + nxyz, sizeof(vsave[0]) * (nxyz2 - nxyz));
-
-	a65: 
-	fclose(fp_log);
-	fclose(fp_tgd);
-	fclose(fp_fnw);
-	return c2f_data;
-}
-
 void find_vel(float x, float y, float z, float *v, int iph, GRID grid) {
 // c-----find a velocity at x, y, z
 	int i;
@@ -521,4 +167,126 @@ OUTPUT_C2F(C2F_DATA *c2f_data, SPEC spec){
 	fwrite(c2f_data->vsfile->vsave, sizeof(c2f_data->vsfile->vsave[0]), nxyz2 - nxyz, fp_fns);
 
 
+}
+
+int LOG_C2F(SPEC spec){
+	char VERSION[9] = "2017.1122";
+	char logfile[80 + 1];
+	sprintf(logfile, "c2f.log%d", spec.ittnum);
+	FILE *fp_log = fopen(logfile, "w");
+	if (!fp_log) {
+		printf("create %s file error.\n", logfile);
+		assert(0);
+	}
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+
+	fprintf(fp_log, "          Parameters Set For This Run of c2f.c\n");
+
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " c2f VERSION: %s\n", VERSION);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Current parameter specification file: %-40s\n",
+			spec.spec_file);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, "  Iteration counter:%19d\n", spec.ittnum);
+	fprintf(fp_log, "  \n");
+	char out_str[MAXSTRLEN];
+	dtoa(out_str, spec.grid.x0, 18);
+	fprintf(fp_log, "  Cartesian X origin (x0):   %s     \n", out_str);
+	dtoa(out_str, spec.grid.y[0], 18);
+	fprintf(fp_log, "  Cartesian Y origin (y0):   %s     \n", out_str);
+	dtoa(out_str, spec.grid.z0, 18);
+	fprintf(fp_log, "  Cartesian Z origin (z0):   %s     \n", out_str);
+	dtoa(out_str, spec.grid.h, 18);
+	fprintf(fp_log, "  Fine grid spacing:   %s     \n", out_str);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of X coarse grid nodes: %12d\n", spec.grid.nxc);
+	fprintf(fp_log, "  X coarse grid node spacing: \n");
+	//write(lout, "(10i4)")(igridx(i), i = 1, nxc - 1)
+	for (int iii = 0; iii < spec.grid.nxc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridx[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, "\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Y coarse grid nodes: %12d\n", spec.grid.nyc);
+	fprintf(fp_log, "  Y coarse grid node spacing: \n");
+//write(lout,"(10i4)") (igridy(i),i=1,nyc-1)
+	for (int iii = 0; iii < spec.grid.nyc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridy[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, "\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, "  Number of Z coarse grid nodes: %12d\n", spec.grid.nzc);
+	fprintf(fp_log, "  Z coarse grid node spacing: \n");
+//write(lout,"(10i4)") (igridz(i),i=1,nzc-1)
+	for (int iii = 0; iii < spec.grid.nzc - 1; iii++) {
+		fprintf(fp_log, "% 4d", spec.grid.igridz[iii]);
+		if (iii % 10 == 9) {
+			fprintf(fp_log, "\n");
+		}
+	}
+	fprintf(fp_log, "\n");
+	fprintf(fp_log, " \n");
+	//fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", nx+1);
+	//fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", ny+1);
+	//fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", nz+1);
+	fprintf(fp_log, "  Number of X fine grid nodes: %12d\n", spec.grid.nx);
+	fprintf(fp_log, "  Number of Y fine grid nodes: %12d\n", spec.grid.ny);
+	fprintf(fp_log, "  Number of Z fine grid nodes: %12d\n", spec.grid.nz);
+	fprintf(fp_log, " \n");
+	//fprintf(fp_log, "  Total Number of fine grid nodes:%15d\n", (nx+1)*(ny+1)*(nz+1));
+	fprintf(fp_log, "  Total Number of fine grid nodes:%15d\n", spec.grid.nx * spec.grid.ny * spec.grid.nz);
+	fprintf(fp_log, "  Total Number of coarse grid nodes:%13d\n", nxyzc);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Input file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Current Wavespeed model file: %-40s\n", spec.oldvfil);
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Output file attachments:\n");
+	fprintf(fp_log, " \n");
+	fprintf(fp_log, " Grid output file:             %-40s\n", spec.tgrdfil);
+	fprintf(fp_log, " P&S fine model:               %-40s\n", spec.finevel);
+	fprintf(fp_log, " P only fine model (*.pvel):   %-40s\n", spec.finevel);
+	fprintf(fp_log, " S only fine model (*.svel):   %-40s\n", spec.finevel);
+	fprintf(fp_log, " \n");
+//c---temporary output of grid for testing.  This will not be coorect
+//c   for spherical coordinates.
+	FILE *fp_tgd = fopen(spec.tgrdfil, "w");
+	if (!fp_tgd) {
+		printf("(Error in c2f.c)create file error.\n");
+		assert(0);
+	}
+	for (int i = 0; i < spec.grid.nxc; i++) {
+		dtoa(out_str, spec.grid.gx[i], 10);
+		fprintf(fp_tgd, "  %s    ", out_str);
+		dtoa(out_str, spec.grid.gy[0], 10);
+		fprintf(fp_tgd, "  %s    \n", out_str);
+		dtoa(out_str, spec.grid.gx[i], 10);
+		fprintf(fp_tgd, "  %s    ", out_str);
+		dtoa(out_str, spec.grid.gy[spec.grid.nyc - 1], 10);
+		fprintf(fp_tgd, "  %s    \n", out_str);
+	}
+
+	for (int i = 0; i < spec.grid.nyc; i++) {
+		dtoa(out_str, spec.grid.gx[0], 10);
+		fprintf(fp_tgd, "  %s    ", out_str);
+		dtoa(out_str, spec.grid.gy[i], 10);
+		fprintf(fp_tgd, "  %s    \n", out_str);
+		dtoa(out_str, spec.grid.gx[spec.grid.nxc - 1], 10);
+		fprintf(fp_tgd, "  %s    ", out_str);
+		dtoa(out_str, spec.grid.gy[i], 10);
+		fprintf(fp_tgd, "  %s    \n", out_str);
+	}
+
+	fclose(fp_log);
+	fclose(fp_tgd);
 }

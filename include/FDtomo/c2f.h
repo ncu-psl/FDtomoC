@@ -1,6 +1,7 @@
 #ifndef C2F_H_
 #define C2F_H_
 #include "common/read_spec.h"
+#include "common/velocity_model.h"
 #include "FDtomo/make1d.h"
 typedef struct{
     char filename[MAXSTRLEN + 1];
@@ -13,6 +14,7 @@ typedef struct{
     VELFILE *vsfile;
 }C2F_DATA;
 
-C2F_DATA *c2f(SPEC, MAKE1D_DATA *);
+C2F_DATA *c2f(SPEC, velocity3D);
 int OUTPUT_C2F(C2F_DATA *, SPEC);
+int LOG_C2F(SPEC);
 #endif

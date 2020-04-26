@@ -8,4 +8,5 @@ typedef struct{
 
 SPHFDLOC_DATA **sphfdloc(SPEC, SPHFD_DATA **);
 int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **, SPEC);
+int LOG_SPHFDLOC(SPEC);
 #endif

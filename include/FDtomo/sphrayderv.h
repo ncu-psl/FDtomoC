@@ -18,5 +18,5 @@ typedef struct{
 
 SPHRAYDERV_DATA *sphrayderv(SPEC, SPHFDLOC_DATA **);
 int OUTPUT_SPHFRAYDERV(SPHRAYDERV_DATA *, SPEC);
-
+int LOG_SPHFRAYDERV(SPEC);
 #endif

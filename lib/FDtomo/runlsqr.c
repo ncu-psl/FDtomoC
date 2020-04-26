@@ -73,7 +73,7 @@
 #include "runlsqr/snrm2.h"
 #include "runlsqr/sscal.h"
 
-void lsqr(int , int , float , int , int ,int *, float *, float *, float *, float *, float *, float *, float , float , float , int , FILE *, int , float , float , float *, float *, float *, FILE *);
+void lsqr(int , int , float , int , int ,int *, float *, float *, float *, float *, float *, float *, float , float , float , int , FILE *, int , float , float , float *, float *, float *);
 
 // c---gfortran objects to nout being declared here, so it is initialized below
 // c	parameter(nout=6)
@@ -96,9 +96,6 @@ float damp, v[NMAX], w[NMAX], *x, *se;
 float atoL, btol, conlim, anorm;
 float acond, rnorm, arnorm, dampsq, xnorm;
 float *a;
-
-
-char logfile[80 + 1];
 float one = 1.0f;
 
 RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
@@ -124,40 +121,7 @@ RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 
 	int i, len, ierr;
 
-	sprintf(logfile, "runlsqr.log%d\n", ittnum);
-	FILE *fp_log = fopen(logfile, "w");
-	if (!fp_log) {
-		printf("(Error in runlsqr.c)create fp_log file error.\n");
-		assert(0);
-	}
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
-	fprintf(fp_log, "          Parameters Set For This Run of runlsqr.c\n");
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " VERSION: %s\n", VERSION);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Current parameter specification file: %-40s\n",
-			spec.spec_file);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " iteration counter: %d \n", ittnum);
-	fprintf(fp_log, "  \n");
-
-	fprintf(fp_log, " Damper: %f\n", damper);
-	fprintf(fp_log, " intlim: %d\n", intlims);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Input file attachments: \n");
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " A matrix: %-60s \n", dtdsfil);
-	fprintf(fp_log, " Data Vector: %-60s \n", resfile);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Output file attachments: \n");
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log, " Perturbations: %-60s \n", nmodfil);
-	fprintf(fp_log, "  \n");
-	fprintf(fp_log,
-			" *************************************************************** \n");
-
+	
 	damp = damper;
 	FILE *fp_frs = fopen(fresfil, "w");
 	if (!fp_frs) {
@@ -171,7 +135,6 @@ RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 // c------------------------------------------------------------------------
 	
 	printf("  Reading in a and b ... \n");
-	fprintf(fp_log, "  Reading in a and b ... \n");
 	int nbl;
 
 	m = SPHRAYDERV->mat->number_rows;
@@ -214,7 +177,6 @@ RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 // c  This value is of intlim is appropriate for ill conditioned systems
 	intlim = 4 * n;
 	printf("  Suggested intlim = %12d\n", intlim);
-	fprintf(fp_log, "  Suggested intlim = %12d\n", intlim);
 	if (intlims != 0) {
 		intlim = intlims;
 	}
@@ -223,12 +185,11 @@ RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 	} else {
 		printf(" least-squares test problem      p(%8d%8d  %10.6f%10.2f%8d\n\n\n", m, n, damp, conlim, intlim);
 	}
-	fprintf(fp_log, " %d %d %f %f %d \n", m, n, damp, conlim, intlim);
 
 	x = (float *)malloc(sizeof(float) * NMAX);
 	se = (float *)malloc(sizeof(float) * NMAX);
 
-	lsqr(m, n, damp, 1, 1, ja, a, u, v, w, x, se, atoL, btol, conlim, intlim, fp_nout, istop, anorm, acond, &rnorm, &arnorm, &xnorm, fp_log);
+	lsqr(m, n, damp, 1, 1, ja, a, u, v, w, x, se, atoL, btol, conlim, intlim, fp_nout, istop, anorm, acond, &rnorm, &arnorm, &xnorm);
 // c-----------------------------------------------------------------------
 // c
 // c  examine the results.
@@ -572,8 +533,7 @@ RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
 void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 		float *u, float *v, float *w, float *x, float *se, float atoL,
 		float btol, float conlim, int itnlim, FILE *fp_nout, int istop,
-		float anorm, float acond, float *rnorm, float *arnorm, float *xnorm,
-		FILE *fp_out) {
+		float anorm, float acond, float *rnorm, float *arnorm, float *xnorm) {
 
 	if (fp_nout != NULL) {
 		fprintf(fp_nout, "%25slsqr   --   least-squares solution of  a*x = b\n\n", "");
@@ -588,12 +548,6 @@ void lsqr(int m, int n, float damp, int leniw, int lenrw, int *iw, float *rw,
 		printf("%25satol   =%10.2E          conlim =%10.2E\n", "", atoL, conlim);
 		printf("%25sbtol   =%10.2E          itnlim =%10d\n\n\n", "", btol, itnlim);
 	}
-	fprintf(fp_out, "%25slsqr   --   least-squares solution of  a*x = b\n\n", "");
-	fprintf(fp_out, "%25sthe matrix  a  has %8d rows   and %8d cols\n", "", m, n);
-	fprintf(fp_out, "%25sthe damping parameter is    damp   =%10.2E\n\n", "", damp);
-	fprintf(fp_out, "%25satol   =%10.2E          conlim =%10.2E\n", "", atoL, conlim);
-	fprintf(fp_out, "%25sbtol   =%10.2E          itnlim =%10d\n\n\n", "", btol, itnlim);
-
 
 	float ctol = 0;
 	float one = 1.0f;
@@ -894,5 +848,45 @@ int OUTPUT_RUNLSQR(RUNLSQR_DATA *RUNLSQR, SPEC spec){
 	fwrite(RUNLSQR->jndx, sizeof(jndx[0]), RUNLSQR->n, fp_fmd);
 	fwrite(RUNLSQR->se, sizeof(se[0]), RUNLSQR->n, fp_fmd);
 
+	return 0;
+}
+
+int LOG_RUNLSQR(SPEC spec){
+	char logfile[80 + 1];
+
+	sprintf(logfile, "runlsqr.log%d\n", spec.ittnum);
+	FILE *fp_log = fopen(logfile, "w");
+	if (!fp_log) {
+		printf("(Error in runlsqr.c)create fp_log file error.\n");
+		assert(0);
+	}
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+	fprintf(fp_log, "          Parameters Set For This Run of runlsqr.c\n");
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " VERSION: %s\n", VERSION);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Current parameter specification file: %-40s\n",
+			spec.spec_file);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " iteration counter: %d \n", spec.ittnum);
+	fprintf(fp_log, "  \n");
+
+	fprintf(fp_log, " Damper: %f\n", spec.damper);
+	fprintf(fp_log, " intlim: %d\n", spec.intlims);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Input file attachments: \n");
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " A matrix: %-60s \n", spec.dtdsfil);
+	fprintf(fp_log, " Data Vector: %-60s \n", spec.resfile);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Output file attachments: \n");
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log, " Perturbations: %-60s \n", spec.nmodfil);
+	fprintf(fp_log, "  \n");
+	fprintf(fp_log,
+			" *************************************************************** \n");
+	
 	return 0;
 }

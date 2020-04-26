@@ -3,6 +3,7 @@
 #include "parseprogs.h"
 #include "common/shared_variables.h"
 #include "common/gridspec.h"
+#define MAX1D 1000
 #define MAXSTRLEN 132
 typedef struct 
 {
@@ -72,4 +73,9 @@ void read_files(char *spec_file, SPEC *file_identifier);
 void read_grid(char *spec_file, SPEC *spec);
 void read_error(char *name, char *type, FILE *fp_spc);
 SPEC create_spec(char *specFile);
+int getNumberOfXfine(SPEC);
+int getNumberOfYfine(SPEC);
+int getNumberOfZfine(SPEC);
+
+
 #endif
