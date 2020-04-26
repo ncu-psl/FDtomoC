@@ -1,23 +1,32 @@
 #include "common/station.h"
-Station *createNewStation(char *name, Point3D location){
-    Station *new_station = (Station *)malloc(sizeof(Station));
-	new_station->name = (char *)malloc(sizeof(char) * (strlen(name) + 1));
-	new_station->location=location;
-    memcpy(new_station->name, name, strlen(name) + 1);
-	new_station->next=NULL;
-	return new_station;
+StationNode *createStationNode(char *name, Point3D location){
+    StationNode *new_station_node = (StationNode *)malloc(sizeof(StationNode));
+	new_station_node->data.name = (char *)malloc(sizeof(char) * (strlen(name) + 1));
+	new_station_node->data.location = location;
+    memcpy(new_station_node->data.name, name, strlen(name) + 1);
+	new_station_node->next=NULL;
+	return new_station_node;
 }
 
-void appendStation(Station **station_head, Station *station) {
+void insertStation(StationNode *station_head, Station station) {
+	StationNode *current = station_head;
+	while(current->next!=NULL) {
+		current=current->next;
+	}
+	current->data = station;
+	current->next = NULL;
+}
+
+void appendStationNode(StationNode **station_head, StationNode *new_station_node) {
 	if(*station_head == NULL){
-		*station_head = station;
+		*station_head = new_station_node;
 		return;
 	}
-	Station *ptr=*station_head;
-	while(ptr->next!=NULL) {
-		ptr=ptr->next;
+	StationNode *current = *station_head;
+	while(current->next != NULL) {
+		current = current->next;
 	}
-	ptr->next = station;
+	current->next = new_station_node;
 }
 
 
@@ -27,8 +36,7 @@ Station *createStationList(char *file, int sph){
 		printf("Can not open file: %s\n", file);
 		assert(0);
 	}
-    Station *station_head = NULL;
-
+	StationNode *station_head = NULL;
     char str_inp[100];
 	while(fgets(str_inp, sizeof(str_inp), fp_sta) != NULL){
         int zs = 0;
@@ -41,20 +49,16 @@ Station *createStationList(char *file, int sph){
 		}
 		fzs = zs / -1000.;
         
-        Point3D location = {fxs, fys, fzs};
-        Station *station =  createNewStation(sta, location);
-        if(station_head==NULL){
-            station_head = station;
-        }else{
-            appendStation(&station_head, station);
-        }
+		Point3D location = {fxs, fys, fzs};
+        StationNode *new_station_node = createStationNode(sta, location);
+    	appendStationNode(&station_head, new_station_node);
     }
     return station_head;
 }
 
-int getStationCount(Station *station_list){
-	int index = 0;
-	Station *current = station_list;
+int getStationCount(StationNode *station_list){
+	int index = 1;
+	StationNode *current = station_list;
 	while(station_list->next != NULL){
 		index++;
 		station_list = station_list->next;

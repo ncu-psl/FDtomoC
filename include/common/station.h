@@ -1,15 +1,23 @@
 #ifndef STATION
 #define STATION
 #include "common/grid.h"
-struct station{
+struct Station_{
     char *name;
     Point3D location;
-    struct station *next;
 };
-typedef struct station Station;
 
-Station *createNewStation(char *, Point3D);
-void appendStation(Station **, Station *);
+struct StationNode_{
+    int key;
+    struct Station_ data;
+    struct StationNode_ *next;
+};
+
+typedef struct Station_ Station;
+typedef struct StationNode_ StationNode;
+
+StationNode *createStationNode(char *, Point3D);
+void insertStation(StationNode *, Station);
+void appendStationNode(StationNode **, StationNode *);
 Station *createStationList(char *, int);
-int getStationCount(Station *);
+int getStationCount(StationNode *);
 #endif
