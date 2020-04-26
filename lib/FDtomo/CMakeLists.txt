@@ -8,8 +8,8 @@ SET(PROGS
 	makenewmod
 )
 
-FOREACH(prog ${PROGS})
-	ADD_LIBRARY(${prog}
+FOREACH(prog ${PROGS}) 
+	ADD_LIBRARY(${prog} SHARED
 		${prog}.c
 	)
 	TARGET_LINK_LIBRARIES(${prog}

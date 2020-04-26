@@ -1,5 +1,6 @@
 ADD_SUBDIRECTORY(vec)
-ADD_LIBRARY(_common
+ADD_LIBRARY(_common SHARED
+  bindToPython
 	parseprogs.c
 	geographic_method.c
 	string_process.c
