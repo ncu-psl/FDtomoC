@@ -14,7 +14,8 @@ typedef struct{
     VELFILE *vsfile;
 }C2F_DATA;
 
-C2F_DATA *c2f(SPEC, velocity3D);
+C2F_DATA *c2f(SPEC, velocityModel3D);
 int OUTPUT_C2F(C2F_DATA *, SPEC);
 int LOG_C2F(SPEC);
+
 #endif

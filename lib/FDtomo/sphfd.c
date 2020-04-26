@@ -152,8 +152,8 @@
 #define SQR6 2.449489743
 #define rearth 6371.0
 #define degrad PI / 180.0
-#define tc(x, y, z) time0[nyz * (x) + nz * (y) + (z)]
-#define sc(x, y, z) slow0[nyz * (x) + nz * (y) + (z)]
+#define tc(x, y, z) time0[nxy*(z) + nx*(y) + (x)]
+#define sc(x, y, z) slow0[nxy*(z) + nx*(y) + (x)]
 // olddefine rc(z)   (rearth - (z0 + h*(z)))
 #define rc(z) (z0r - h * (z))
 #define qc(y) (y0 + dq * (y))
@@ -197,29 +197,27 @@ double rcent;
 static double z0r;
 int endian();
 int litend;
-travelTimeTable sphfd_exec(velocity3D, Point3D);
+travelTimeTable sphfd_exec(velocityModel3D, Point3D);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
-travelTimeTable *sphfd(velocity3D model, Station *station_head)
+travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
 {
 	int numOfStations = getStationCount(station_head);
 	travelTimeTable *travle_time_array = (travelTimeTable *)malloc(sizeof(travelTimeTable) * numOfStations);
-	Station *currentStation = station_head;
+	StationNode *currentStation = station_head;
 	travelTimeTable *currentTable = travle_time_array;
 	int index = 0;
-	for(int i = 0; i < numOfStations; i++){
-		Point3D location = currentStation->location; 
-		*currentTable = sphfd_exec(model, location);
-		strcpy(currentTable->name, currentStation->name);
+	for(int i = 0; i < numOfStations - 1; i++){
+		Point3D location = currentStation->data.location; 
+		currentTable[i] = sphfd_exec(model, location);
+		strcpy(currentTable->name, currentStation->data.name);
 		currentStation = currentStation->next;
-		currentTable++;
-		printf("%s\n", travle_time_array[i].name);
 	}
 
 	return travle_time_array;
 }
 
-travelTimeTable sphfd_exec(velocity3D model, Point3D location)
+travelTimeTable sphfd_exec(velocityModel3D model, Point3D location)
 {
 	travelTimeTable travel_time;
 	
@@ -346,16 +344,16 @@ travelTimeTable sphfd_exec(velocity3D model, Point3D location)
 
 	fprintf(stderr, "Starting sphfd: by S. Roecker 2003, RPI\n");
 
-	fxs=location.x;
-	fys=location.y;
-	fzs=location.z;
-	nx=getNumberOfXfine(model.mesh);
-	ny=getNumberOfYfine(model.mesh);
-	nz=getNumberOfZfine(model.mesh);
-	x0=model.mesh.origin.x;
-	y0=model.mesh.origin.y;
-	z0=model.mesh.origin.z;
-	h=model.mesh.xSpace;
+	fxs = location.x;
+	fys = location.y;
+	fzs = location.z;
+	nx = model.coordinate.mesh.numberOfNode.x;
+	ny = model.coordinate.mesh.numberOfNode.y;
+	nz = model.coordinate.mesh.numberOfNode.z;
+	x0 = model.coordinate.origin.x;
+	y0 = model.coordinate.origin.y;
+	z0 = model.coordinate.origin.z;
+	h = model.coordinate.space.x;
 
 	if (invh == 1)
 		h = 1. / h;
@@ -564,7 +562,7 @@ travelTimeTable sphfd_exec(velocity3D model, Point3D location)
 		assert(0);
 	}
 	/* READ IN VELOCITY FILE */
-	memcpy(slow0, model.vp, 4 * nxyz);
+	memcpy(slow0, model.velocity, 4 * nxyz);
 
 	/* swap bytes on input if necessary */
 	/*        if ((litend && swab==1) || swab==2) { */

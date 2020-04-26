@@ -18,6 +18,6 @@ typedef struct StationNode_ StationNode;
 StationNode *createStationNode(char *, Point3D);
 void insertStation(StationNode *, Station);
 void appendStationNode(StationNode **, StationNode *);
-Station *createStationList(char *, int);
+StationNode *createStationList(char *, int);
 int getStationCount(StationNode *);
 #endif

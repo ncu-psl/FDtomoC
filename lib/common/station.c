@@ -30,7 +30,7 @@ void appendStationNode(StationNode **station_head, StationNode *new_station_node
 }
 
 
-Station *createStationList(char *file, int sph){
+StationNode *createStationList(char *file, int sph){
     FILE *fp_sta = fopen(file, "r");
 	if(!fp_sta) {
 		printf("Can not open file: %s\n", file);
@@ -57,6 +57,8 @@ Station *createStationList(char *file, int sph){
 }
 
 int getStationCount(StationNode *station_list){
+	if (station_list == NULL)
+		return 0;
 	int index = 1;
 	StationNode *current = station_list;
 	while(station_list->next != NULL){
