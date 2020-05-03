@@ -107,3 +107,11 @@ void dtoepoch(int date, double *time) {
 	days += (day - 1);
 	*time = (double)(days * 24 * 60 * 60);
 }
+
+double htoe2(Time time){
+	double epoch;
+	int jdate = 1000 * time.iyr + time.jday;
+	dtoepoch(jdate, &epoch);
+	epoch = epoch + 3600.0 * time.ihr + 60.0 * time.imn + time.sec;
+	return epoch;
+}

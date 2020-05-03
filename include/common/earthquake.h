@@ -3,6 +3,7 @@
 #include "common/grid.h"
 #include "common/travel_time.h"
 #include "common/station.h"
+#include "common/time_process.h"
 
 typedef struct{
     int iyr, jday, ihr, imn;
@@ -24,6 +25,8 @@ typedef struct {
 typedef struct {
     Earthquake earthquake;
     TimeNode *observedTimeList;
+    char phase[maxobs];
+    float rwts[maxobs];
     char station_name_list[maxobs][MAXSTRLEN + 1];
 }Event;
 
@@ -37,9 +40,11 @@ TimeNode *createTimeNode(int, int, int, int, float);
 void insertTime(TimeNode *, Time);
 void appendTimeNode(TimeNode **, TimeNode *);
 int getTimeCount(TimeNode *);
-EventNode *createEventNode(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *);
+EventNode *createEventNode(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *, char *, float *);
 void appendEventNode(EventNode **, EventNode *);
+int getEventCount(EventNode *);
 EventNode *createEventList(char *);
-int *checkTravelTime(EventNode *, travelTimeTable *, StationNode *);
-
+Event *EventList2Arr(EventNode *);
+int *checkTravelTime(Event , travelTimeTable *, StationNode *);
+float *getObsTime(Event);
 #endif

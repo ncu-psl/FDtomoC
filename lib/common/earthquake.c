@@ -44,11 +44,13 @@ int getTimeCount(TimeNode *time_list){
 	return index;
 }
 
-EventNode *createEventNode(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *obstime){
+EventNode *createEventNode(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *obstime, char *phase, float *rwts){
     EventNode *new_event_node = (EventNode *)malloc(sizeof(EventNode));
     int observationCnt = getTimeCount(obstime);
     if (observationCnt != 0){
         memcpy(new_event_node->event.station_name_list, station_name_list, observationCnt * (MAXSTRLEN+1));
+        memcpy(new_event_node->event.phase, phase, observationCnt);
+        memcpy(new_event_node->event.rwts, rwts, observationCnt * sizeof(float));
         new_event_node->event.observedTimeList = obstime;
     }else {
         new_event_node->event.observedTimeList = NULL;
@@ -70,6 +72,17 @@ void appendEventNode(EventNode **event_head, EventNode *new_event_node){
     current->next = new_event_node;
 }
 
+int getEventCount(EventNode *event_list){
+    if (event_list == NULL)  
+        return 0;
+	int index = 1;
+	EventNode *current = event_list;
+	while(event_list->next != NULL){
+		index++;
+		event_list = event_list->next;
+	}
+	return index;
+}
 
 EventNode *createEventList(char *filename){
     EventNode *event_head = NULL;
@@ -155,22 +168,34 @@ EventNode *createEventList(char *filename){
             }
             pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
         }
-        EventNode *new_event_node = createEventNode(earthquake, station_name, obstimeList);
+        EventNode *new_event_node = createEventNode(earthquake, station_name, obstimeList, phs, rwts);
         appendEventNode(&event_head, new_event_node);
     }
     fclose(fp_event);
     return event_head;
 }
 
-int *checkTravelTime(EventNode *event_head, travelTimeTable *table_list, StationNode *station_head){
+Event *EventList2Arr(EventNode *event_list){
+    int event_count = getEventCount(event_list);
+    Event *event_array = malloc(sizeof(Event) * event_count);
+    for(int i = 0; i < event_count; i++){
+        event_array[i] = event_list->event;
+        event_list = event_list->next;
+    }
+    return event_array;
+}
+
+
+
+int *checkTravelTime(Event event, travelTimeTable *table_list, StationNode *station_head){
     int numOfStations = getStationCount(station_head);
-    int numbOfObservation = getTimeCount(event_head->event.observedTimeList);
+    int numbOfObservation = getTimeCount(event.observedTimeList);
     int *timeIndex = (int *)malloc(sizeof(int) * numbOfObservation);
     travelTimeTable *current = NULL;
     for(int i = 0; i < numbOfObservation; i++){
         current = table_list;
         for (int j = 0; j < numOfStations; j++){
-            if(strcmp(event_head->event.station_name_list[i], current->name) == 0){
+            if(strcmp(event.station_name_list[i], current->name) == 0){
                 timeIndex[i] = j;
                 break;
             }
@@ -178,4 +203,17 @@ int *checkTravelTime(EventNode *event_head, travelTimeTable *table_list, Station
         }
     }
     return timeIndex;
+}
+
+float *getObsTime(Event event){
+    int numbOfObservation = getTimeCount(event.observedTimeList);
+    float *obs_travel_time = malloc(sizeof(float) * numbOfObservation);
+    double origin_time = htoe2(event.earthquake.time);
+    TimeNode *current_time = event.observedTimeList;
+    for(int i = 0; i < numbOfObservation; i++){
+        double obs_time = htoe2(current_time->time);
+        obs_travel_time[i] = obs_time - origin_time;
+        current_time = current_time->next;
+    }
+    return obs_travel_time;
 }
