@@ -77,281 +77,66 @@
 
 float **t;
 int total_earthquakes = 0;
-void find_time(double, double, double, double *, int, int *, GRID grid);
+void find_time(double, double, double, double *, int, int *, Coordinate3D);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 int get_time(int, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **); 
-SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
-	//initialize variable
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
-	    ny = spec.grid.ny, nz = spec.grid.nz;
-	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
-	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
-	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
+LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode *event_list, StationNode *station_list) {
+	coordinate = change2Sphere(coordinate, 1);
+	double x0 = coordinate.origin.x;
+	double y[0] = {coordinate.origin.y};
+	double z0 = coordinate.origin.y;
+	double h = coordinate.origin.z;
 
-	int iread = spec.iread, ivs = spec.ivs, nthres = spec.nthres, kmin = spec.kmin, 
-		ndiv = spec.ndiv, ndiv2 = spec.ndiv2, ittnum = spec.ittnum;
-
-	double vpvs = spec.vpvs, resthres = spec.resthres, resthrep = spec.resthrep, stdmax = spec.stdmax;
-
-	char timedir[60 + 1], eqkdir[60 + 1];
-	strcpy(timedir, spec.timedir);
-	strcpy(eqkdir, spec.eqkdir);
-
-	char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
-		fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
-	strcpy(leqsfil, spec.leqsfil);
-	strcpy(fsumfil, spec.fsumfil);
-	strcpy(outlfil, spec.outlfil);
-	strcpy(fhedfil, spec.fhedfil);
-	strcpy(fdatfil, spec.fdatfil);
-
+	double z0r;  //need to be modified!!!!!!!!!!!!!!!!
+	double df = coordinate.space.x * degrad;
+	double dq = coordinate.space.y * degrad;
 	
-	int len, ierr;
-	int ib = 0, ie = 0, lenv = 0, nvl = 0;
-
-// c---If dq and df have not been specified, { make them so that the
-// c   interval at the surface is equal to h
-// c   First Convert geographic latitude to geocentric colatitude
-	if(DEBUG_PRINT)
-		printf(" Origin:  x0=%.14lf\t\ty0=%.14lf\t\tz0=%.14lf\n", x0, y[0], z0);
-	y[0] = y00;
-	y[0] *= degrad;
-//   y[0] = hpi - glat(y[0]);
-	double z0r;
-	y[0] = hpi - glath(y[0], z0, &z0r);
-
-	
-	if(DEBUG_PRINT) {
-		printf(" Origin:  x0=%.14lf y0=%.14lf z0=%.14lf\n", x0, y[0], z0r);
-		printf(" Spacing:  h=%lf\n", h);
-		printf(" nxc=%d nyc=%d nzc=%d\n", nxc, nyc, nzc);
-	}
-	int nxyc = nxc * nyc;
-	int nxyzc = nxyc * nzc;
-
-	int nxy = nx * ny;
-	int nxyz = nxy * nz;
+	int nx = coordinate.mesh.numberOfNode.x;
+	int ny = coordinate.mesh.numberOfNode.y;
+	int nz = coordinate.mesh.numberOfNode.z;
 
 	float xmax = x0 + (nx - 1) * df;
 	float ymax = y[0] + (ny - 1) * dq;
 	float zmax = z0 + (nz - 1) * h;
-//---START LOOP OVER EVENTS
-//   read in event header
-	if(total_earthquakes == 0) {
-		total_earthquakes = earthquake_file_delimiter(leqsfil, eqkdir);
-	}
-	char timefiles[maxsta][MAXSTRLEN + 1];
-	int timefile_counts = get_time(nxyz, timefiles, SPHFD);
-	if (timefile_counts < 0) {
-		printf("file can not open\n");
-		assert(0);
-	}
-	//qsort(timefiles, timefile_counts, sizeof(timefiles[0]), (int (*)(const void*, const void*))strcmp);
-	
-	SPHFDLOC_DATA **str_data = (SPHFDLOC_DATA **)malloc(sizeof(SPHFDLOC_DATA *) * total_earthquakes);
-	char **str_fhd = (char **)malloc(sizeof(char *) * total_earthquakes);
-	char **str_sum = (char **)malloc(sizeof(char *) * total_earthquakes);
-	char **str_out = (char **)malloc(sizeof(char *) * total_earthquakes);
-	for(int i=0;i<total_earthquakes;i++) {
-		str_fhd[i]=(char*)malloc(sizeof(char)*100);
-		str_out[i]=(char*)malloc(sizeof(char)*1000);
-		str_data[i]=(SPHFDLOC_DATA*)malloc(sizeof(SPHFDLOC_DATA));
-		str_sum[i]=(char*)malloc(sizeof(char)*20000);
-		memset(str_fhd[i], 0, sizeof(str_fhd[i]));
-		//memset(str_data[i], 0, sizeof(str_data[i]));
-		memset(str_sum[i], 0, sizeof(str_sum[i]));
-		memset(str_out[i], 0, sizeof(str_out[i]));
-	}
-	
 
+	int nxy = nx * ny;
+	int nxyz = nxy * nz;
+
+	int event_count = getEventCount(event_list);
+	Event *event_array = EventList2Arr(event_list);
+
+	char str_fhd[160000][20000];
+	char str_sum[160000][20000], str_out[160000][20000];
+
+	LocData *loc_data = malloc(sizeof(LocData) * event_count);
 #pragma omp parallel for
-	for (int nev = 0; nev < total_earthquakes; nev++) {
-		char filename[100];
-		sprintf(filename, "%s/%d.eqk", eqkdir, nev + 1);
-		FILE *fp_leq = fopen(filename, "r");
-		if (!fp_leq) {
-			printf("file not found: %s\n", filename);
-			assert(0);
-		}
-		char str_inp[MAXSTRLEN];
-		if (fgets(str_inp, sizeof(str_inp), fp_leq) == 0) {
-			if (feof(fp_leq)) {
-				printf("eof on fp_leq(%s)\n", filename);
-				assert(0);
-			} else {
-				printf("error on reading fp_leq(%s)\n", filename);
-				assert(0);
-			}
-		}
-		if(strlen(str_inp) > sizeof(str_inp)) {
-			printf("str_inp is too long: %s\n", str_inp);
-			assert(0);
-		}
-		int iyr, jday, ihr, imn;
-		float sec;
-		float xlat, xlon, dep;
-		char evid[10 + 1];
-// c---START LOOP OVER EVENTS
-// c	read in event header
-		sscanf(str_inp, "%d %d %d %d %f %f %f %f %s\n", &iyr, &jday, &ihr,
-				&imn, &sec, &xlat, &xlon, &dep, evid);
-//	c---convert to epochal time
-		double dsec = sec;
-		double dpot;
-		htoe(iyr, jday, ihr, imn, dsec, &dpot);
-
-		int isgood[maxobs], indsta[maxobs];
-		float obstime[maxobs], res[maxobs], resmin[maxobs], wtmin[maxobs];
-		float wtsave[maxobs], pwt[maxobs], rwts[maxobs], tps[maxobs];
-
-		memset(isgood, 0, sizeof(isgood));
-		memset(indsta, 0, sizeof(indsta));
-
-		char sta[maxobs][MAXSTRLEN + 1];
-		char phs[maxobs];
-		char usemark;
-		int nsta = 0;
-// c	read in the times and stations
-		for(nsta = 0; fgets(str_inp, sizeof(str_inp), fp_leq); nsta++) {
-			if (nsta >= maxobs) {
-				printf("Error:  too many observations! nsta=%d maxobs=%d\n",
-						nsta, maxobs);
-				assert(0);
-			}
-			
-			trim(str_inp);
-			int len = strlen(str_inp);
-			if (str_inp[0] == '\n') {
-				break;
-			}
-			if (len > MAXSTRLEN) {
-				printf("input length is too large. len=%d str_inp=%s\n", len,
-						str_inp);
-				assert(0);
-			}
-
-			char str_tmp[100];
-			sscanf(str_inp, "%s %d %d %d %d %f %99[^\n]\n", sta[nsta], &iyr,
-					&jday, &ihr, &imn, &sec, str_tmp);
-
-			isgood[nsta] = 1;
-			if (str_tmp[0] == '*') {
-				isgood[nsta] = 0;
-				usemark = '*';
-				str_tmp[0] = ' ';
-				trim(str_tmp);
-			}
-			sscanf(str_tmp, "%c %f", &phs[nsta], &rwts[nsta]);
-// c---convert from "0 1" to "P S" if necessary
-			if (phs[nsta] == '0') {
-				phs[nsta] = 'P';
-			} else if (phs[nsta] == '1') {
-				phs[nsta] = 'S';
-			}
-			pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
-			dsec = sec;
-
-			double tarr;
-			htoe(iyr, jday, ihr, imn, dsec, &tarr);
-			obstime[nsta] = tarr - dpot;
-			char key[MAXSTRLEN];
-			strcpy(key, sta[nsta]);
-			if (phs[nsta] == 'P') {
-				strcat(key, ".ptimes");
-			} else if (phs[nsta] == 'S') {
-				strcat(key, ".stimes");
-			} else {
-				assert(0);
-			}
-			//char *word = (char*)bsearch(key, timefiles, timefile_counts, MAXSTRLEN, (int(*)(const void*, const void*)) strcmp);
-
-			indsta[nsta] = -1;
-			for (int ind = 0; ind < timefile_counts; ind++) {
-				if (strcmp(timefiles[ind], key) == 0) {
-					indsta[nsta] = ind;
-					break;
-				}
-			}
-			if (indsta[nsta] == -1) {
-				printf("file: %s not found!\n", key);
-				assert(0);
-			}
-		}
-		fclose(fp_leq);
-		if(DEBUG_PRINT)
-			printf(" %d times read in for event %d\n", nsta, nev + 1);
-
-		int ngood = nsta;
-		if(DEBUG_PRINT)
-			printf(" Working on event %d\n", nev + 1);
-
-//---see if the travel time tables for these stations have been read in.  If
-//   not, read them in.
-		if (nsta > maxsta) {
-			printf("Error: too many station.\n");
-			assert(0);
-		}
-
-		char pha[maxsta];
-		char stn[maxsta][MAXSTRLEN];
-		int ntread = 0;
-		for (int i = 0; i < nsta; i++) {
-			if(DEBUG_PRINT)
-				printf("%4d%4d %4s %c\n", i + 1, ntread, sta[i], phs[i]);
-			int j;
-			if (ntread > 0) {
-				for (j = 0; j < ntread; j++) {
-					if (strcmp(sta[i], stn[j]) == 0) {
-						if (ivs == 0 || phs[i] == pha[j]) {
-							continue;
-						}
-					}
-				}
-			}
-			int iuse = ntread;
-			ntread++;
-			if (ntread > maxsta) {
-				if(DEBUG_PRINT)
-					printf(" Limit reached...looking for one we do not need now.\n");
-				assert(0);
-				for (j = 0; j < ntread; j++) {
-					int flag = 0;
-					for (int k = 0; k < nsta; k++) {
-						if (strcmp(sta[k], stn[j]) == 0) {
-							if (ivs == 0 || phs[k] == pha[j]) {
-								flag = 1;
-								break;
-							}
-						}
-					}
-					if (flag)
-						continue;
-					goto a21;
-				}
-				if(DEBUG_PRINT)
-					printf("Sorry, no more space available...\n");
-				assert(0);
-				a21: ntread--;
-				iuse = j;
-				if(DEBUG_PRINT)
-					printf("Overwriting %s  %c with  %s %c\n", stn[j], pha[j],
-						sta[i], phs[i]);
-			}
-			strcpy(stn[iuse], sta[i]);
-			pha[iuse] = phs[i];
-		}
-		if(DEBUG_PRINT)
-			printf(" Current ntread = %d\n", ntread);
-
-		//----test to see if all data can be read in correctly
-		if (iread == 1)
-			continue;
-
+	for (int nev = 0; nev < event_count; nev++) {
 		//   Start the PDF calculation.  Loop over all grid points.
 		int iretry = 0;
 		int maxretry = 1;
+		int nsta = getTimeCount(event_array[nev].observedTimeList);
+		int ngood = nsta;
+		int *indsta = checkTravelTime(event_array[nev], table_list, station_list);
+		char *phs = event_array[nev].phase;
+		char *evid = event_array[nev].evid;
+		char **sta = event_array[nev].station_name_list;
+		float *rwts = event_array[nev].rwts;
+		float *obstime = getObsTime(event_array[nev]);
+		float *pwt = getPwt(event_array[nev]);
+		int *isgood = event_array[nev].isgood;
+
+		float res[maxobs], wtsave[maxobs];
+		float resmin[maxobs],  tps[maxobs], wtmin[maxobs];
+		
+		float xlat, xlon;
+
+		//time
+		double dpot = htoe2(event_array[nev].earthquake.time);
+		int iyr, jday, ihr, imn;
+		float sec;
+		double dsec;
 
 		a33: 
 		if(DEBUG_PRINT)
@@ -368,7 +153,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					int n = nxy * k + nx * j + i;
 					float avres = 0.0, rsq = 0.0, facs = 0.0;
 					for (int is = 0; is < nsta; is++) {
-						double tp = t[indsta[is]][n];
+						double tp = table_list[indsta[is]].time[n];
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -497,7 +282,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					double xp = x0i + ddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta, spec.grid);
+						find_time(xp, yp, zp, &tp, is, indsta, coordinate);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -611,7 +396,7 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 					double xp = x0i + dddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta, spec.grid);
+						find_time(xp, yp, zp, &tp, is, indsta, coordinate);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -742,7 +527,10 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 				int len_str_data = 0;
-				strcpy(str_data[nev]->event_hdr, tmp);
+				//strcpy(str_data[nev]->event_hdr, tmp);
+				event_array[nev].earthquake.time = (Time){iyr, jday, ihr, imn, sec};
+				event_array[nev].earthquake.location = (Point3D){xlat, xlon, ezmr};
+				loc_data[nev].stdmin = stdmin;
 				strcpy(str_fhd[nev], tmp);
 				
 				sprintf(tmp,
@@ -824,9 +612,10 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 								rwts[j], resmin[j] - avrmin);
 						strapp(str_out[nev], &len_str_out, tmp);
 					}
-					strapp(str_data[nev]->event, &len_str_data, tmp);
+					//strapp(str_data[nev]->event, &len_str_data, tmp);
+					loc_data[nev].tmp_min[j] = resmin[j] - avrmin;
 				}
-				strapp(str_data[nev]->event, &len_str_data, " \n");
+				//strapp(str_data[nev]->event, &len_str_data, " \n");
 			}
 		} else {
 			double ot = dpot + avrmin;
@@ -856,51 +645,27 @@ SPHFDLOC_DATA **sphfdloc(SPEC spec, SPHFD_DATA **SPHFD) {
 		}
 	}
 //---END OF LOOP OVER EQS
-	FILE *fp_fhd = fopen(fhedfil, "w");
-	FILE *fp_sum = fopen(fsumfil, "w");
-	FILE *fp_out = fopen(outlfil, "w");
+	
+	return loc_data;
+} 
 
-	if (!fp_fhd) {
-		printf("fp_fhd: open '%s' error\n", fhedfil);
-		assert(0);
-	}
-	if (!fp_sum) {
-		printf("fp_sum: open '%s' error\n", fsumfil);
-		assert(0);
-	}
-	if (!fp_out) {
-		printf("fp_out: open '%s' error\n", outlfil);
-		assert(0);
-	}
+void find_time(double x, double yy, double z, double *tp, int is, int *indsta, Coordinate3D coordinate) {
+	double x0 = coordinate.origin.x;
+	double y[1] = {coordinate.origin.y};
+	double z0 = coordinate.origin.z;
+	double h = coordinate.space.z;
 
-	for (int i = 0; i < total_earthquakes; i++) {
-		if (fprintf(fp_fhd, "%s", str_fhd[i]) < 0) {
-			printf("write fp_fhd(%s) error\n", fhedfil);
-			assert(0);
-		}
-		if (fprintf(fp_sum, "%s", str_sum[i]) < 0) {
-			printf("write fp_sum(%s) error\n", fsumfil);
-			assert(0);
-		}
-		if (fprintf(fp_out, "%s", str_out[i]) < 0) {
-			printf("write fp_out(%s) error\n", outlfil);
-			assert(0);
-		}
-	}
-	fclose(fp_fhd);
-	fclose(fp_sum);
-	fclose(fp_out);
-	return str_data;
-}
+	double df = coordinate.space.x * degrad;
+	double dq = coordinate.space.y * degrad;
+	
+	int nx = coordinate.mesh.numberOfNode.x;
+	int ny = coordinate.mesh.numberOfNode.y;
+	int nz = coordinate.mesh.numberOfNode.z;
 
-void find_time(double x, double yy, double z, double *tp, int is, int *indsta, GRID grid) {
-	int nxc = grid.nxc, nyc = grid.nyc, nzc = grid.nzc, nx = grid.nx,
-	    ny = grid.ny, nz = grid.nz;
-	double h = grid.h, x0 = grid.x0, *y = grid.y, 
-	z0 = grid.z0, dq = grid.dq, df = grid.df, x00 = grid.x00, y00 = grid.y00;
 	int i = ((int) ((x - x0) / df));
 	int j = ((int) ((yy - y[0]) / dq));
 	int k = ((int) ((z - z0) / h));
+
 	if (i < 0)
 		i = 0;
 	if (j < 0)

@@ -44,13 +44,16 @@ int getTimeCount(TimeNode *time_list){
 	return index;
 }
 
-EventNode *createEventNode(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *obstime, char *phase, float *rwts){
+EventNode *createEventNode(Earthquake eqk, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *obstime, 
+                            char *phase, float *rwts, int *isgood, char *evid){
     EventNode *new_event_node = (EventNode *)malloc(sizeof(EventNode));
     int observationCnt = getTimeCount(obstime);
     if (observationCnt != 0){
         memcpy(new_event_node->event.station_name_list, station_name_list, observationCnt * (MAXSTRLEN+1));
         memcpy(new_event_node->event.phase, phase, observationCnt);
         memcpy(new_event_node->event.rwts, rwts, observationCnt * sizeof(float));
+        memcpy(new_event_node->event.isgood, isgood, observationCnt * sizeof(int));
+        memcpy(new_event_node->event.evid, evid, strlen(evid) + 1);
         new_event_node->event.observedTimeList = obstime;
     }else {
         new_event_node->event.observedTimeList = NULL;
@@ -109,10 +112,10 @@ EventNode *createEventList(char *filename){
         int iyr, jday, ihr, imn;
         float sec;
         float xlat, xlon, dep;
-        int eventId;
+        char  evid[11];
 
         sscanf(str_eqk, "%d %d %d %d %f %f %f %f %s\n", &iyr, &jday, &ihr,
-                    &imn, &sec, &xlat, &xlon, &dep, eventId);
+                    &imn, &sec, &xlat, &xlon, &dep, evid);
 
         Time time = {iyr, jday, ihr, imn, sec};
         Point3D location = {xlat, xlon, dep};
@@ -168,7 +171,8 @@ EventNode *createEventList(char *filename){
             }
             pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
         }
-        EventNode *new_event_node = createEventNode(earthquake, station_name, obstimeList, phs, rwts);
+        EventNode *new_event_node = createEventNode(earthquake, station_name, obstimeList, 
+                                                    phs, rwts, isgood, evid);
         appendEventNode(&event_head, new_event_node);
     }
     fclose(fp_event);
@@ -216,4 +220,13 @@ float *getObsTime(Event event){
         current_time = current_time->next;
     }
     return obs_travel_time;
+}
+
+float *getPwt(Event event){
+    int numbOfObservation = getTimeCount(event.observedTimeList);
+    float *pwt = malloc(sizeof(float) * numbOfObservation);
+    for(int i = 0; i < numbOfObservation; i++){
+        pwt[i] = 1.f / (event.rwts[i] * event.rwts[i]);
+    }
+    return pwt;
 }

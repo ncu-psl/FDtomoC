@@ -25,7 +25,9 @@ typedef struct {
 typedef struct {
     Earthquake earthquake;
     TimeNode *observedTimeList;
+    char evid[maxobs];
     char phase[maxobs];
+    int isgood[maxobs];
     float rwts[maxobs];
     char station_name_list[maxobs][MAXSTRLEN + 1];
 }Event;
@@ -36,15 +38,22 @@ struct EventNode_{
 };
 typedef struct EventNode_ EventNode;
 
+typedef struct {
+    float stdmin;
+    double tmp_min[maxobs];
+}LocData;
+
 TimeNode *createTimeNode(int, int, int, int, float);
 void insertTime(TimeNode *, Time);
 void appendTimeNode(TimeNode **, TimeNode *);
 int getTimeCount(TimeNode *);
-EventNode *createEventNode(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *, char *, float *);
+EventNode *createEventNode(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *,
+                             char *, float *, int *, char *);
 void appendEventNode(EventNode **, EventNode *);
 int getEventCount(EventNode *);
 EventNode *createEventList(char *);
 Event *EventList2Arr(EventNode *);
 int *checkTravelTime(Event , travelTimeTable *, StationNode *);
 float *getObsTime(Event);
+float *getPwt(Event);
 #endif

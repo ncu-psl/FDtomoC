@@ -134,7 +134,7 @@ Coordinate3D readCoarseCoordinate(SPEC spec){
     coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
     return coordinate;
 }
-/*
+
 Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     double z0r;
     double rearth = 6371.0f, degrad = 0.017453292f, hpi = 1.570796f;
@@ -150,7 +150,7 @@ Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     coordinate.space.x = fabs(space / (rearth * sin(coordinate.origin.y)));
     coordinate.space.x = coordinate.space.x / degrad;
     return coordinate;
-}*/
+}
 
 Point3D searchFineBase(Point3D point, Coordinate3D coordinate){
     float *gx = getXAxis(coordinate);
