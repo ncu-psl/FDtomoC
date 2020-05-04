@@ -1,6 +1,9 @@
 #include "common/interpolation.h"
 float linear_interpolation(float x, float a, float fa, float b, float fb){
-        return (a == b) ? fa : fa + (fb-fa) * (x-a) / (b-a);
+        int hz = b -a;
+		float fz = (x - a) / hz;
+		float v = (1.0f - fz) * fa + fz * fb;
+		return v;
 }
 
 float trilinear_interpolation(Point3D point, Cell cells[2][2][2]){
@@ -29,9 +32,9 @@ float trilinear_interpolation(Point3D point, Cell cells[2][2][2]){
 
 float *linear_interpolation_array(float *c, float *x, float *y, int csize, int xsize, char *mode){
     float *fc = (float *)malloc(sizeof(float) * csize);
-    for(int i = 0;i < csize; i++){
+    for(int i = 0; i < csize; i++){
         int ik;
-		for (ik = 1; ik < xsize; ik++) {
+		for (ik = 0; ik < xsize; ik++) {
 			if (x[ik] > c[i])
 				break;
 		}
