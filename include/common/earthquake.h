@@ -43,6 +43,13 @@ typedef struct {
     double tmp_min[maxobs];
 }LocData;
 
+typedef struct {
+    int iread, ivs, nthres, kmin, ndiv, ndiv2;
+    float vpvs, resthres, resthrep, stdmax;
+    char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
+                fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
+}LocEnv;
+
 TimeNode *createTimeNode(int, int, int, int, float);
 void insertTime(TimeNode *, Time);
 void appendTimeNode(TimeNode **, TimeNode *);
@@ -56,4 +63,7 @@ Event *EventList2Arr(EventNode *);
 int *checkTravelTime(Event , travelTimeTable *, StationNode *);
 float *getObsTime(Event);
 float *getPwt(Event);
+void setLocFiles(LocEnv *, char *);
+void setLocVariables(LocEnv *, char *);
+LocEnv setLocEnv(char *);
 #endif

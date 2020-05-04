@@ -230,3 +230,118 @@ float *getPwt(Event event){
     }
     return pwt;
 }
+
+void setLocFiles(LocEnv *loc_env, char *spec_file){
+    char *files[5] = {"leqsfil\0", "fsumfil\0", "outlfil\0", "fhedfil\0", "fdatfil\0" };
+    char *loc_files[5] = {loc_env->leqsfil, loc_env->fsumfil, loc_env->outlfil, 
+                            loc_env->fhedfil, loc_env->fdatfil};
+
+    FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
+    for (int i = 0; i < 5; i++) {
+		get_vars(fp_spc, files[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			printf("Error trying to read filename %s", files[i]);
+			assert(0);
+		}
+		sscanf(pval, "%s", loc_files[i]);
+	}
+
+}
+
+void setLocVariables(LocEnv *loc_env, char *spec_file){
+    FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+    
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
+
+    get_vars(fp_spc, "iread ", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%d", &loc_env->iread);
+	}
+	if (loc_env->iread != 0 && loc_env->iread != 1) {
+		loc_env->iread = 0;
+	}
+	get_vars(fp_spc, "ivs ", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%d", &loc_env->ivs);
+	}
+	if (loc_env->ivs != 0 && loc_env->ivs != 1) {
+		loc_env->ivs = 0;
+	}
+	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%lf", &loc_env->vpvs);
+	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%d", &loc_env->vpvs);
+	}
+	if (loc_env->vpvs != 0 && loc_env->vpvs != 1) {
+		loc_env->vpvs = 0;
+	}
+
+	get_vars(fp_spc, "nthres ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &loc_env->nthres);
+	get_vars(fp_spc, "resthres ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%lf", &loc_env->resthres);
+	get_vars(fp_spc, "resthrep ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%lf", &loc_env->resthrep);
+	get_vars(fp_spc, "stdmax ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%lf", &loc_env->stdmax);
+	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%d", &loc_env->kmin);
+		loc_env->kmin--;
+	}
+
+//-----grid search control
+	get_vars(fp_spc, "ndiv ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &loc_env->ndiv);
+	if (loc_env->ndiv <= 0)
+		loc_env->ndiv = 1;
+	get_vars(fp_spc, "ndiv2 ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &loc_env->ndiv2);
+	if (loc_env->ndiv2 <= 0)
+		loc_env->ndiv2 = 1;
+}
+
+LocEnv setLocEnv(char *spec_file){
+    LocEnv loc_env;
+    loc_env.iread = 0;
+//----ivs = 1 to treat Vp and Vs separately (individual time files).
+//        = 0 to compute Ts as Tp*vpvs
+	loc_env.ivs = 1;
+	loc_env.vpvs = 1.78;
+//---thresholds to define an acceptable location
+//---number of phases threshold
+	loc_env.nthres = 8;
+//---residual threshold (absolute time)
+	loc_env. resthres = .5;
+//---residual threshold (percentage of travel time)
+	loc_env.resthrep = 5.0;
+//---std threshold
+	loc_env.stdmax = 15.0;
+	loc_env.kmin = 2;
+
+    setLocFiles(&loc_env, spec_file);
+    setLocVariables(&loc_env, spec_file);
+    return loc_env;
+}
