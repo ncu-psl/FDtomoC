@@ -124,7 +124,7 @@ Coordinate3D readFineCoordinate(SPEC spec){
     Coordinate3D coordinate;
     coordinate.mesh = readFineMesh3D(spec);
     coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
-    coordinate.space = (Point3DDouble){spec.grid.h, spec.grid.h, spec.grid.h};
+    coordinate.space = (Point3DDouble){2, 2, 2};
     return coordinate;
 }
 
