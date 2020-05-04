@@ -55,7 +55,6 @@
 #include "common/parseprogs.h"
 #include "common/string_process.h"
 #include "common/earthquake_file_delimiter.h"
-#include "common/shared_variables.h"
 #include "common/read_spec.h"
 #include "FDtomo/sphfdloc.h"
 
@@ -74,22 +73,30 @@
 #define nhbyte 58 * 4
 #define rearth 6371.0
 #define VERSION "2018.0429"
-
+	char str_fhd[160000][20000];
+	char str_sum[160000][20000], str_out[160000][20000];
 float **t;
 int total_earthquakes = 0;
-void find_time(double, double, double, double *, int, int *, Coordinate3D);
+void find_time(double, double, double, double *, int, int *, Coordinate3D, travelTimeTable *);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 int get_time(int, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **); 
-LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode *event_list, StationNode *station_list) {
+LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode *event_list,
+				 StationNode *station_list, LocEnv loc_env) {
+	
+	double hpi = 1.570796f, degrad = 0.017453292f;
+	double tmp = coordinate.origin.y;
+	double h = coordinate.space.x;
 	coordinate = change2Sphere(coordinate, 1);
 	double x0 = coordinate.origin.x;
-	double y[0] = {coordinate.origin.y};
-	double z0 = coordinate.origin.y;
-	double h = coordinate.origin.z;
+	double y[1] = {coordinate.origin.y};
+	double z0 = coordinate.origin.z;
 
-	double z0r;  //need to be modified!!!!!!!!!!!!!!!!
+	double z0r;
+	tmp *= degrad;
+	tmp = hpi - glath(tmp, z0, &z0r);
+
 	double df = coordinate.space.x * degrad;
 	double dq = coordinate.space.y * degrad;
 	
@@ -107,10 +114,31 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 	int event_count = getEventCount(event_list);
 	Event *event_array = EventList2Arr(event_list);
 
-	char str_fhd[160000][20000];
-	char str_sum[160000][20000], str_out[160000][20000];
+//    Default setting for some variables
+	int iread = loc_env.iread;
+	int ivs = loc_env.ivs;
+	float vpvs = loc_env.vpvs;
+	int nthres = loc_env.nthres;
+	float resthres = loc_env.resthres;
+	float resthrep = loc_env.resthrep;
+	float stdmax = loc_env.stdmax;
+	int kmin = loc_env.kmin;
+	int ndiv = loc_env.ndiv;
+	int ndiv2 = loc_env.ndiv2;
+
+
+	// Default Files
+	char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
+	fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
+	memcpy(leqsfil, loc_env.leqsfil, strlen(loc_env.leqsfil) + 1);
+	memcpy(fsumfil, loc_env.fsumfil, strlen(loc_env.fsumfil) + 1);
+	memcpy(outlfil, loc_env.outlfil, strlen(loc_env.outlfil) + 1);
+	memcpy(fhedfil, loc_env.fhedfil, strlen(loc_env.fhedfil) + 1);
+	memcpy(fdatfil, loc_env.fdatfil, strlen(loc_env.fdatfil) + 1);
 
 	LocData *loc_data = malloc(sizeof(LocData) * event_count);
+
+
 #pragma omp parallel for
 	for (int nev = 0; nev < event_count; nev++) {
 		//   Start the PDF calculation.  Loop over all grid points.
@@ -121,7 +149,7 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 		int *indsta = checkTravelTime(event_array[nev], table_list, station_list);
 		char *phs = event_array[nev].phase;
 		char *evid = event_array[nev].evid;
-		char **sta = event_array[nev].station_name_list;
+		char (*sta)[MAXSTRLEN + 1] = event_array[nev].station_name_list;
 		float *rwts = event_array[nev].rwts;
 		float *obstime = getObsTime(event_array[nev]);
 		float *pwt = getPwt(event_array[nev]);
@@ -282,7 +310,7 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 					double xp = x0i + ddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta, coordinate);
+						find_time(xp, yp, zp, &tp, is, indsta, coordinate, table_list);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -396,7 +424,7 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 					double xp = x0i + dddf * i;
 					for (int is = 0; is < nsta; is++) {
 						double tp = 0;
-						find_time(xp, yp, zp, &tp, is, indsta, coordinate);
+						find_time(xp, yp, zp, &tp, is, indsta, coordinate, table_list);
 						if (ivs == 0 && phs[is] == 'S') {
 							tp *= vpvs;
 						}
@@ -527,7 +555,6 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
 				int len_str_data = 0;
-				//strcpy(str_data[nev]->event_hdr, tmp);
 				event_array[nev].earthquake.time = (Time){iyr, jday, ihr, imn, sec};
 				event_array[nev].earthquake.location = (Point3D){xlat, xlon, ezmr};
 				loc_data[nev].stdmin = stdmin;
@@ -612,10 +639,8 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 								rwts[j], resmin[j] - avrmin);
 						strapp(str_out[nev], &len_str_out, tmp);
 					}
-					//strapp(str_data[nev]->event, &len_str_data, tmp);
 					loc_data[nev].tmp_min[j] = resmin[j] - avrmin;
 				}
-				//strapp(str_data[nev]->event, &len_str_data, " \n");
 			}
 		} else {
 			double ot = dpot + avrmin;
@@ -646,10 +671,49 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 	}
 //---END OF LOOP OVER EQS
 	
-	return loc_data;
+	FILE *fp_fhd = fopen(fhedfil, "w");
+	FILE *fp_sum = fopen(fsumfil, "w");
+	FILE *fp_out = fopen(outlfil, "w");
+
+	if (!fp_fhd) {
+		printf("fp_fhd: open '%s' error\n", fhedfil);
+		assert(0);
+	}
+	if (!fp_sum) {
+		printf("fp_sum: open '%s' error\n", fsumfil);
+		assert(0);
+	}
+	if (!fp_out) {
+		printf("fp_out: open '%s' error\n", outlfil);
+		assert(0);
+	}
+
+	for (int i = 0; i < event_count; i++) {
+		if (fprintf(fp_fhd, "%s", str_fhd[i]) < 0) {
+			printf("write fp_fhd(%s) error\n", fhedfil);
+			assert(0);
+		}
+		if (fprintf(fp_sum, "%s", str_sum[i]) < 0) {
+			printf("write fp_fdt(%s) error\n", fsumfil);
+			assert(0);
+		}
+		if (fprintf(fp_out, "%s", str_out[i]) < 0) {
+			printf("write fp_fdt(%s) error\n", outlfil);
+			assert(0);
+		}
+	}
+
+	fclose(fp_fhd);
+	fclose(fp_sum);
+	fclose(fp_out);
+
+
+
+	return ;
 } 
 
-void find_time(double x, double yy, double z, double *tp, int is, int *indsta, Coordinate3D coordinate) {
+void find_time(double x, double yy, double z, double *tp, int is, int *indsta, Coordinate3D coordinate, travelTimeTable *table_list) {
+	double degrad = 0.017453292f;
 	double x0 = coordinate.origin.x;
 	double y[1] = {coordinate.origin.y};
 	double z0 = coordinate.origin.z;
@@ -693,14 +757,14 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta, C
 	double fz = (z - zk) / h;
 
 	int ist = indsta[is];
-	*tp = (1.f - fx) * (1.f - fy) * (1.f - fz) * t[ist][nk + nj + i];
-	*tp = *tp + fx * (1.f - fy) * (1.f - fz) * t[ist][nk + nj + i + 1];
-	*tp = *tp + (1.f - fx) * fy * (1.f - fz) * t[ist][nk + nj2 + i];
-	*tp = *tp + (1.f - fx) * (1.f - fy) * fz * t[ist][nk2 + nj + i];
-	*tp = *tp + fx * fy * (1.f - fz) * t[ist][nk + nj2 + i + 1];
-	*tp = *tp + fx * (1.f - fy) * fz * t[ist][nk2 + nj + i + 1];
-	*tp = *tp + (1.f - fx) * fy * fz * t[ist][nk2 + nj2 + i];
-	*tp = *tp + fx * fy * fz * t[ist][nk2 + nj2 + i + 1];
+	*tp = (1.f - fx) * (1.f - fy) * (1.f - fz) * table_list[ist].time[nk + nj + i];
+	*tp = *tp + fx * (1.f - fy) * (1.f - fz) * table_list[ist].time[nk + nj + i + 1];
+	*tp = *tp + (1.f - fx) * fy * (1.f - fz) * table_list[ist].time[nk + nj2 + i];
+	*tp = *tp + (1.f - fx) * (1.f - fy) * fz * table_list[ist].time[nk2 + nj + i];
+	*tp = *tp + fx * fy * (1.f - fz) * table_list[ist].time[nk + nj2 + i + 1];
+	*tp = *tp + fx * (1.f - fy) * fz * table_list[ist].time[nk2 + nj + i + 1];
+	*tp = *tp + (1.f - fx) * fy * fz * table_list[ist].time[nk2 + nj2 + i];
+	*tp = *tp + fx * fy * fz * table_list[ist].time[nk2 + nj2 + i + 1];
 }
 
 void read_station_set(int *nsta, int *iyr, int *jday, int *ihr, int *imn,
@@ -834,7 +898,7 @@ int read_timefiles(int iread, int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], c
 }
 
 int get_time(int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **SPHFD) {
-
+	int num_parfiles = 0;// temporary
 	int i = -1;
 	t = (float *)malloc(sizeof(float *) * num_parfiles);
 	for (i = 0; i < num_parfiles; i++) {
@@ -865,6 +929,7 @@ int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **SPHFDLOC, SPEC spec){
 }
 
 int LOG_SPHFDLOC(SPEC spec){
+	double degrad = 0.017453292f;
 	float xmax = spec.grid.x0 + (spec.grid.nx - 1) * spec.grid.df;
 	float ymax = spec.grid.y[0] + (spec.grid.ny - 1) * spec.grid.dq;
 	float zmax = spec.grid.z0 + (spec.grid.nz - 1) * spec.grid.h;

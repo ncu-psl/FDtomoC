@@ -210,8 +210,7 @@ travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
 	for(int i = 0; i < numOfStations - 1; i++){
 		Point3DDouble location = currentStation->data.location; 
 		currentTable[i] = sphfd_exec(model, location);
-		strcpy(currentTable->name, currentStation->data.name);
-		outputTravelTime(currentTable[i]);
+		strcpy(currentTable[i].name, currentStation->data.name);
 		currentStation = currentStation->next;
 	}
 

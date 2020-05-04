@@ -283,7 +283,7 @@ void setLocVariables(LocEnv *loc_env, char *spec_file){
 	}
 	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &loc_env->vpvs);
+		sscanf(pval, "%f", &loc_env->vpvs);
 	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
 	if (ierr == 0) {
 		sscanf(pval, "%d", &loc_env->vpvs);
@@ -297,13 +297,13 @@ void setLocVariables(LocEnv *loc_env, char *spec_file){
 		sscanf(pval, "%d", &loc_env->nthres);
 	get_vars(fp_spc, "resthres ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &loc_env->resthres);
+		sscanf(pval, "%f", &loc_env->resthres);
 	get_vars(fp_spc, "resthrep ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &loc_env->resthrep);
+		sscanf(pval, "%f", &loc_env->resthrep);
 	get_vars(fp_spc, "stdmax ", pval, &len, &ierr);
 	if (ierr == 0)
-		sscanf(pval, "%lf", &loc_env->stdmax);
+		sscanf(pval, "%f", &loc_env->stdmax);
 	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
 	if (ierr == 0) {
 		sscanf(pval, "%d", &loc_env->kmin);
@@ -334,13 +334,14 @@ LocEnv setLocEnv(char *spec_file){
 //---number of phases threshold
 	loc_env.nthres = 8;
 //---residual threshold (absolute time)
-	loc_env. resthres = .5;
+	loc_env.resthres = .5;
 //---residual threshold (percentage of travel time)
 	loc_env.resthrep = 5.0;
 //---std threshold
 	loc_env.stdmax = 15.0;
 	loc_env.kmin = 2;
-
+    loc_env.ndiv = 20;
+	loc_env.ndiv2 = 20;
     setLocFiles(&loc_env, spec_file);
     setLocVariables(&loc_env, spec_file);
     return loc_env;

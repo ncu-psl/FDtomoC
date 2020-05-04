@@ -1,5 +1,6 @@
 #ifndef GRID_H_
 #define GRID_H_
+#include "common/geographic_method.h"
 #include "common/vec/vec.h"
 #include "common/read_spec.h"
 
