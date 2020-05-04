@@ -1,5 +1,5 @@
 #include "common/station.h"
-StationNode *createStationNode(char *name, Point3D location){
+StationNode *createStationNode(char *name, Point3DDouble location){
     StationNode *new_station_node = (StationNode *)malloc(sizeof(StationNode));
 	new_station_node->data.name = (char *)malloc(sizeof(char) * (strlen(name) + 1));
 	new_station_node->data.location = location;
@@ -40,16 +40,17 @@ StationNode *createStationList(char *file, int sph){
     char str_inp[100];
 	while(fgets(str_inp, sizeof(str_inp), fp_sta) != NULL){
         int zs = 0;
-		float stx = 0, sty = 0, fxs = 0, fys = 0, fzs = 0;
+		float stx = 0, sty = 0;
+		double fxs = 0, fys = 0, fzs = 0;
 		char sta[100];
 		if(sph) {
-			sscanf(str_inp, "%f %f %d %s %f %f", &sty, &stx, &zs, sta, &fys, &fxs);
+			sscanf(str_inp, "%f %f %d %s %lf %lf", &sty, &stx, &zs, sta, &fys, &fxs);
 		} else {
-			sscanf(str_inp, "%f %f %f %s", &fys, &fxs, &fzs, sta);
+			sscanf(str_inp, "%lf %lf %lf %s", &fys, &fxs, &fzs, sta);
 		}
 		fzs = zs / -1000.;
         
-		Point3D location = {fxs, fys, fzs};
+		Point3DDouble location = {fxs, fys, fzs};
         StationNode *new_station_node = createStationNode(sta, location);
     	appendStationNode(&station_head, new_station_node);
     }

@@ -13,6 +13,7 @@ ADD_LIBRARY(_common SHARED
 	grid.c
 	station.c
 	earthquake.c
+	travel_time.c
 )
 
 TARGET_LINK_LIBRARIES(_common vec)

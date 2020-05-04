@@ -8,4 +8,5 @@ typedef struct{
     float *time;
 }travelTimeTable;
 
+void outputTravelTime(travelTimeTable);
 #endif

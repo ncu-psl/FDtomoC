@@ -197,7 +197,7 @@ double rcent;
 static double z0r;
 int endian();
 int litend;
-travelTimeTable sphfd_exec(velocityModel3D, Point3D);
+travelTimeTable sphfd_exec(velocityModel3D, Point3DDouble);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
 travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
@@ -208,16 +208,17 @@ travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
 	travelTimeTable *currentTable = travle_time_array;
 	int index = 0;
 	for(int i = 0; i < numOfStations - 1; i++){
-		Point3D location = currentStation->data.location; 
+		Point3DDouble location = currentStation->data.location; 
 		currentTable[i] = sphfd_exec(model, location);
 		strcpy(currentTable->name, currentStation->data.name);
+		outputTravelTime(currentTable[i]);
 		currentStation = currentStation->next;
 	}
 
 	return travle_time_array;
 }
 
-travelTimeTable sphfd_exec(velocityModel3D model, Point3D location)
+travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
 {
 	travelTimeTable travel_time;
 	
@@ -264,7 +265,7 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3D location)
 			 Set savsrc to 1 to preserve the true source in the header, and to  0
 			 to redefine it as a grid point */
 
-		reverse = 1,	/* will automatically do up to this number of
+		reverse = 50,	/* will automatically do up to this number of
 			 reverse propagation steps to fix waves that travel
 			 back into expanding cell */
 		headpref = 6,   /* if headpref starts > 0, will determine
@@ -536,8 +537,8 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3D location)
 	}
 
 	/* ALLOCATE MAIN AND ALTERNATE GRID FOR SLOWNESSES AND TIMES */
-	slow0 = (float *)malloc(4 * nxyz *2);
-	time0 = (float *)malloc(4 * nxyz *2);
+	slow0 = (float *)malloc(sizeof(float) * nxyz);
+	time0 = (float *)malloc(sizeof(float) * nxyz);
 
 	/* MAKE ARRAY SORT LARGE ENOUGH FOR ANY SIDE */
 	if (nx <= ny && nx <= nz)
@@ -6277,6 +6278,7 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3D location)
 	fprintf(stdout, "fzss =  %g\n", headout.fzs);
 
 	travel_time.time = time0;
+	travel_time.mesh = model.coordinate.mesh;
 	fprintf(stderr, "wavefront done \n");
 	return travel_time;
 }
