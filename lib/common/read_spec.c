@@ -403,7 +403,7 @@ void read_grid(char *spec_file, SPEC *spec){
 void read_error(char *name, char *type, FILE *fp_spc){
 	printf("Error trying to read %s %s\n", type, name);
 	fclose(fp_spc);
-
+	assert(0);
 }
 
 SPEC create_spec(char *specFile){
@@ -454,26 +454,58 @@ SPEC create_spec(char *specFile){
 	return spec;
 }
 
-int getNumberOfXfine(SPEC spec){
-	int sum = 1;
-    for(int i = 1; i < spec.grid.nxc; i++){
-        sum += spec.grid.igridx[i - 1];
-    }
-    return sum;
+CommonEnv setCommonEnv(char *spec_file){
+	CommonEnv common_env;
+	common_env.iread = 0;
+	common_env.ivs = 1;
+	common_env.vpvs = 1.78f;
+	common_env.ittnum = 0;
+	common_env.ivpvs = 0;
+	common_env.istacor = 0;
+	common_env.doshot = 0;
+	common_env.dotel = 0;
+
+	setCommonVariables(&common_env, spec_file);
+	return common_env;
 }
 
-int getNumberOfYfine(SPEC spec){
-	int sum = 1;
-    for(int i = 1; i < spec.grid.nyc; i++){
-        sum += spec.grid.igridy[i - 1];
-    }
-    return sum;
-}
+void setCommonVariables(CommonEnv *common_env, char *spec_file){
+	FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+    
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
 
-int getNumberOfZfine(SPEC spec){
-	int sum = 1;
-    for(int i = 1; i < spec.grid.nzc; i++){
-        sum += spec.grid.igridz[i - 1];
-    }
-    return sum;
+	get_vars(fp_spc, "istacor ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &common_env->istacor);
+	if (common_env->istacor != 0 && common_env->istacor != 1) {
+		common_env->istacor = 0;
+	}
+	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%d", &common_env->ivpvs);
+	}
+	if (common_env->ivpvs != 0 && common_env->ivpvs != 1) {
+		common_env->ivpvs = 0;
+	}
+	get_vars(fp_spc, "doshot ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &common_env->doshot);
+	if (common_env->doshot != 0 && common_env->doshot != 1) {
+		common_env->doshot = 0;
+	}
+	get_vars(fp_spc, "dotel ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &common_env->dotel);
+	if (common_env->dotel != 0 && common_env->dotel != 1) {
+		common_env->dotel = 0;
+	}
+	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &common_env->ittnum);
 }

@@ -19,23 +19,19 @@ typedef struct {
 
 typedef struct{
     int numberOfNode;
-    int space;
-    vec_int_t igrid;
+    int *igrid;
 }Mesh1D; 
 
 typedef struct{
     Point3D numberOfNode;
-    double xspace;
-    double yspace;
-    double zspace;
-    vec_int_t igridx;
-    vec_int_t igridy;
-    vec_int_t igridz;
+    int *gridx;
+    int *gridy;
+    int *gridz;
 }Mesh3D;
 
 typedef struct{
-    Mesh1D mesh1d;
-    int unit;
+    Mesh1D mesh;
+    int space;
     int origin;
 }Coordinate1D;
 
@@ -51,12 +47,13 @@ float *getXAxis(Coordinate3D);
 float *getYAxis(Coordinate3D);
 float *getZAxis(Coordinate3D);
 Point3D getPoint3D(Point3D, Coordinate3D);
-Mesh1D createMesh1D(int, int, vec_int_t);
-Mesh3D readFineMesh3D(SPEC);
-Mesh3D readCoarseMesh3D(SPEC);
+Mesh1D createMesh1D(int, int *);
+Mesh3D setMesh3D(char *);
+void setGrid(Mesh3D *, char *);
+int getNumberOfFine(int , int *);
+Mesh3D generateFineMesh(Mesh3D);
 Coordinate1D createCoordinate(Mesh1D, int, int);
-Coordinate3D readFineCoordinate(SPEC);
-Coordinate3D readCoarseCoordinate(SPEC);
+Coordinate3D setCoordinate(char *);
 Coordinate3D change2Sphere(Coordinate3D, int);
 Point3D searchFineBase(Point3D, Coordinate3D);
 #endif

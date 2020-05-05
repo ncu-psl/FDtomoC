@@ -1,14 +1,18 @@
 #include "common/velocity_model.h"
 
-void readVelocityModel1D(SPEC spec, velocityModel1D *vpModel, velocityModel1D *vsModel, char *interp){
+void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityModel1D *vsModel, char *interp){
+	int vs1d = 1;
 	FILE *fp_one;
-	fp_one = fopen(spec.onedfil, "r");
+	fp_one = fopen(model1D_path, "r");
 	if(!fp_one) {
-        printf("Error on opening fp_one(%s)\n", spec.onedfil);
+        printf("Error on opening fp_one(%s)\n", model1D_path);
         assert(0);
 	}
 	vpModel->velocity = (float *)calloc(MAX1D, sizeof(float));
 	vsModel->velocity = (float *)calloc(MAX1D, sizeof(float));
+	vpModel->coordinate.mesh.igrid = (float *)calloc(MAX1D, sizeof(int));
+	vsModel->coordinate.mesh.igrid = (float *)calloc(MAX1D, sizeof(int));
+
 	char aline[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
 
@@ -44,7 +48,7 @@ void readVelocityModel1D(SPEC spec, velocityModel1D *vpModel, velocityModel1D *v
 		assert(0);
 	}
 	vpModel->velocity[count] = p;
-	if (spec.vs1d == 1) {
+	if (vs1d == 1) {
 		vsModel->velocity[count] = s;
 	} else {
 		vsModel->velocity[count] = p/s;
@@ -53,22 +57,22 @@ void readVelocityModel1D(SPEC spec, velocityModel1D *vpModel, velocityModel1D *v
 	if(count == 0){
 		vpModel->coordinate.origin = h;
 	}else{
-		vec_push(&vpModel->coordinate.mesh1d.igrid, h - tmp);
+		vpModel->coordinate.mesh.igrid[count - 1] = h - tmp;
 	}
 	tmp = h;
 	interp[count] = pval[0];
 	count++;
 	}
-	vpModel->coordinate.unit = 1;
-	vpModel->coordinate.mesh1d.numberOfNode = count;
-	vsModel->coordinate.mesh1d.numberOfNode = count;
+	vpModel->coordinate.space = 1;
+	vpModel->coordinate.mesh.numberOfNode = count;
+	vsModel->coordinate.mesh.numberOfNode = count;
 	fclose(fp_one);
 	
 }
 
 void transform1D(Coordinate1D coordinate, velocityModel1D *model, char *mode){
-	int size = coordinate.mesh1d.numberOfNode;
-	int vsize = model->coordinate.mesh1d.numberOfNode;
+	int size = coordinate.mesh.numberOfNode;
+	int vsize = model->coordinate.mesh.numberOfNode;
 	float *points = getAxis(coordinate);
 	float *vpoints = getAxis(model->coordinate);
 	float *velocity = (float *)calloc(size, sizeof(float));
@@ -82,7 +86,7 @@ void transform1D(Coordinate1D coordinate, velocityModel1D *model, char *mode){
 
 velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
 	int meshSize3D = sizeOfMesh3D(coordinate.mesh);
-	int axisSize1D = model.coordinate.mesh1d.numberOfNode;
+	int axisSize1D = model.coordinate.mesh.numberOfNode;
 	int axisSize3D = coordinate.mesh.numberOfNode.z;
 	
 	if(axisSize1D != axisSize3D){

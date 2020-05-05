@@ -18,7 +18,7 @@ typedef struct velocityModel3D_{
     float *velocity;
 }velocityModel3D;
 
-void readVelocityModel1D(SPEC spec, velocityModel1D *, velocityModel1D *, char *);
+void readVelocityModel1D(char *, velocityModel1D *, velocityModel1D *, char *);
 void transform1D(Coordinate1D, velocityModel1D *,char *);
 velocityModel3D create3DModel(Coordinate3D, velocityModel1D);
 velocityModel3D generate3DModel(float *, float *, Mesh3D);

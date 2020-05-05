@@ -4,11 +4,11 @@ int sizeOfMesh3D(Mesh3D mesh){
 }
 
 float *getAxis(Coordinate1D coordinate){
-    int numberOfPoints = coordinate.mesh1d.numberOfNode;
+    int numberOfPoints = coordinate.mesh.numberOfNode;
     float *points = (float *)malloc(sizeof(float) * numberOfPoints);
     points[0] = coordinate.origin;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + coordinate.unit * coordinate.mesh1d.igrid.data[i - 1];
+        points[i] = points[i - 1] + coordinate.space * coordinate.mesh.igrid[i - 1];
     }
     return points;
 }
@@ -20,7 +20,7 @@ float *getXAxis(Coordinate3D coordinate){
 
     points[0] = coordinate.origin.x;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + coordinate.space.x * coordinate.mesh.igridx.data[i - 1];
+        points[i] = points[i - 1] + coordinate.space.x * coordinate.mesh.gridx[i - 1];
     }
     return points;
 }
@@ -29,7 +29,7 @@ float *getYAxis(Coordinate3D coordinate){
     float *points = (float *)calloc(numberOfPoints, sizeof(float));
     points[0] = coordinate.origin.y;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + coordinate.space.y * coordinate.mesh.igridy.data[i - 1];
+        points[i] = points[i - 1] + coordinate.space.y * coordinate.mesh.gridy[i - 1];
     }
     return points;
 }
@@ -39,7 +39,7 @@ float *getZAxis(Coordinate3D coordinate){
     float *points = (float *)calloc(numberOfPoints, sizeof(float));
     points[0] = coordinate.origin.z;
     for(int i = 1; i < numberOfPoints; i++){
-        points[i] = points[i - 1] + coordinate.space.z * coordinate.mesh.igridz.data[i - 1];
+        points[i] = points[i - 1] + coordinate.space.z * coordinate.mesh.gridz[i - 1];
     }
     return points;
 }
@@ -60,80 +60,188 @@ Point3D getPoint3D(Point3D point, Coordinate3D coordinate){
     return finePoint;
 }
 
-Mesh1D createMesh1D(int numberOfNode, int space, vec_int_t igrid){
+Mesh1D createMesh1D(int numberOfNode, int *igrid){
     Mesh1D mesh;
-    vec_init(&mesh.igrid);
     mesh.numberOfNode = numberOfNode;
-    mesh.space = space;
-    vec_extend(&mesh.igrid, &igrid);
+	mesh.igrid = calloc(numberOfNode, sizeof(int));
+    memcpy(mesh.igrid, igrid, numberOfNode);
     return mesh;
 }
 
-Mesh3D readFineMesh3D(SPEC spec){
+Mesh3D setMesh3D(char *spec_file){
     Mesh3D mesh;
-    mesh.numberOfNode.x = getNumberOfXfine(spec);
-    mesh.numberOfNode.y = getNumberOfYfine(spec);
-    mesh.numberOfNode.z = getNumberOfZfine(spec);
-    vec_init(&mesh.igridx);
-    vec_init(&mesh.igridy);
-    vec_init(&mesh.igridz);
-    for(int i = 1; i < mesh.numberOfNode.x; i++){
-        vec_push(&mesh.igridx, 1);
+    char *mvals[3] = { "nxc\0", "nyc\0", "nzc\0"};
+	char pval[MAXSTRLEN + 1];
+    int len, ierr;
+
+    FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+
+    int i;
+	for (i = 0; i < 3; i++) {
+		get_vars(fp_spc, mvals[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			read_error(mvals[i], "variable", fp_spc);
+		}
+		if (i == 0) {
+			sscanf(pval, "%f", &mesh.numberOfNode.x);
+		} else if (i == 1) {
+			sscanf(pval, "%f", &mesh.numberOfNode.y);
+		} else if (i == 2) {
+			sscanf(pval, "%f", &mesh.numberOfNode.z);
+		}
     }
-    for(int i = 1; i < mesh.numberOfNode.y; i++){
-        vec_push(&mesh.igridy, 1);
-    }
-    for(int i = 1; i < mesh.numberOfNode.z; i++){
-        vec_push(&mesh.igridz, 1);
-    }
+
+    mesh.gridx = malloc(sizeof(float) * (mesh.numberOfNode.x - 1));
+    mesh.gridy = malloc(sizeof(float) * (mesh.numberOfNode.y - 1));
+    mesh.gridz = malloc(sizeof(float) * (mesh.numberOfNode.z - 1));
+    setGrid(&mesh, spec_file);
+    fclose(fp_spc);
     return mesh;
 }
 
-Mesh3D readCoarseMesh3D(SPEC spec){
-    Mesh3D mesh;
-    mesh.numberOfNode.x = spec.grid.nxc;
-    mesh.numberOfNode.y = spec.grid.nyc;
-    mesh.numberOfNode.z = spec.grid.nzc;
-    mesh.xspace = spec.grid.xSpace;
-    mesh.yspace = spec.grid.ySpace;
-    mesh.zspace = spec.grid.zSpace;
-    vec_init(&mesh.igridx);
-    vec_init(&mesh.igridy);
-    vec_init(&mesh.igridz);
-    for(int i = 1; i < spec.grid.nxc; i++){
-        vec_push(&mesh.igridx, spec.grid.igridx[i - 1]);
-    }
-    for(int i = 1; i < spec.grid.nyc; i++){
-        vec_push(&mesh.igridy, spec.grid.igridy[i - 1]);
-    }
-    for(int i = 1; i < spec.grid.nzc; i++){
-        vec_push(&mesh.igridz, spec.grid.igridz[i - 1]);
-    }
-    return mesh;
+void setGrid(Mesh3D *mesh, char *spec_file){
+    FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+
+	char aline[MAXSTRLEN + 1], varname[MAXSTRLEN + 1], parval[MAXSTRLEN + 1];
+	int len, ierr;
+	int ib = 0, ie = 0, lenv = 0, nvl = 0;
+	a11: get_line(fp_spc, aline, &ierr);
+	aline[MAXSTRLEN] = '\0';
+	if (ierr == 1)
+		goto a12;
+	if (ierr != 0)
+		goto a11;
+	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
+	if (strncmp(varname, "igridx", lenv) != 0)
+		goto a11;
+	ib = ie;
+	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+	sscanf(parval, "%d", &mesh->gridx[0]);
+	int k;
+	for (k = 1; k < mesh->numberOfNode.x; k++) {
+		ib = ie;
+		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+		sscanf(parval, "%d", &mesh->gridx[k]);
+	}
+	a12: rewind(fp_spc);
+	a13: get_line(fp_spc, aline, &ierr);
+	if (ierr == 1)
+		goto a14;
+	if (ierr != 0)
+		goto a13;
+	ib = 0;
+	get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
+	if (strncmp(varname, "igridy", lenv) != 0)
+		goto a13;
+	ib = ie;
+	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+	sscanf(parval, "%d", &mesh->gridy[0]);
+	for (k = 1; k < mesh->numberOfNode.y; k++) {
+		ib = ie;
+		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+		sscanf(parval, "%d", &mesh->gridy[k]);
+	}
+	a14: rewind(fp_spc);
+
+	a15: get_line(fp_spc, aline, &ierr);
+	if (ierr != 1) {
+		if (ierr != 0)
+			goto a15;
+		ib = 0;
+		get_field(fp_spc, aline, ib, &ie, varname, &lenv, &ierr);
+		if (strncmp(varname, "igridz", lenv) != 0)
+			goto a15;
+		ib = ie;
+		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+		sscanf(parval, "%d", &mesh->gridz[0]);
+		for (k = 1; k < mesh->numberOfNode.z; k++) {
+			ib = ie;
+			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
+			sscanf(parval, "%d", &mesh->gridz[k]);
+		}
+	}
+	fclose(fp_spc);
+
 }
 
-Coordinate1D createCoordinate(Mesh1D mesh, int unit, int origin){
+int getNumberOfFine(int numberOfNode, int *igrid){
+    int sum = 1;
+    for(int i = 0; i < numberOfNode; i++){
+        sum += igrid[i];
+    }
+    return sum;
+}
+
+Mesh3D generateFineMesh(Mesh3D mesh){
+    Mesh3D new_mesh;
+    new_mesh.numberOfNode.x = getNumberOfFine(mesh.numberOfNode.x, mesh.gridx);
+    new_mesh.numberOfNode.y = getNumberOfFine(mesh.numberOfNode.y, mesh.gridy);
+    new_mesh.numberOfNode.z = getNumberOfFine(mesh.numberOfNode.z, mesh.gridz);
+    new_mesh.gridx = malloc(sizeof(float) * new_mesh.numberOfNode.x - 1);
+    new_mesh.gridy = malloc(sizeof(float) * new_mesh.numberOfNode.y - 1);
+    new_mesh.gridz = malloc(sizeof(float) * new_mesh.numberOfNode.z - 1);
+
+    for(int i = 0; i < new_mesh.numberOfNode.x - 1; i++){
+        new_mesh.gridx[i] = 1;
+    }
+    for(int i = 0; i < new_mesh.numberOfNode.y - 1; i++){
+        new_mesh.gridy[i] = 1;
+    }
+    for(int i = 0; i < new_mesh.numberOfNode.z - 1; i++){
+        new_mesh.gridz[i] = 1;
+    }
+    return new_mesh;
+}
+
+
+Coordinate1D createCoordinate(Mesh1D mesh, int space, int origin){
     Coordinate1D coordinate;
-    coordinate.mesh1d = mesh;
-    coordinate.unit = unit;
+    coordinate.mesh = mesh;
+    coordinate.space = space;
     coordinate.origin = origin;
     return coordinate;
 }
 
-Coordinate3D readFineCoordinate(SPEC spec){
+Coordinate3D setCoordinate(char *spec_file){
     Coordinate3D coordinate;
-    coordinate.mesh = readFineMesh3D(spec);
-    coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
-    coordinate.space = (Point3DDouble){2, 2, 2};
+    coordinate.mesh = setMesh3D(spec_file);
+
+    double h;
+    char *mvals[4] = { "x0\0", "y0\0", "z0\0", "h\0" };
+    double *varList[4] = {&coordinate.origin.x, &coordinate.origin.y, &coordinate.origin.z, &h};
+
+	char pval[MAXSTRLEN + 1];
+    int len, ierr;
+	sscanf(spec_file, "%s", spec_file);
+    FILE *fp_spc;
+
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+
+    for(int i = 0; i < 4; i++){
+        get_vars(fp_spc, mvals[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			read_error(mvals[i], "variable", fp_spc);
+		}            
+        sscanf(pval, "%lf", varList[i]);
+    }
+    coordinate.space.x = coordinate.space.y = coordinate.space.z = h;
     return coordinate;
 }
 
-Coordinate3D readCoarseCoordinate(SPEC spec){
-    Coordinate3D coordinate;
-    coordinate.mesh = readCoarseMesh3D(spec);
-    coordinate.origin = (Point3DDouble){spec.grid.x00, spec.grid.y00, spec.grid.z0};
-    return coordinate;
-}
 
 Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     double z0r;

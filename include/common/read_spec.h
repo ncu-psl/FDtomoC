@@ -68,14 +68,19 @@ char nstafil[MAXSTRLEN + 1];
 
 }SPEC;
 
+typedef struct{
+	int iread, ivs, vpvs;
+    int istacor, ivpvs, doshot, dotel, normal, havepo,
+		icon, dmax, iaddcon, ipop, ittnum;
+}CommonEnv;
+
+
 void read_variables(char *spec_file, SPEC *spec);
 void read_files(char *spec_file, SPEC *file_identifier);
 void read_grid(char *spec_file, SPEC *spec);
 void read_error(char *name, char *type, FILE *fp_spc);
 SPEC create_spec(char *specFile);
-int getNumberOfXfine(SPEC);
-int getNumberOfYfine(SPEC);
-int getNumberOfZfine(SPEC);
-
+CommonEnv setCommonEnv(char *);
+void setCommonVariables(CommonEnv *, char *);
 
 #endif
