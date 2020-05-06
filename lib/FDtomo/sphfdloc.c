@@ -76,13 +76,12 @@
 	char str_fhd[160000][20000];
 	char str_sum[160000][20000], str_out[160000][20000];
 float **t;
-int total_earthquakes = 0;
 void find_time(double, double, double, double *, int, int *, Coordinate3D, travelTimeTable *);
 void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 		char *, float *, char[maxobs][MAXSTRLEN + 1], char *, FILE *);
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 int get_time(int, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **); 
-LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode *event_list,
+Event *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode *event_list,
 				 StationNode *station_list, LocEnv loc_env) {
 	
 	double hpi = 1.570796f, degrad = 0.017453292f;
@@ -97,8 +96,8 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 	tmp *= degrad;
 	tmp = hpi - glath(tmp, z0, &z0r);
 
-	double df = coordinate.space.x * degrad;
-	double dq = coordinate.space.y * degrad;
+	double df = coordinate.space.x;
+	double dq = coordinate.space.y;
 	
 	int nx = coordinate.mesh.numberOfNode.x;
 	int ny = coordinate.mesh.numberOfNode.y;
@@ -554,7 +553,7 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 						"%4d %3d %2d %2d %8.4f %9.5f %10.5f %8.4lf %12s %13.3lf\n",
 						iyr, jday, ihr, imn, sec, xlat, xlon, ezmr, evid,
 						stdmin);
-				int len_str_data = 0;
+				int len_str_data = 0;				
 				event_array[nev].earthquake.time = (Time){iyr, jday, ihr, imn, sec};
 				event_array[nev].earthquake.location = (Point3D){xlat, xlon, ezmr};
 				loc_data[nev].stdmin = stdmin;
@@ -709,7 +708,7 @@ LocData *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNod
 
 
 
-	return ;
+	return event_array;
 } 
 
 void find_time(double x, double yy, double z, double *tp, int is, int *indsta, Coordinate3D coordinate, travelTimeTable *table_list) {
@@ -719,8 +718,8 @@ void find_time(double x, double yy, double z, double *tp, int is, int *indsta, C
 	double z0 = coordinate.origin.z;
 	double h = coordinate.space.z;
 
-	double df = coordinate.space.x * degrad;
-	double dq = coordinate.space.y * degrad;
+	double df = coordinate.space.x;
+	double dq = coordinate.space.y;
 	
 	int nx = coordinate.mesh.numberOfNode.x;
 	int ny = coordinate.mesh.numberOfNode.y;
@@ -913,6 +912,8 @@ int get_time(int nxyz, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **SPHFD
 }
 
 int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **SPHFDLOC, SPEC spec){
+	int total_earthquakes = 0;
+
 	FILE *fp_fdt = fopen(spec.fdatfil, "w");
 	if (!fp_fdt) {
 		printf("fp_fdt: open '%s' error\n", spec.fdatfil);

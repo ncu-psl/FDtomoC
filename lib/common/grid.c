@@ -64,7 +64,7 @@ Mesh1D createMesh1D(int numberOfNode, int *igrid){
     Mesh1D mesh;
     mesh.numberOfNode = numberOfNode;
 	mesh.igrid = calloc(numberOfNode, sizeof(int));
-    memcpy(mesh.igrid, igrid, numberOfNode);
+    memcpy(mesh.igrid, igrid, sizeof(float) * numberOfNode);
     return mesh;
 }
 
@@ -254,9 +254,8 @@ Coordinate3D change2Sphere(Coordinate3D coordinate, int isElevation){
     }
     coordinate.origin.x = coordinate.origin.x * degrad;
     int space = coordinate.space.x; 
-    coordinate.space.y = space / rearth / degrad;
+    coordinate.space.y = space / rearth;
     coordinate.space.x = fabs(space / (rearth * sin(coordinate.origin.y)));
-    coordinate.space.x = coordinate.space.x / degrad;
     return coordinate;
 }
 
