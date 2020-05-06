@@ -169,7 +169,8 @@ float trilinear_interpolation_base(Point3D point, Point3D base, Coordinate3D coo
 
 
 
-void transform3D(Coordinate3D coordinate, velocityModel3D *model){
+velocityModel3D transform3D(Coordinate3D coordinate, velocityModel3D *model){
+	velocityModel3D new_model;
 	int meshSize3D = sizeOfMesh3D(coordinate.mesh);
 	int modelSize3D = sizeOfMesh3D(model->coordinate.mesh);
 	int vMeshSize3D = sizeOfMesh3D(model->coordinate.mesh);
@@ -196,10 +197,9 @@ void transform3D(Coordinate3D coordinate, velocityModel3D *model){
             } 
         }
     }
-	model->coordinate = coordinate;
-	free(model->velocity);
-	model->velocity = velocity;
-	velocity = NULL;
+	new_model.coordinate = coordinate;
+	new_model.velocity = velocity;
+	return new_model;
 }
 
 velocityModel3D change2ColumnMajor(velocityModel3D model){
