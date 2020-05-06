@@ -98,26 +98,20 @@ float acond, rnorm, arnorm, dampsq, xnorm;
 float *a;
 float one = 1.0f;
 
-RUNLSQR_DATA *runlsqr(SPEC spec, SPHRAYDERV_DATA *SPHRAYDERV) {
+RUNLSQR_DATA *runlsqr(SPHRAYDERV_DATA *SPHRAYDERV, RunlsqrEnv runlsqr_env, CommonEnv common_env){
+	char VERSION[10] = "2018.0114\0";
+
 	RUNLSQR_DATA *RUNLSQR = (RUNLSQR_DATA *)malloc(sizeof(RUNLSQR_DATA));
 
 	//initialize variable
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
-	    ny = spec.grid.ny, nz = spec.grid.nz;
-	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
-	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
-	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
 
-	float damper = spec.damper;
-	int intlims = spec.intlims, ittnum = spec.ittnum;
-	char dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], nmodfil[MAXSTRLEN + 1],
-		fresfil[MAXSTRLEN + 1];
-	char VERSION[10] = "2018.0114\0";
-	
-	strcpy(dtdsfil, spec.dtdsfil);
-	strcpy(resfile, spec.resfile);
-	strcpy(nmodfil, spec.nmodfil);
-	strcpy(fresfil, spec.fresfil);
+	float damper = runlsqr_env.damper;
+	int intlims = runlsqr_env.intlim;
+	int ittnum = common_env.ittnum;
+	char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1];
+	strcpy(nmodfil, runlsqr_env.nmodfil);
+	strcpy(fresfil, runlsqr_env.fresfil);
+
 
 	int i, len, ierr;
 
@@ -853,6 +847,7 @@ int OUTPUT_RUNLSQR(RUNLSQR_DATA *RUNLSQR, SPEC spec){
 
 int LOG_RUNLSQR(SPEC spec){
 	char logfile[80 + 1];
+	char VERSION[10] = "2018.0114\0";
 
 	sprintf(logfile, "runlsqr.log%d\n", spec.ittnum);
 	FILE *fp_log = fopen(logfile, "w");
@@ -889,4 +884,52 @@ int LOG_RUNLSQR(SPEC spec){
 			" *************************************************************** \n");
 	
 	return 0;
+}
+
+RunlsqrEnv setRunlsqrEnv(char *spec_file){
+	RunlsqrEnv runlsqr_env;
+	setRunlsqrVariables(&runlsqr_env, spec_file);
+	setRunlsqrFiles(&runlsqr_env, spec_file);
+	return runlsqr_env;
+}
+
+void setRunlsqrVariables(RunlsqrEnv *runlsqr_env, char *spec_file){
+	FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+    
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
+	get_vars(fp_spc, "damper", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%f", &runlsqr_env->damper);
+	}
+	get_vars(fp_spc, "intlim", pval, &len, &ierr);
+	if (ierr == 0) {
+		sscanf(pval, "%d", &runlsqr_env->intlim);
+	}
+}
+void setRunlsqrFiles(RunlsqrEnv *runlsqr_env, char *spec_file){
+	FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+	int len, ierr;
+    char pval[MAXSTRLEN + 1];
+
+	char *files[2] = { "nmodfil\0", "fresfil\0" };
+	char *file_list[2] = {runlsqr_env->nmodfil, runlsqr_env->fresfil};
+	for (int i = 0; i < 2; i++) {
+		get_vars(fp_spc, files[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			printf("Error trying to read filename %s", files[i]);
+			assert(0);
+		}
+		sscanf(pval, "%s", file_list[i]);
+	}
 }
