@@ -203,14 +203,13 @@ travelTimeTable sphfd_exec(velocityModel3D, Point3DDouble);
 travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
 {
 	int numOfStations = getStationCount(station_head);
-	travelTimeTable *travle_time_array = (travelTimeTable *)malloc(sizeof(travelTimeTable) * numOfStations);
+	travelTimeTable *travle_time_array = (travelTimeTable *)malloc(sizeof(travelTimeTable) * (numOfStations - 1));
 	StationNode *currentStation = station_head;
-	travelTimeTable *currentTable = travle_time_array;
 	int index = 0;
 	for(int i = 0; i < numOfStations - 1; i++){
 		Point3DDouble location = currentStation->data.location; 
-		currentTable[i] = sphfd_exec(model, location);
-		strcpy(currentTable[i].name, currentStation->data.name);
+		travle_time_array[i] = sphfd_exec(model, location);
+		strcpy(travle_time_array[i].name, currentStation->data.name);
 		currentStation = currentStation->next;
 	}
 

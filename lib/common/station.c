@@ -68,3 +68,14 @@ int getStationCount(StationNode *station_list){
 	}
 	return index;
 }
+
+Station *StationList2Arr(StationNode *station_list){
+	int station_count = getStationCount(station_list);
+    Station *station_array = malloc(sizeof(Station) * station_count);
+	StationNode *current_station = station_list;
+    for(int i = 0; i < station_count; i++){
+        station_array[i] = current_station->data;
+        current_station = current_station->next;
+    }
+    return station_array;
+}
