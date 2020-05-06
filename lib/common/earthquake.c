@@ -194,7 +194,7 @@ Event *EventList2Arr(EventNode *event_list){
 int *checkTravelTime(Event event, travelTimeTable *table_list, StationNode *station_head){
     int numOfStations = getStationCount(station_head);
     int numbOfObservation = getTimeCount(event.observedTimeList);
-    int *timeIndex = (int *)malloc(sizeof(int) * numbOfObservation);
+    int *timeIndex = (int *)calloc(numbOfObservation, sizeof(int));
     travelTimeTable *current = NULL;
     for(int i = 0; i < numbOfObservation; i++){
         current = table_list;
@@ -211,7 +211,7 @@ int *checkTravelTime(Event event, travelTimeTable *table_list, StationNode *stat
 
 float *getObsTime(Event event){
     int numbOfObservation = getTimeCount(event.observedTimeList);
-    float *obs_travel_time = malloc(sizeof(float) * numbOfObservation);
+    float *obs_travel_time = calloc(numbOfObservation, sizeof(float));
     double origin_time = htoe2(event.earthquake.time);
     TimeNode *current_time = event.observedTimeList;
     for(int i = 0; i < numbOfObservation; i++){
@@ -284,13 +284,6 @@ void setLocVariables(LocEnv *loc_env, char *spec_file){
 	get_vars(fp_spc, "vpvs ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%f", &loc_env->vpvs);
-	get_vars(fp_spc, "ivpvs ", pval, &len, &ierr);
-	if (ierr == 0) {
-		sscanf(pval, "%d", &loc_env->vpvs);
-	}
-	if (loc_env->vpvs != 0 && loc_env->vpvs != 1) {
-		loc_env->vpvs = 0;
-	}
 
 	get_vars(fp_spc, "nthres ", pval, &len, &ierr);
 	if (ierr == 0)

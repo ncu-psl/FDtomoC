@@ -20,4 +20,5 @@ void insertStation(StationNode *, Station);
 void appendStationNode(StationNode **, StationNode *);
 StationNode *createStationList(char *, int);
 int getStationCount(StationNode *);
+Station *StationList2Arr(StationNode *);
 #endif

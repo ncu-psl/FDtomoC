@@ -67,7 +67,6 @@
 #include "common/time_process.h"
 #include "common/geographic_method.h"
 #include "common/environment_setting.h"
-#include "common/shared_variables.h"
 #include "common/read_spec.h"
 #include "FDtomo/sphrayderv.h"
 // #include "common/dirent.h"
@@ -92,112 +91,73 @@
 #define _ATL_SECURE_NO_WARNINGS
 #pragma warning(disable : 4206 4221 4464 4710 5045)
 
-int kn = 0, iph = 0, kbl = 0;
-int je = 0, ke = 0;
+SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_list, Event *event_array,
+								int event_size, StationNode *station_list,SphraydervEnv sphrayderv_env, CommonEnv common_env) {
 
-double dsec, tarr, dpot;
-double stx, sty;
-double stz[maxlst];
-double xlat, xlon;
-double a, b, c, quad;
-double tolmin, tolmax;
-double ex, ey, ez;
-double xx, yy, zz, xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
-double sx, sy, sz, sf, sq, sr;
-double xo, yo, zo;
-double xold, yold, zold;
-double ro, r1, r2, q1, q2, f1, f2;
-double xs, ys, zs;
-double sinq, cosq, tanq, ctanq, tansq, ctansq;
-double dl;
-// some variable name is used in <math.h>, moved it into main()
-
-// added by lzw
-double sfq;
-
-float sp[nxyzm2];
-float obstime[maxobs];
-float pwt[maxobs], dat[maxobs];
-float rwts[maxobs], resmin[maxobs];
-float tdelts[maxobs], az1s[maxobs], az2s[maxobs];
-float azs[maxobs], ais[maxobs];
-float tcor[maxlst][2], dtc[maxlst2];
-float stlat[maxlst], stlon[maxlst];
-float t[maxsta][nxyzm];
-float vm[maxnbk][maxobs], vmp[maxkbl][maxobs];
-float vsum[maxkbl];
-float am[maxobs][4];
-float avrstn[maxlst][2];
-float rstnsq[maxlst][2];
-float facstn[maxlst][2];
-float du[nxyzm];
-
-float slats[nxm][nym], slons[nxm][nym];
-
-int nobstn[maxlst][2];
-int ind[maxnbk][maxobs];
-int mndm[maxkbl], *jndx;
-int mndex[nxyzm2], indx[nxyzm2];
-int nhit[nxyzm2], mhit[nxyzm2];
-int inbk[maxobs];
-int jsave[maxkbl];
-int istn[maxobs];
-int i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
-
-char filen[80], rayfile[80];
-char evid[10];
-char sta[maxobs][6], stn[maxsta][6], stt[maxlst][6];
-char phs[maxobs], pha[maxsta];
-char mark;
-
-// -- - the following are set so that the grid in the header can
-//    be read in without overridding the vaules in the spec file
-
-int jgridx[nxcm1], jgridy[nycm1], jgridz[nzcm1];
-int wsum = 0, ncwrt = 0;
-// ---- - end header stuff
-
-SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	SPHRAYDERV_DATA *SPHRAYDERV = (SPHFDLOC_DATA *)malloc(sizeof(SPHFDLOC_DATA));
 	SPHRAYDERV->mat = (sparse_matrix *)malloc(sizeof(sparse_matrix));
 	SPHRAYDERV->b = (float *)malloc(sizeof(float) * MMAX);
-	jndx = (int *)malloc(sizeof(int) * maxmbl);
+	int *jndx = (int *)malloc(sizeof(int) * maxmbl);
+
+	double degrad = 0.017453292f;
+	double hpi = 1.570796f;
+	float rearth = 6371.0f;
+
 	//initialize variable
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
-	    ny = spec.grid.ny, nz = spec.grid.nz;
-	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
-	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
-	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
+	int nxc = coarseModel.coordinate.mesh.numberOfNode.x;
+	int nyc = coarseModel.coordinate.mesh.numberOfNode.y;
+	int nzc = coarseModel.coordinate.mesh.numberOfNode.z;
 
-	float *gx = spec.grid.gx, *gy = spec.grid.gy, *gz = spec.grid.gz;
+	int nx = table_list[0].mesh.numberOfNode.x;
+	int ny = table_list[0].mesh.numberOfNode.y;
+	int nz = table_list[0].mesh.numberOfNode.z;
 
 
-	int iread = spec.iread, ivs = spec.ivs, ivpvs = spec.ivpvs, idmean = spec.idmean,
-		iray = spec.iray, iraystat = spec.iraystat, idatout = spec.idatout, nomat = spec.nomat,
-		istacor = spec.istacor, idoshot = spec.idoshot, idotel = spec.idotel, kmin = spec.kmin, 
-		kmax = spec.kmax, ittnum = spec.ittnum;
+	double h = coarseModel.coordinate.space.x;
+	coarseModel.coordinate = change2Sphere(coarseModel.coordinate, 0);
+	double x0 = coarseModel.coordinate.origin.x;
+	double y[1] = {coarseModel.coordinate.origin.y}; 
+	double z0 = coarseModel.coordinate.origin.z;
 	
-	float vpvsscale = spec.vpvsscale, resflag = spec.resflag, clat = spec.clat, clon = spec.clon;
-	double vpvs = spec.vpvs; 
+	double df = coarseModel.coordinate.space.x;
+	double dq = coarseModel.coordinate.space.y;
+	
+	float *gx = getXAxis(coarseModel.coordinate);
+    float *gy = getYAxis(coarseModel.coordinate);
+    float *gz = getZAxis(coarseModel.coordinate);
+
+	int iread = common_env.iread;
+	int ivs = common_env.ivs;
+	int ivpvs = common_env.ivpvs;
+    int istacor = common_env.istacor;
+	int idoshot = common_env.doshot;
+	int idotel = common_env.dotel;
+	int ittnum = common_env.ittnum;
+
+	int idmean = sphrayderv_env.dmean;
+	int iray = sphrayderv_env.iray;
+	int iraystat = sphrayderv_env.iraystat;
+	int idatout = sphrayderv_env.idatout;
+	int nomat = sphrayderv_env.nomat;
+	int kmin = sphrayderv_env.kmin;
+	int kmax = sphrayderv_env.kmax;
+	int vpvsscale = sphrayderv_env.vpvsscale;
+	int resflag = sphrayderv_env.resflag;
 
 	char VERSION[10] = "2004.0923";
-	char timedir[60 + 1];
 	char parval[MAXSTRLEN];
-	char stafile[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
+	char locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
     	dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
 		dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1]; 
 
-	strcpy(timedir, spec.timedir);
-	strcpy(stafile, spec.stafile);
-	strcpy(oldvfil, spec.oldvfil);
-	strcpy(locdfil, spec.locdfil);
-	strcpy(telrerr, spec.telrerr);
-	strcpy(dtdsfil, spec.dtdsfil);
-	strcpy(resfile, spec.resfile);
-	strcpy(hitfile, spec.hitfile);
-	strcpy(dtdhfil, spec.dtdhfil);
-	strcpy(bookfil, spec.bookfil);
-	strcpy(sclefil, spec.sclefil);
+	strcpy(locdfil, sphrayderv_env.locdfil);
+	strcpy(telrerr, sphrayderv_env.telrerr);
+	strcpy(dtdsfil, sphrayderv_env.dtdsfil);
+	strcpy(resfile, sphrayderv_env.resfile);
+	strcpy(hitfile, sphrayderv_env.hitfile);
+	strcpy(dtdhfil, sphrayderv_env.dtdhfil);
+	strcpy(bookfil, sphrayderv_env.bookfil);
+	strcpy(sclefil, sphrayderv_env.sclefil);
 
 	char aline[MAXSTRLEN];	
 	char telefil[MAXSTRLEN],  pbasfil[MAXSTRLEN], sbasfil[MAXSTRLEN], shotfil[MAXSTRLEN],
@@ -206,26 +166,20 @@ SPHRAYDERV_DATA *sphrayderv(SPEC spec, SPHFDLOC_DATA **SPHFDLOC) {
 	int ido1d = 0;
 	double sinf, cosf, tanf, ctanf;
 	strcpy(aline, "spec.aline");
-	strcpy(telefil, spec.telefil);
-	strcpy(pbasfil, spec.pbasfil);
-	strcpy(sbasfil, spec.sbasfil);
-	strcpy(shotfil, spec.shotfil);
-	strcpy(elipfil, spec.elipfil);
-	strcpy(raystat, spec.raystat);
-	strcpy(dotfile, spec.dotfile);
-	strcpy(headfil, spec.headfil);
-	strcpy(entfile, spec.entfile);
-	strcpy(stcfile, spec.stcfile);
+	strcpy(telefil, sphrayderv_env.telefil);
+	strcpy(pbasfil, sphrayderv_env.pbasfil);
+	strcpy(sbasfil, sphrayderv_env.sbasfil);
+	strcpy(shotfil, sphrayderv_env.shotfil);
+	strcpy(elipfil, sphrayderv_env.elipfil);
+	strcpy(raystat, sphrayderv_env.raystat);
+	strcpy(dotfile, sphrayderv_env.dotfile);
+	strcpy(headfil, sphrayderv_env.headfil);
+	strcpy(entfile, sphrayderv_env.entfile);
+	strcpy(stcfile, sphrayderv_env.stcfile);
 
 	double xn, yn, zn;
 	int len = 0, ierr = 0;
 
-int ib = 0, ie = 0, lenv = 0, nvl = 0;
-
-	get_field(spec.spec_file, aline, ib, &ie, parval, &nvl, &ierr);
-
-	int nxy = nx * ny;
-	int nxyz = nxy * nz;
 	//c-- - Note that x0, y0, z0 are the spherical coordinates of the model origin
 	//c(i.e., NW corner, top).At the start :
 	//c    x0 is the geographic longitude in degress(E positive),
@@ -240,8 +194,8 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		printf("  Origin:  %22.14lf %25.15lf %25.16lf       degrees/km\n", x0, y[0], z0);
 	}
 
-	tolmin = h * 1.E-6f;
-	tolmax = h * 6.0f;
+	double tolmin = h * 1.E-6f;
+	double tolmax = h * 6.0f;
 	if (DEBUG_PRINT) {
 		printf("  Origin:  %22.16lf %25.16lf %25.16lf       radians/km\n", x0, y[0], z0);
 		printf("  Radial Spacing: %24.16lf       km\n", h);
@@ -250,6 +204,9 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		printf("  nxc, nyc, nzc: %12d%12d%12d\n", nxc, nyc, nzc);
 	}
 	
+	int nxy = nx * ny;
+	int nxyz = nxy * nz;
+
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
@@ -271,11 +228,6 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	//c
 	//c     Note that at present this is hardwired(shots wired to m2)
 	int m1 = -1, m2 = -2;
-	FILE* fp_sta = fopen(stafile, "r");
-	if (!fp_sta) {
-		printf("Error on opening file: %s\n", stafile);
-		assert(0);
-	}
 	FILE* fp_eqs = fopen(locdfil, "r");
 	if (!fp_eqs) {
 		printf("Error on opening file: %s\n", locdfil);
@@ -336,7 +288,7 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	sbasfil(S base travel time file(istel / idotel = 1))		.. / data / small / runs_files / parameter / Stimes.base293
 	elipfil(Ellipticity correction  file(istel / idotel = 1))	.. / data / small / runs_files / parameter / elpcor
 	*/
-
+	
 	if (idatout) {
 		fp_dot = fopen(dotfile, "w");
 		if (!fp_dot) {
@@ -384,44 +336,17 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	int nstr;
 	char str_inp[MAXSTRLEN];
 
-	for (nstr = 0; fgets(str_inp, sizeof(str_inp), fp_sta); nstr++) {
-		char str_inp_trimed[MAXSTRLEN];
-		trimwhitespace(str_inp_trimed, strlen(str_inp), str_inp);
-		if (str_inp_trimed[0] == '\n')
-			break;
-		if (strlen(str_inp_trimed) > MAXSTRLEN) {
-			printf("str_inp is too long: %s\n", str_inp_trimed);
-			assert(0);
-		}
-		if (nstr >= maxlst) {
-			printf(" Error: too many stations in list.. aborting\n");
-			assert(0);
-		}
-		//
-		// ---- sty and stx are in meters from the origin when using cartesian coordinates,
-		//    but they are not used in this version.  slat and slon are lats
-		//    and lons in decimal degrees.  stx and sty save the lats and lons relative
-		//    to the origin.  ielev is elevation in meters above m.s.l.
-		//
-
-		int ielev;
-		float slat, slon;
-		sscanf(str_inp, "%lf %lf %d %s %f %f %f %f", &sty, &stx, &ielev, stt[nstr], &slat, &slon, &tcor[nstr][0], &tcor[nstr][1]);
-
-		// ---temp lines to reassign slat and slon as the reference locations
-		stx = slon;
-		sty = slat;
-		// --end temp lines
-		stlon[nstr] = stx * degrad;
-		stlat[nstr] = hpi - glat(sty * degrad);
-		stz[nstr] = -(float)(ielev / 1000.f);
-		//    stz(nstr) = -elev
-		// ---left justify the station name (no leading blanks)
-		ljust(stt[nstr]);
+	float stlat[maxlst], stlon[maxlst], tcor[maxlst][2];
+	double stz[maxlst];
+	int numOfStations = getStationCount(station_list);
+	Station *station_array = StationList2Arr(station_list);
+	for (nstr = 0; nstr < numOfStations; nstr++){
+		stlon[nstr] = station_array[nstr].location.x * degrad;
+		stlat[nstr] = hpi - glat(station_array[nstr].location.y * degrad);
+		stz[nstr] = station_array[nstr].location.z;
+		tcor[nstr][0] = 0;
+		tcor[nstr][1] = 0;
 	}
-	nstr--;
-	printf(" %d stations read in.\n", nstr+1);
-	fclose(fp_sta);
 
 	// -- - header on station correction array
 	int nstr2 = 2 * nstr;
@@ -429,8 +354,10 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 		fprintf(fp_stc, " %d", nstr2);
 	}
 
-	for (i = 0; i < nstr; i++) {
-		for (j = 0; j < 2; j++) {
+	float avrstn[maxlst][2], rstnsq[maxlst][2], facstn[maxlst][2];
+	int nobstn[maxlst][2];
+	for (int i = 0; i < nstr; i++) {
+		for (int j = 0; j < 2; j++) {
 			avrstn[i][j] = 0;
 			rstnsq[i][j] = 0;
 			facstn[i][j] = 0;
@@ -441,6 +368,7 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	// ---- - set the data file to the local earthquake data file
 	FILE* fp_din = fp_eqs;
 	int mbl = 0;
+	int nhit[nxyzm2];
 	for (int i1 = 0; i1 < nxyz2; i1++) {
 		nhit[i1] = 0;
 	}
@@ -455,35 +383,35 @@ int ib = 0, ie = 0, lenv = 0, nvl = 0;
 	//    Read in event header
 	int evenum = 0;
 	int row_count = 0, ith = 0;
-	char *evetmp;
+	Event eventmp;
 a3: ;
-	if (evenum >= total_earthquakes) {
+	if (evenum >= event_size) {
 		goto a60;
 	}
-	evetmp = SPHFDLOC[evenum]->event;
-	if (*evetmp == NULL){
-		evenum++;
-		goto a3;
-	}
-	/*
-	fgets(str_inp, sizeof(str_inp), fp_din);
-	if (feof(fp_din)) {
-		goto a60;
-	}
-	if (strlen(str_inp) > sizeof(str_inp)) {
-		printf("str_inp is too long: %s\n", str_inp);
-		assert(0);
-	}*/
-	int kyr, kday, khr, kmn;
-	float esec;
-	float dep;
+	eventmp = event_array[evenum];
 
-	sscanf(SPHFDLOC[evenum]->event_hdr, "%d %d %d %d %f %lf %lf %f %s\n", &kyr, &kday, &khr,
-		&kmn, &esec, &xlat, &xlon, &dep, evid);
+	int *indsta = checkTravelTime(event_array[evenum], table_list, station_list);
+	int *isgood = event_array[evenum].isgood;
+	int nsta = getTimeCount(event_array[evenum].observedTimeList);
+	float *obstime = getObsTime(event_array[evenum]);
+	float *pwt = getPwt(event_array[nev]);
+	char *phs = event_array[evenum].phase;
+	char (*sta)[MAXSTRLEN + 1] = event_array[evenum].station_name_list;
+
+	int kyr = eventmp.earthquake.time.iyr;
+	int kday = eventmp.earthquake.time.jday;
+	int khr = eventmp.earthquake.time.ihr;
+	int kmn = eventmp.earthquake.time.imn;
+	float esec = eventmp.earthquake.time.sec;
+	double xlat = eventmp.earthquake.location.x;
+	double xlon = eventmp.earthquake.location.y;
+	float dep = eventmp.earthquake.location.z;
+	char evid[10];
+	strcpy(evid, eventmp.evid);
 
 	//	c---convert to epochal time
-	dsec = esec;
-	htoe(kyr, kday, khr, kmn, dsec, &dpot);
+	double dsec = esec;
+	double dpot = htoe2(eventmp.earthquake.time);
 
 	if (isshot == 0) {
 		if (istel == 0) {
@@ -496,8 +424,52 @@ a3: ;
 	else {
 		nshot++;
 	}
+	
+	int kn = 0, iph = 0, kbl = 0;
+	int ie = 0, je = 0, ke = 0;
+	int timeIndex;
+	double tarr;
+	double stx, sty;
+	double a, b, c, quad;
+	double ex, ey, ez;
+	double xx, yy, zz, xi, yj, zk, gradt[3], dd[3], d, length, dlen, dt, fx, fy, fz, gradtm;
+	double sx, sy, sz, sf, sq, sr;
+	double xo, yo, zo;
+	double xold, yold, zold;
+	double ro, r1, r2, q1, q2, f1, f2;
+	double xs, ys, zs;
+	double sinq, cosq, tanq, ctanq, tansq, ctansq;
+	double dl;
+
+	double sfq;
+
+	float sp[nxyzm2];
+	float dat[maxobs];
+	float rwts[maxobs], resmin[maxobs];
+	float tdelts[maxobs], az1s[maxobs], az2s[maxobs];
+	float azs[maxobs], ais[maxobs];
+	float dtc[maxlst2];
+	float vm[maxnbk][maxobs], vmp[maxkbl][maxobs];
+	float vsum[maxkbl];
+	float am[maxobs][4];
+
+	float slats[nxm][nym], slons[nxm][nym];
+
+	int ind[maxnbk][maxobs];
+	int mndm[maxkbl];
+	int mndex[nxyzm2], indx[nxyzm2];
+	int mhit[nxyzm2];
+	int inbk[maxobs];
+	int jsave[maxkbl];
+	int istn[maxobs];
+	int i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
 	int ies = 0, jes = 0, kes = 0;
 	float xis = 0, yjs = 0, zks = 0;
+	char filen[80], rayfile[80];
+	int wsum = 0, ncwrt = 0;
+	char mark;
+	char stn[maxsta][6], pha[maxsta];
+
 	if (istel == 0) {
 		ex = xlon * degrad;
 		ey = hpi - glat(xlat * degrad);
@@ -516,22 +488,6 @@ a3: ;
 			fprintf(fp_err, " Error:  This event is out of bounds and skipped : \n");
 			fprintf(fp_err, " %4d %3d %2d %2d %8.4lf %9.5f %10.5f %8.4lf %12s\n", kyr, kday, khr, kmn, esec, ex, ey, ez, evid);
 			fprintf(fp_err, "\n");
-			while (aline[0] != '\0') {
-				if(!sscanf(evetmp, "%[^\n]", str_inp)) {
-					break;
-				}
-				len = (int)strlen(str_inp);
-				if (len > MAXSTRLEN) {
-					printf("input length is too large. len=%d str_inp=%s\n", len,
-						str_inp);
-					assert(0);
-				}
-				strcpy(str_inp, trim(str_inp));
-				if (str_inp[0] == '\n' || str_inp[0] == '\0') {
-					break;
-				}
-				evetmp = evetmp + strlen(str_inp) + 1;
-			}
 			evenum++;
 			goto a3;
 		}
@@ -541,105 +497,17 @@ a3: ;
 		yjs = dq * jes + y[0];
 		zks = h * kes + z0;
 	}
-
-	// ----Read in the times and stations
-	avresev = 0;
-	facsev = 0;
-	int nsta = 0;
-	int isgood[maxobs];
-	memset(isgood, 0, sizeof(isgood));
-	for (nsta = 0; sscanf(evetmp, "%[^\n]", str_inp); nsta++) {
-		if (nsta >= maxobs) {
-			printf("Error:  too many observations! nsta=%d maxobs=%d\n", nsta, maxobs);
-			assert(0);
-		}
-		char str_inp_trimed[100];
-		trimwhitespace(str_inp_trimed, strlen(str_inp), str_inp);
-
-		len = (int)strlen(str_inp_trimed);
-		if (str_inp_trimed[0] == '\0') {
-			break;
-		}
-		if (len >= MAXSTRLEN) {
-			printf("input length is too large. len=%d str_inp=%s\n", len,
-				str_inp_trimed);
-			assert(0);
-		}
-
-		char str_tmp[MAXSTRLEN];
-		int iyr = 0, jday = 0, ihr = 0, imn = 0;
-		float sec = 0;
-		sscanf(str_inp_trimed, "%s %d %d %d %d %f %99[^\n]\n", sta[nsta], &iyr,
-			&jday, &ihr, &imn, &sec, str_tmp);
-		if (str_tmp[0] == '*') {
-			str_tmp[0] = ' ';
-			//trim(str_tmp);
-		}
-		char str_t[10] = "";
-		sscanf(str_tmp, " %c %f", str_t, &rwts[nsta]);
-		phs[nsta] = str_t[0];
-		// --- left justify station name
-		ljust(sta[nsta]);
-		// ---convert from "0 1" to "P S" if necessary
-		if (phs[nsta] == '0') {
-			phs[nsta] = 'P';
-		}
-		else if (phs[nsta] == '1') {
-			phs[nsta] = 'S';
-		}
-		d_blank(filen, &len);
-
-		pwt[nsta] = 1.f / (rwts[nsta] * rwts[nsta]);
-		dsec = sec;
-
-		htoe(iyr, jday, ihr, imn, dsec, &tarr);
-		obstime[nsta] = tarr - dpot;
-
-		if (nsta > maxobs) {
-			printf(" Error: too many observations!\n");
-			assert(0);
-		}
-		evetmp = evetmp + strlen(str_inp) + 1;
-	}
-	if (DEBUG_PRINT) {
-		if (isshot == 0) {
-			if (istel == 0) {
-				printf(" %d times read in for local event %d\n", nsta, nev);
-				printf(" Working on local event %s\n", evid);
-			}
-			else {
-				printf(" %d times read in for teleseismic event %d\n", nsta, ntel);
-				printf(" Working on tele event %s\n", evid);
-			}
-		}
-		else {
-			printf(" %d times read in for shot %d\n", nsta, nshot);
-			printf(" Working on shot %s\n", evid);
-		}
-	}
-
+	
 	// *****Start Loop over Phases*****
 	for (i = 0; i < nsta; i++) {
 
 		// ------clear derivative array
-		memset(du, 0, maxvar * sizeof(du[0]));
-
+		float *du = calloc(maxvar, sizeof(float));
 		inbk[i] = 0;
 		float rdevs = 0;
 		isgood[i] = 1;
 
-		// Find this station in the station list
-		for (kn = 0; kn < nstr + 1; kn++) {
-			if (strcmp(sta[i], stt[kn]) == 0) {
-				break;
-			}
-		}
-		if (kn == nstr + 1 ) {
-			printf(" Warning: Station not in list = %s ...skipping this phase.\n", sta[i]);
-			isgood[i] = 0;
-			goto a200;
-			// continue; // for(i=0;i<nsta;i++) {...}
-		}
+		kn = indsta[i];
 		xs = stlon[kn];
 		ys = stlat[kn];
 		zs = stz[kn];
@@ -651,19 +519,19 @@ a3: ;
 		float tc = tcor[kn][iph];
 		istn[i] = kn + nstr * iphm1;
 
+
+		int is, js, ks;
 		//--- This is the nearest grid point to the Station
 		is = (int)(round((xs - x0) / df));
 		js = (int)(round((ys - y[0]) / dq));
 		ks = (int)(round((zs - z0) / h));
 
+		int iscell, jscell, kscell;
 		//--- This is the cell containing the Station
 		iscell = (int)((xs - x0) / df);
 		jscell = (int)((ys - y[0]) / dq);
 		kscell = (int)((zs - z0) / h);
-		// printf("1083 iscell=%d\tjsecll=%d\tkscell=%d\n", iscell, jscell, kscell);
-		// stop
 
-		//---See if the travel time tables for this station has been read in.  If not, read them in.
 		if (ntread > 0) {
 			for (j = 0; j < ntread; j++) {
 				if (strcmp(sta[i], stn[j]) == 0) {
@@ -676,113 +544,13 @@ a3: ;
 
 		int iuse = ntread;
 		ntread++;
-		if (ntread > maxsta) {
-			if (DEBUG_PRINT)
-				printf(" Limit reached...looking for one we do not need now.\n");
-			assert(0);
-			// ---Loop over the station-phases that have been read in.
-			// If it happens that one of these is not used by the current event, read over it.
-			// If there is no more space available, choose one at random to read over.
-
-			for (j = 0; j < ntread - 1; j++) {
-				int flag = 0;
-				for (k = 0; k < nsta; k++) {
-					if (strcmp(sta[k], stn[j]) == 0) {
-						if (ivs == 0 || phs[k] == pha[j]) {
-							flag = 1;
-							break;
-						}
-					}
-				}
-				if (flag)
-					continue;
-				goto a21;
-			}
-			iover++;
-			if (iover > maxsta)
-				iover = 1;
-			iuse = iover;
-			j = iuse;
-		a21:
-			ntread--;
-			iuse = j;
-			if (DEBUG_PRINT)
-				printf("Overwriting %s  %c with  %s %c\n", stn[j], pha[j], sta[i], phs[i]);
-		}
-
 		strcpy(stn[iuse], sta[i]);
 		pha[iuse] = phs[i];
-		if (phs[i] == 'P' || ivs == 0) {
-			sprintf(filen, "%s/%s.ptimes", timedir, sta[i]);
-		}
-		else {
-			sprintf(filen, "%s/%s.stimes", timedir, sta[i]);
-		}
-
-		d_blank(filen, &len);
-		printf("Reading in %s\n", filen);
-
-		FILE* fp_tab = fopen(filen, "rb");
-		if (!fp_tab) {
-			printf("Error on opening file: %s\n", filen);
-			assert(0);
-		}
-
-		char hdr[nhbyte];
-		char head[5], type[5], syst[5];
-		char quant[5];
-		char flatten[5];
-		char hcomm[125];
-
-		fread(hdr, sizeof(hdr[0]), nhbyte, fp_tab);
-		char* offset = hdr;
-		sscanf(offset, "%4s", head);
-		offset += strlen(head);
-		sscanf(offset, "%4s", type);
-		offset += strlen(type);
-		sscanf(offset, "%4s", syst);
-		offset += strlen(syst);
-		sscanf(offset, "%4s", quant);
-		offset += strlen(quant);
-		sscanf(offset, "%4s", flatten);
-		offset += strlen(flatten);
-		sscanf(offset, "%124s", hcomm);
-
-		// ---see if this the time file has a header on it.
-		if (strcmp(head, "HEAD") == 0) {
-			if (DEBUG_PRINT) {
-				printf(" File has a header...\n");
-			}
-			if (strcmp(type, "FINE") != 0) {
-				if (DEBUG_PRINT)
-					printf("WARNING: input mesh does not appear to be FINE: %s\n", type);
-			}
-			if (iread == 0) {
-				fread(t[iuse], sizeof(t[iuse][0]), nxyz, fp_tab);
-			}
-		}
-		else {
-			rewind(fp_tab);
-			if (DEBUG_PRINT) {
-				printf(" File has no header...\n");
-			}
-			if (iread == 0) {
-				fread(t[iuse], sizeof(t[iuse][0]), nxyz, fp_tab);
-			}
-		}
-		fclose(fp_tab);
-		if (DEBUG_PRINT)
-			printf("...Done.\n");
 		j = iuse;
-
-	a7:
-		// ----test to see if all data can be read in correctly
-		if (iread == 1) {
-			evenum++;
-			goto a3;
-		}
-
+	a7: ;
 		// ----(rsx, rsy) is a unit vector from earthquake to station used in raypath stats only
+		timeIndex = indsta[i];
+
 		float rsx = xs - ex;
 		float rsy = ys - ey;
 
@@ -913,9 +681,8 @@ a3: ;
 
 		// Don't use this ray if it's in a region of the model where times are not
 		// alculated(see parameter "maxoff" in punch.c)
-
 		for (int iii = 0; iii < 8; iii++) {
-			if (t[j][ipt[iii]] > 1.E9) {
+			if (table_list[timeIndex].time[ipt[iii]] > 1.E9) {
 				printf(" Ray out of bounds...skipping this observation\n");
 				fprintf(fp_err, " Ray out of bounds...skipping this observation\n");
 				isgood[i] = 0;
@@ -943,7 +710,7 @@ a3: ;
 
 		dt = 0;
 		for (int iii = 0; iii < 8; iii++) {
-			dt += ds[iii] * t[j][ipt[iii]];
+			dt += ds[iii] * table_list[timeIndex].time[ipt[iii]];
 		}
 
 		// --- For local events, ttel = 0. For teles, ttel is the time to the base of the model.
@@ -986,9 +753,9 @@ a3: ;
 		dsdz[7] = fy * fx;
 		float dtdx = 0, dtdy = 0, dtdz = 0;
 		for (int iii = 0; iii < 8; iii++) {
-			dtdx += dsdx[iii] * t[j][ipt[iii]];
-			dtdy += dsdy[iii] * t[j][ipt[iii]];
-			dtdz += dsdz[iii] * t[j][ipt[iii]];
+			dtdx += dsdx[iii] * table_list[timeIndex].time[ipt[iii]];
+			dtdy += dsdy[iii] * table_list[timeIndex].time[ipt[iii]];
+			dtdz += dsdz[iii] * table_list[timeIndex].time[ipt[iii]];
 		}
 		dtdx /= df;
 		dtdy /= dq;
@@ -1142,7 +909,7 @@ a3: ;
 			if (iraystat) {
 				float rdevav = rdevs / nseg;
 				rdevs = 0.;
-				fprintf(fp_ray, " %10.4f %10.4f %10.4f %10.4f %10.4f %s %10.4f", ex, ey, ez, rsx, rsy, stt[kn], rdevav);
+				fprintf(fp_ray, " %10.4f %10.4f %10.4f %10.4f %10.4f %s %10.4f", ex, ey, ez, rsx, rsy, station_array[kn], rdevav);
 			}
 
 			// ****** BEGIN STUFF FROM SPHYPIT
@@ -1334,26 +1101,25 @@ a3: ;
 		q2 = q1 + dq;
 		f1 = xi;
 		f2 = f1 + dq;
-
 		// dt/df=(1/rsinQ)dt/df
-		gradt[0] = ((t[j][ipt[1]] - t[j][ipt[0]]) / (r1 * sin(q1))
-			+ (t[j][ipt[3]] - t[j][ipt[2]]) / (r1 * sin(q2))
-			+ (t[j][ipt[5]] - t[j][ipt[4]]) / (r2 * sin(q1))
-			+ (t[j][ipt[7]] - t[j][ipt[6]]) / (r2 * sin(q2))) / (4 * df);
+		gradt[0] = ((table_list[timeIndex].time[ipt[1]] - table_list[timeIndex].time[ipt[0]]) / (r1 * sin(q1))
+			+ (table_list[timeIndex].time[ipt[3]] - table_list[timeIndex].time[ipt[2]]) / (r1 * sin(q2))
+			+ (table_list[timeIndex].time[ipt[5]] - table_list[timeIndex].time[ipt[4]]) / (r2 * sin(q1))
+			+ (table_list[timeIndex].time[ipt[7]] - table_list[timeIndex].time[ipt[6]]) / (r2 * sin(q2))) / (4 * df);
 
 		// dt / dq' = (1/r)dt/dq
-		gradt[1] = ((t[j][ipt[2]] + t[j][ipt[3]]
-			- t[j][ipt[0]] - t[j][ipt[1]]) / r1
-			+ (t[j][ipt[6]] + t[j][ipt[7]]
-				- t[j][ipt[4]] - t[j][ipt[5]]) / r2) / (4 * dq);
+		gradt[1] = ((table_list[timeIndex].time[ipt[2]] + table_list[timeIndex].time[ipt[3]]
+			- table_list[timeIndex].time[ipt[0]] - table_list[timeIndex].time[ipt[1]]) / r1
+			+ (table_list[timeIndex].time[ipt[6]] + table_list[timeIndex].time[ipt[7]]
+				- table_list[timeIndex].time[ipt[4]] - table_list[timeIndex].time[ipt[5]]) / r2) / (4 * dq);
 
 		// dt / dr' = -dt/dr
-		gradt[2] = (t[j][ipt[4]] + t[j][ipt[5]]
-			+ t[j][ipt[6]] + t[j][ipt[7]]
-			- t[j][ipt[0]] - t[j][ipt[1]]
-			- t[j][ipt[2]] - t[j][ipt[3]]) / (4 * h);
+		gradt[2] = (table_list[timeIndex].time[ipt[4]] + table_list[timeIndex].time[ipt[5]]
+			+ table_list[timeIndex].time[ipt[6]] + table_list[timeIndex].time[ipt[7]]
+			- table_list[timeIndex].time[ipt[0]] - table_list[timeIndex].time[ipt[1]]
+			- table_list[timeIndex].time[ipt[2]] - table_list[timeIndex].time[ipt[3]]) / (4 * h);
 
-		//c-- - reverse sign on gradient since we are tracing the ray BACKWARDS(i.e.to the source, j).gradt3 is
+		//c-- - reverse sign on gradient since we are tracing the ray BACKWARDS(i.e.to the source, timeIndex).gradt3 is
 		//c   a double negative(-dtdz = -(-dtdr)) so we leave it as is, but recall that gradt(3) is now the r component
 		//c   of the ray.
 		gradt[0] = gradt[0] * -1;
@@ -2194,7 +1960,7 @@ a60:
 					avres = 0.;
 					std = 0.;
 				}
-				fprintf(fp_err, "%5d %s %4d %8.3f %8.3f %4d\n", kn + 1, stt[kn], iph + 1, avres, std, jnobs);
+				fprintf(fp_err, "%5d %s %4d %8.3f %8.3f %4d\n", kn + 1, station_array[kn].name, iph + 1, avres, std, jnobs);
 			}
 		}
 
@@ -2255,7 +2021,10 @@ int OUTPUT_SPHFRAYDERV(SPHRAYDERV_DATA *SPHRAYDERV, SPEC spec){
 }
 
 int LOG_SPHFRAYDERV(SPEC spec){
+	char VERSION[10] = "2020.0101";
 	char logfile[80];
+	double degrad = 0.017453292f;
+	int i;
 	
 	float xmax = spec.grid.x0 + (spec.grid.nx - 1) * spec.grid.df;
 	float ymax = spec.grid.y[0] + (spec.grid.ny - 1) * spec.grid.dq;
@@ -2403,4 +2172,111 @@ int LOG_SPHFRAYDERV(SPEC spec){
 
 	fclose(fp_log);
 	return 0;
+}
+
+SphraydervEnv setSphraydervEnv(char *spec_file){
+	SphraydervEnv sphrayderv_env;
+	sphrayderv_env.dmean = 0;
+	sphrayderv_env.iray = 0;
+	sphrayderv_env.iraystat = 0;
+	sphrayderv_env.idatout = 1; 
+	sphrayderv_env.nomat = 0;
+	sphrayderv_env.resflag = 1.0f;
+	sphrayderv_env.ido1d = 0;
+	sphrayderv_env.vpvsscale = 0;
+	setSphrayderVariables(&sphrayderv_env, spec_file);
+	setSphrayderFiles(&sphrayderv_env, spec_file);
+	return sphrayderv_env;
+}
+
+void setSphrayderVariables(SphraydervEnv *sphrayderv_env, char *spec_file){
+	FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+    
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
+		
+	get_vars(fp_spc, "dmean ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->dmean);
+	if (sphrayderv_env->dmean != 0 && sphrayderv_env->dmean != 1) {
+		sphrayderv_env->dmean = 0;
+	}
+	get_vars(fp_spc, "iray ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->iray);
+	if (sphrayderv_env->iray != 0 && sphrayderv_env->iray != 1) {
+		sphrayderv_env->iray = 0;
+	}
+	get_vars(fp_spc, "iraystat ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->iraystat);
+	if (sphrayderv_env->iraystat != 0 && sphrayderv_env->iraystat != 1) {
+		sphrayderv_env->iraystat = 0;
+	}
+	get_vars(fp_spc, "idatout ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->idatout);
+	if (sphrayderv_env->idatout != 0 && sphrayderv_env->idatout != 1) {
+		sphrayderv_env->idatout = 0;
+	}
+	get_vars(fp_spc, "nomat ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->nomat);
+	if (sphrayderv_env->nomat != 0 && sphrayderv_env->nomat != 1) {
+		sphrayderv_env->nomat = 0;
+	}
+	get_vars(fp_spc, "resflag ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%f", &sphrayderv_env->resflag);
+	get_vars(fp_spc, "kmin ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->kmin);
+	get_vars(fp_spc, "kmax ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &sphrayderv_env->kmax);
+
+}
+
+void setSphrayderFiles(SphraydervEnv *sphrayderv_env, char *spec_file){
+	FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+    
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
+
+	char files[8][10] = { "locdfil", "telrerr", "dtdsfil", "resfile",
+							 "hitfile", "dtdhfil", "bookfil", "sclefil" };
+	char *file_list[10] = { sphrayderv_env->locdfil, sphrayderv_env->telrerr, sphrayderv_env->dtdsfil, sphrayderv_env->resfile, 
+							sphrayderv_env->hitfile, sphrayderv_env->dtdhfil, sphrayderv_env->bookfil, sphrayderv_env->sclefil };
+
+	for (int i = 0; i < 8; i++) {
+		get_vars(fp_spc, files[i], pval, &len, &ierr);
+		if (ierr == 1) {
+			printf("Error trying to read filename %s", files[i]);
+			assert(0);
+		}
+		sscanf(pval, "%s", file_list[i]);
+	}		
+
+	char *files_optional[10] = { "telefil\0",  "pbasfil\0", "sbasfil\0", "shotfil\0","elipfil\0", "raystat\0",  
+									"dotfile\0", "headfil\0", "entfile\0", "stcfile\0"};
+	char *file_opt_list[10] = { sphrayderv_env->telefil, sphrayderv_env->pbasfil, sphrayderv_env->sbasfil, sphrayderv_env->shotfil, sphrayderv_env->elipfil,
+									sphrayderv_env->raystat, sphrayderv_env->dotfile, sphrayderv_env->headfil, sphrayderv_env->entfile, sphrayderv_env->stcfile,
+								 };
+	
+	for (int i = 0; i < 10; i++) {
+		get_vars(fp_spc, files_optional[i], pval, &len, &ierr);
+		if (ierr == 0) {
+			sscanf(pval, "%s", file_opt_list[i]);
+		}
+	}	
 }
