@@ -19,7 +19,7 @@ def model_header():
     void readVelocityModel1D(char *, velocityModel1D *, velocityModel1D *, char *);
     velocityModel1D transform1D(Coordinate1D, velocityModel1D, char *);
     velocityModel3D create3DModel(Coordinate3D, velocityModel1D);
-    velocityModel3D transform3D(Coordinate3D, velocityModel3D *);
+    velocityModel3D transform3D(Coordinate3D, velocityModel3D);
     float getPointVel(Point3D, velocityModel3D *);
     Point3D getPoint3DModel(Point3D, velocityModel3D *);
     float trilinear_interpolation_base(Point3D , Point3D, Coordinate3D, velocityModel3D *);

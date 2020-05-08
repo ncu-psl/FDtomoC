@@ -170,18 +170,18 @@ float trilinear_interpolation_base(Point3D point, Point3D base, Coordinate3D coo
 
 
 
-velocityModel3D transform3D(Coordinate3D coordinate, velocityModel3D *model){
+velocityModel3D transform3D(Coordinate3D coordinate, velocityModel3D model){
 	velocityModel3D new_model;
 	int meshSize3D = sizeOfMesh3D(coordinate.mesh);
-	int modelSize3D = sizeOfMesh3D(model->coordinate.mesh);
-	int vMeshSize3D = sizeOfMesh3D(model->coordinate.mesh);
+	int modelSize3D = sizeOfMesh3D(model.coordinate.mesh);
+	int vMeshSize3D = sizeOfMesh3D(model.coordinate.mesh);
 	float xSize = coordinate.mesh.numberOfNode.x;
     float ySize = coordinate.mesh.numberOfNode.y;
     float zSize = coordinate.mesh.numberOfNode.z;
 	float *velocity = (float *)calloc(meshSize3D, sizeof(float));
 
 	for(int i = 0; i < modelSize3D; i++){
-		model->velocity[i] = 1. / model->velocity[i];
+		model.velocity[i] = 1. / model.velocity[i];
 	}
 
 
@@ -191,8 +191,8 @@ velocityModel3D transform3D(Coordinate3D coordinate, velocityModel3D *model){
             for(int i = 0; i < xSize; i++){
                 Point3D point = {i, j, k};
                 Point3D location = getPoint3D(point, coordinate);
-                Point3D base = searchFineBase(location, model->coordinate);
-                float vel = trilinear_interpolation_base(point, base, coordinate, model);
+                Point3D base = searchFineBase(location, model.coordinate);
+                float vel = trilinear_interpolation_base(point, base, coordinate, &model);
 				velocity[index] = 1.f / vel;
                 index++;
             } 
