@@ -19,7 +19,7 @@ typedef struct velocityModel3D_{
 }velocityModel3D;
 
 void readVelocityModel1D(char *, velocityModel1D *, velocityModel1D *, char *);
-void transform1D(Coordinate1D, velocityModel1D *,char *);
+velocityModel1D transform1D(Coordinate1D, velocityModel1D, char *);
 velocityModel3D create3DModel(Coordinate3D, velocityModel1D);
 velocityModel3D transform3D(Coordinate3D, velocityModel3D *);
 float getPointVel(Point3D, velocityModel3D *);

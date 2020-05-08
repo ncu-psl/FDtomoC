@@ -70,18 +70,19 @@ void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityM
 	
 }
 
-void transform1D(Coordinate1D coordinate, velocityModel1D *model, char *mode){
+velocityModel1D transform1D(Coordinate1D coordinate, velocityModel1D model, char *mode){
+	velocityModel1D new_model;
 	int size = coordinate.mesh.numberOfNode;
-	int vsize = model->coordinate.mesh.numberOfNode;
+	int vsize = model.coordinate.mesh.numberOfNode;
 	float *points = getAxis(coordinate);
-	float *vpoints = getAxis(model->coordinate);
+	float *vpoints = getAxis(model.coordinate);
 	float *velocity = (float *)calloc(size, sizeof(float));
-	model->coordinate = coordinate;
-	velocity = linear_interpolation_array(points, vpoints, model->velocity, size, vsize, mode);
-	free(model->velocity);
-	model->velocity = velocity;
+	new_model.coordinate = coordinate;
+	velocity = linear_interpolation_array(points, vpoints, model.velocity, size, vsize, mode);
+	new_model.velocity = velocity;
 	free(points);
 	free(vpoints);
+	return new_model;
 }
 
 velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
