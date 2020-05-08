@@ -1,4 +1,5 @@
 
+import abc
 from cffi import FFI
 import _FDtomoC
 
@@ -28,4 +29,18 @@ class Coordinate3D(Coordinate):
             tmp = _FDtomoC.ffi.new("char[]", file)
             coordinate.coordinateField = _FDtomoC.lib.setCoordinate(tmp)
             return coordinate
+
+    def setMesh(self, mesh):
+        origin = self.coordinateField.origin
+        space = self.coordinateField.space
+        mesh = _FDtomoC.ffi.new("Mesh3D *", {'numberOfNode' : mesh.meshField.numberOfNode, \
+                                              'gridx' : mesh.meshField.gridx, \
+                                              'gridy' : mesh.meshField.gridy, \
+                                              'gridz' : mesh.meshField.gridz  \
+                                            })
+        new_coordinateField = _FDtomoC.ffi.new("Coordinate3D *", {'mesh'   : mesh[0],   \
+                                                                  'origin' : origin,    \
+                                                                  'space'  : space      \
+                                                                 })
+        self.coordinateField = new_coordinateField[0]
         

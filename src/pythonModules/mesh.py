@@ -43,7 +43,7 @@ class Mesh1D(Mesh):
 
 
 class Mesh3D(Mesh):
-    def create(self, file = None, numberOfNode = None, igrid = None):
+    def create(self, file = None, numberOfNode = None, grid = None):
         if (file != None):
             mesh = Mesh3D()
             tmp = _FDtomoC.ffi.new("char[]", file)
@@ -66,7 +66,8 @@ class Mesh3D(Mesh):
         gridx = _FDtomoC.ffi.new("int[]", self.igrid[0])
         gridy = _FDtomoC.ffi.new("int[]", self.igrid[1])
         gridz = _FDtomoC.ffi.new("int[]", self.igrid[2])
-        mesh = _FDtomoC.ffi.new("Mesh3D *", {'numberOfNode' : self.numberOfNode, 'gridx' : gridx, \
+        meshField = _FDtomoC.ffi.new("Mesh3D *", {'numberOfNode' : self.numberOfNode, 'gridx' : gridx, \
                                                 'gridy' : gridy, 'gridz' : gridz})
 
-        self.mesh = mesh 
+        self.meshField = meshField
+        return self
