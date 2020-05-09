@@ -60,7 +60,7 @@ StationNode *createStationList(char *file, int sph){
 int getStationCount(StationNode *station_list){
 	if (station_list == NULL)
 		return 0;
-	int index = 1;
+	int index = 0;
 	StationNode *current = station_list;
 	while(station_list->next != NULL){
 		index++;
