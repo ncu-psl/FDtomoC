@@ -184,6 +184,7 @@ Event *EventList2Arr(EventNode *event_list){
     Event *event_array = malloc(sizeof(Event) * event_count);
     for(int i = 0; i < event_count; i++){
         event_array[i] = event_list->event;
+        event_array[i].observedTimeList = event_list->event.observedTimeList;
         event_list = event_list->next;
     }
     return event_array;

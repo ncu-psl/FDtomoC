@@ -508,4 +508,6 @@ void setCommonVariables(CommonEnv *common_env, char *spec_file){
 	get_vars(fp_spc, "ittnum ", pval, &len, &ierr);
 	if (ierr == 0)
 		sscanf(pval, "%d", &common_env->ittnum);
+
+	fclose(fp_spc);
 }
