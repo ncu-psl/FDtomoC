@@ -184,6 +184,7 @@ Event *EventList2Arr(EventNode *event_list){
     Event *event_array = malloc(sizeof(Event) * event_count);
     for(int i = 0; i < event_count; i++){
         event_array[i] = event_list->event;
+        event_array[i].observedTimeList = event_list->event.observedTimeList;
         event_list = event_list->next;
     }
     return event_array;
@@ -191,19 +192,16 @@ Event *EventList2Arr(EventNode *event_list){
 
 
 
-int *checkTravelTime(Event event, travelTimeTable *table_list, StationNode *station_head){
-    int numOfStations = getStationCount(station_head);
+int *checkTravelTime(Event event, travelTimeTable *table_array, int table_size){
     int numbOfObservation = getTimeCount(event.observedTimeList);
     int *timeIndex = (int *)calloc(numbOfObservation, sizeof(int));
     travelTimeTable *current = NULL;
     for(int i = 0; i < numbOfObservation; i++){
-        current = table_list;
-        for (int j = 0; j < numOfStations; j++){
-            if(strcmp(event.station_name_list[i], current->name) == 0){
+        for (int j = 0; j < table_size; j++){
+            if(strcmp(event.station_name_list[i], table_array[j].name) == 0){
                 timeIndex[i] = j;
                 break;
             }
-            current++;
         }
     }
     return timeIndex;

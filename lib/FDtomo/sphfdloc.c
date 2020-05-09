@@ -82,7 +82,7 @@ void read_station_set(int *, int *, int *, int *, int *, float *, int *,
 int read_timefiles(int, int, char[maxsta][MAXSTRLEN + 1], char *);
 int get_time(int, char timefiles[maxsta][MAXSTRLEN + 1], SPHFD_DATA **); 
 Event *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode *event_list,
-				 StationNode *station_list, LocEnv loc_env) {
+				 int table_size, LocEnv loc_env) {
 	
 	double hpi = 1.570796f, degrad = 0.017453292f;
 	double tmp = coordinate.origin.y;
@@ -145,7 +145,7 @@ Event *sphfdloc(Coordinate3D coordinate, travelTimeTable *table_list, EventNode 
 		int maxretry = 1;
 		int nsta = getTimeCount(event_array[nev].observedTimeList);
 		int ngood = nsta;
-		int *indsta = checkTravelTime(event_array[nev], table_list, station_list);
+		int *indsta = checkTravelTime(event_array[nev], table_list, table_size);
 		char *phs = event_array[nev].phase;
 		char *evid = event_array[nev].evid;
 		char (*sta)[MAXSTRLEN + 1] = event_array[nev].station_name_list;
@@ -1061,3 +1061,489 @@ int LOG_SPHFDLOC(SPEC spec){
 	fclose(fp_log);
 	return 0;
 }
+
+
+Event singleLoc(Coordinate3D coordinate, travelTimeTable *table_array, Event event,
+                 int table_size, LocEnv loc_env){
+
+    double hpi = 1.570796f, degrad = 0.017453292f;
+	double tmp = coordinate.origin.y;
+	double h = coordinate.space.x;
+	coordinate = change2Sphere(coordinate, 1);
+	double x0 = coordinate.origin.x;
+	double y[1] = {coordinate.origin.y};
+	double z0 = coordinate.origin.z;
+
+	double z0r;
+	tmp *= degrad;
+	tmp = hpi - glath(tmp, z0, &z0r);
+
+	double df = coordinate.space.x;
+	double dq = coordinate.space.y;
+	
+	int nx = coordinate.mesh.numberOfNode.x;
+	int ny = coordinate.mesh.numberOfNode.y;
+	int nz = coordinate.mesh.numberOfNode.z;
+
+	float xmax = x0 + (nx - 1) * df;
+	float ymax = y[0] + (ny - 1) * dq;
+	float zmax = z0 + (nz - 1) * h;
+
+	int nxy = nx * ny;
+	int nxyz = nxy * nz;
+
+//    Default setting for some variables
+	int iread = loc_env.iread;
+	int ivs = loc_env.ivs;
+	float vpvs = loc_env.vpvs;
+	int nthres = loc_env.nthres;
+	float resthres = loc_env.resthres;
+	float resthrep = loc_env.resthrep;
+	float stdmax = loc_env.stdmax;
+	int kmin = loc_env.kmin;
+	int ndiv = loc_env.ndiv;
+	int ndiv2 = loc_env.ndiv2;
+
+
+	// Default Files
+	char leqsfil[MAXSTRLEN + 1], fsumfil[MAXSTRLEN + 1], outlfil[MAXSTRLEN + 1],
+	fhedfil[MAXSTRLEN + 1], fdatfil[MAXSTRLEN + 1];
+	memcpy(leqsfil, loc_env.leqsfil, strlen(loc_env.leqsfil) + 1);
+	memcpy(fsumfil, loc_env.fsumfil, strlen(loc_env.fsumfil) + 1);
+	memcpy(outlfil, loc_env.outlfil, strlen(loc_env.outlfil) + 1);
+	memcpy(fhedfil, loc_env.fhedfil, strlen(loc_env.fhedfil) + 1);
+	memcpy(fdatfil, loc_env.fdatfil, strlen(loc_env.fdatfil) + 1);
+
+	LocData *loc_data = malloc(sizeof(LocData));
+
+
+		//   Start the PDF calculation.  Loop over all grid points.
+    int iretry = 0;
+    int maxretry = 1;
+    int nsta = getTimeCount(event.observedTimeList);
+    int ngood = nsta;
+    int *indsta = checkTravelTime(event, table_array, table_size);
+    char *phs = event.phase;
+    char *evid = event.evid;
+    char (*sta)[MAXSTRLEN + 1] = event.station_name_list;
+    float *rwts = event.rwts;
+    float *obstime = getObsTime(event);
+    float *pwt = getPwt(event);
+    int *isgood = event.isgood;
+
+    float res[maxobs], wtsave[maxobs];
+    float resmin[maxobs],  tps[maxobs], wtmin[maxobs];
+    
+    float xlat, xlon;
+
+    //time
+    double dpot = htoe2(event.earthquake.time);
+    int iyr, jday, ihr, imn;
+    float sec;
+    double dsec;
+
+    a33: 
+    if(DEBUG_PRINT)
+        printf(" Starting Coarse Grid Loop ... \n");
+    //---NB:  we start k at an nz corresponding to a minimum depth.
+    //   h = 10, z0 = -25, so starting at k = 4 makes min depth at this stage 5.0.
+    //   this could be anywhere from -5 to 5 in next stage.
+    int nxx = 0, nyy = 0, nzz = 0;
+    float stdmin = DBL_MAX;
+    float avrmin = 0.;
+    for (int k = kmin; k < nz; k++) {
+        for (int j = 0; j < ny; j++) {
+            for (int i = 0; i < nx; i++) {
+                int n = nxy * k + nx * j + i;
+                float avres = 0.0, rsq = 0.0, facs = 0.0;
+                for (int is = 0; is < nsta; is++) {
+                    double tp = table_array[indsta[is]].time[n];
+                    if (ivs == 0 && phs[is] == 'S') {
+                        tp *= vpvs;
+                    }
+                    res[is] = obstime[is] - tp;
+                    float wt = pwt[is];
+                    wtsave[is] = wt;
+                    if (isgood[is]) {
+                        float res1 = res[is] * wt;
+                        float res2 = res1 * res[is];
+                        avres += res1;
+                        rsq += res2;
+                        facs += wt;
+                    }
+                }
+                //    c---calculate variance of data
+                //    c         avwt = facs/nsta
+                //    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
+                float avwt = facs / ngood;
+                float deb = (rsq - avres * avres / facs)
+                        / ((ngood - 4) * avwt);
+                float dsum = fabs(deb);
+                //    c------ find total sigma and the most likely hypocenter with min std
+                float std = sqrtf(dsum);
+                if (std < stdmin) {
+                    nxx = i;
+                    nyy = j;
+                    nzz = k;
+                    stdmin = std;
+                    avrmin = avres / facs;
+                    for (int i2 = 0; i2 < nsta; i2++) {
+                        resmin[i2] = res[i2];
+                        wtmin[i2] = wtsave[i2];
+                        tps[i2] = obstime[i2] - res[i2];
+                    }
+                }
+            }
+        }
+    }
+
+    double exm = x0 + nxx * df;
+    double eym = y[0] + nyy * dq;
+    double ezm = z0 + nzz * h;
+
+    xlon = exm / degrad;
+    //   xlat = glatinv(hpi-eym)/degrad
+    double ezmr = 0;
+    xlat = glathinv(hpi - eym, z0r - (ezm - z0), &ezmr) / degrad;
+    if(DEBUG_PRINT) {
+        printf("\n");
+        printf("\n");
+        printf(" Coarse grid finished ... \n");
+        printf(" Minimum Standard Deviation   : %12.8lf\n", stdmin);
+        printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
+                nyy + 1, nzz + 1);
+        printf(" Average residual             : %10.8lf\n", avrmin);
+        printf(" Hypocenter (lat, lon ,z )    :   %12.3f  %12.3f  %12.3f\n",
+                xlat, xlon, ezmr);
+        printf("\n");
+        printf(" Station statistics at this point: \n");
+        printf(
+                "Code  Ph  Demeaned    True   Expected  Used   Tobs     Tcalc     To-Tc \n");
+        printf(
+                "          Residual   Weight   Uncert.  Flag    Abs      Abs     \n");
+        printf("\n");
+        for (int i = 0; i < nsta; i++) {
+            printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
+                    sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
+                    1.f / sqrt(wtmin[i]), isgood[i], obstime[i], tps[i],
+                    obstime[i] - tps[i]);
+        }
+        printf("\n");
+        printf("\n");
+    }
+    //----Now refine location to subgrid spacing
+    //   ndiv = 20
+    int nstep1 = ndiv + 1;
+    int nstep2 = nstep1 + ndiv;
+    double dh = h / ndiv;
+    double ddq = dq / ndiv;
+    double ddf = df / ndiv;
+
+    int iz0 = nzz - 1;
+    int nstepz = nstep2;
+    //   if (iz0.le.0) {
+    if (iz0 < kmin) {
+        iz0 = nzz;
+        nstepz = nstep1;
+    }
+    if (nzz == nz - 1) {
+        nstepz = nstep1 - 1;
+    }
+
+    int iy0 = nyy - 1;
+    int nstepy = nstep2;
+    if (iy0 < 0) {
+        iy0 = nyy;
+        nstepy = nstep1;
+    }
+    if (nyy == ny - 1) {
+        nstepy = nstep1 - 1;
+    }
+
+    int ix0 = nxx - 1;
+    int nstepx = nstep2;
+    if (ix0 < 0) {
+        ix0 = nxx;
+        nstepx = nstep1;
+    }
+    if (nxx == nx - 1) {
+        nstepx = nstep1 - 1;
+    }
+
+    double z0i = z0 + h * iz0;
+    double y0i = y[0] + dq * iy0;
+    double x0i = x0 + df * ix0;
+    if(DEBUG_PRINT)
+        printf("ix0=%d iy0=%d iz0=%d\n", ix0, iy0, iz0);
+
+    for (int k = 0; k < nstepz; k++) {
+        double zp = z0i + dh * k;
+        for (int j = 0; j < nstepy; j++) {
+            double yp = y0i + ddq * j;
+            for (int i = 0; i < nstepx; i++) {
+                float avres = 0.0, rsq = 0.0, facs = 0.0;
+                double xp = x0i + ddf * i;
+                for (int is = 0; is < nsta; is++) {
+                    double tp = 0;
+                    find_time(xp, yp, zp, &tp, is, indsta, coordinate, table_array);
+                    if (ivs == 0 && phs[is] == 'S') {
+                        tp *= vpvs;
+                    }
+                    res[is] = obstime[is] - tp;
+                    float wt = pwt[is];
+                    wtsave[is] = wt;
+                    if (isgood[is]) {
+                        float res1 = res[is] * wt;
+                        float res2 = res1 * res[is];
+                        avres += res1;
+                        rsq += res2;
+                        facs += wt;
+                    }
+                }
+                //    c---calculate variance of data
+                //    c         avwt = facs/nsta
+                //    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
+
+                float avwt = facs / ngood;
+                float deb = (rsq - avres * avres / facs)
+                        / ((ngood - 4) * avwt);
+                float dsum = fabs(deb);
+                //------ find total sigma and the most likely hypocenter with min std
+                float std = sqrtf(dsum);
+                if (std < stdmin) {
+                    nxx = i;
+                    nyy = j;
+                    nzz = k;
+                    exm = xp;
+                    eym = yp;
+                    ezm = zp;
+                    stdmin = std;
+                    avrmin = avres / facs;
+                    for (int i2 = 0; i2 < nsta; i2++) {
+                        resmin[i2] = res[i2];
+                        tps[i2] = obstime[i2] - res[i2];
+                        wtmin[i2] = wtsave[i2];
+                    }
+                }
+            }
+        }
+    }
+    if(DEBUG_PRINT) {
+        printf("\n");
+        printf("\n");
+        printf(" First Order Refinement finished ... \n");
+        printf(" Minimum Standard Deviation   : %12.9lf\n", stdmin);
+        printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
+                nyy + 1, nzz + 1);
+        printf(" Average residual             : %10.8lf\n", avrmin);
+        printf(" Hypocenter (lat, lon ,z )    :   %12.3f  %12.3f  %12.3f\n",
+                exm, eym, ezm);
+        printf("\n");
+        printf(" Station statistics at this point: \n");
+        printf(
+                "Code  Ph  Demeaned    True   Expected  Used   Tobs     Tcalc     To-Tc \n");
+        printf(
+                "          Residual   Weight   Uncert.  Flag    Abs      Abs     \n");
+        for (int i = 0; i < nsta; i++) {
+            printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
+                    sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
+                    1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
+                    obstime[i] - tps[i]);
+        }
+        printf("\n");
+        printf("\n");
+    }
+    //----Second order refinement
+    //   ndiv2 = 20
+    nstep1 = ndiv2 + 1;
+    nstep2 = nstep1 + ndiv2;
+    double ddh = dh / ndiv2;
+    double dddq = ddq / ndiv2;
+    double dddf = ddf / ndiv2;
+
+    z0i = ezm - dh;
+    nstepz = nstep2;
+    //   if (z0i.le.z0) {
+    if (z0i <= z0 + kmin * h) {
+        z0i = ezm;
+        nstepz = nstep1;
+    }
+    if (ezm + dh > zmax)
+        nstepz = nstep1 - 1;
+
+    y0i = eym - ddq;
+    nstepy = nstep2;
+    if (y0i <= y[0]) {
+        y0i = eym;
+        nstepy = nstep1;
+    }
+    if (eym + ddq > ymax)
+        nstepy = nstep1 - 1;
+
+    x0i = exm - ddf;
+    nstepx = nstep2;
+    if (x0i <= x0) {
+        x0i = exm;
+        nstepx = nstep1;
+    }
+
+    if (exm + ddf > xmax)
+        nstepx = nstep1 - 1;
+    for (int k = 0; k < nstepz; k++) {
+        double zp = z0i + ddh * k;
+        for (int j = 0; j < nstepy; j++) {
+            double yp = y0i + dddq * j;
+            for (int i = 0; i < nstepx; i++) {
+                float avres = 0.0, rsq = 0.0, facs = 0.0;
+                double xp = x0i + dddf * i;
+                for (int is = 0; is < nsta; is++) {
+                    double tp = 0;
+                    find_time(xp, yp, zp, &tp, is, indsta, coordinate, table_array);
+                    if (ivs == 0 && phs[is] == 'S') {
+                        tp *= vpvs;
+                    }
+                    res[is] = obstime[is] - tp;
+                    float wt = pwt[is];
+                    wtsave[is] = wt;
+                    if (isgood[is]) {
+                        float res1 = res[is] * wt;
+                        float res2 = res1 * res[is];
+                        avres += res1;
+                        rsq += res2;
+                        facs += wt;
+                    }
+                }
+                //    c---calculate variance of data
+                //    c         avwt = facs/nsta
+                //    c         deb = (rsq - avres*avres/facs)/((nsta - 4)*avwt)
+                float avwt = facs / ngood;
+                float deb = (rsq - avres * avres / facs)
+                        / ((ngood - 4) * avwt);
+                float dsum = fabs(deb);
+                //------ find total sigma and the most likely hypocenter with min std
+                float std = sqrtf(dsum);
+                if (std < stdmin) {
+                    nxx = i;
+                    nyy = j;
+                    nzz = k;
+                    exm = xp;
+                    eym = yp;
+                    ezm = zp;
+                    stdmin = std;
+                    avrmin = avres / facs;
+                    for (int i2 = 0; i2 < nsta; i2++) {
+                        resmin[i2] = res[i2];
+                        tps[i2] = obstime[i2] - res[i2];
+                        wtmin[i2] = wtsave[i2];
+                    }
+                }
+            }
+        }
+    }
+
+    xlon = exm / degrad;
+    //   xlat = glatinv(hpi-eym)/degrad
+    xlat = glathinv(hpi - eym, z0r - (ezm - z0), &ezmr) / degrad;
+    if(DEBUG_PRINT) {
+        printf("xlon=%lf xlat=%lf\n", xlon, xlat);
+        printf("\n");
+        printf("\n");
+        printf(" Second Order Refinement finished ... \n");
+        printf(" Minimum Standard Deviation   : %12.9lf\n", stdmin);
+        printf(" Optimal Grid point (nx,ny,nz): %12d %11d %11d\n", nxx + 1,
+                nyy + 1, nzz + 1);
+        printf(" Average residual             : %10.8lf\n", avrmin);
+        printf(" Hypocenter (lat, lon ,z )    :   %12.3f  %12.3f  %12.3f\n",
+                xlat, xlon, ezmr);
+        printf("\n");
+        printf(" Station statistics at this point: \n");
+        printf(
+                "Code  Ph  Demeaned    True   Expected  Used   Tobs     Tcalc     To-Tc \n");
+        printf(
+                "          Residual   Weight   Uncert.  Flag    Abs      Abs     \n");
+        for (int i = 0; i < nsta; i++) {
+            printf("%4s   %c %9.4lf %9.3E %9.4f %3d %9.4f %9.4f %9.4f\n",
+                    sta[i], phs[i], resmin[i] - avrmin, wtmin[i],
+                    1. / sqrtf(wtmin[i]), isgood[i], obstime[i], tps[i],
+                    obstime[i] - tps[i]);
+        }
+        printf("\n");
+        printf("\n");
+    }
+    //----check for outliers and acceptable locations
+    ngood = 0;
+    int iredo = 0;
+    for (int i = 0; i < nsta; i++) {
+        if (isgood[i]) {
+            float absres = fabs(resmin[i] - avrmin);
+            float percres = 100.0f * absres / tps[i];
+            if (absres <= resthres || percres <= resthrep)
+                ngood++;
+            else {
+                isgood[i] = 0;
+                iredo = 1;
+            }
+        }
+    }
+    int len_str_out = 0;
+    if (ngood >= nthres) {
+        //---redo the location if outliers have been removed from a well recorded event
+        if (iredo == 1) {
+            if(DEBUG_PRINT)
+                printf(" Outliers found .. redoing location \n");
+            goto a33;
+        }
+        //---in some cases, a revised location can bring back data that originally was considered outlier
+        //       so we allow the program to go back and use this recovered data
+        if (iretry < maxretry) {
+            iretry++;
+            iredo = 0;
+            for (int i = 0; i < nsta; i++) {
+                if (isgood[i] == 0) {
+                    float absres = fabs(resmin[i] - avrmin);
+                    float percres = 100.0f * absres / tps[i];
+                    if (absres <= resthres || percres <= resthrep) {
+                        ngood++;
+                        isgood[i] = 1;
+                        iredo = 1;
+                    }
+                }
+            }
+            if (iredo == 1) {
+                if(DEBUG_PRINT)
+                    printf(" Recovered data .. redoing location \n");
+                goto a33;
+            }
+        }
+        if (stdmin <= stdmax) {
+            xlon = exm / degrad;
+            //       xlat = glatinv[hpi-eym]/degrad;
+            xlat = glathinv(hpi - eym, z0r - (ezm - z0), &ezmr) / degrad;
+            double ot = dpot + avrmin;
+            etoh(ot, &iyr, &jday, &ihr, &imn, &dsec);
+            sec = dsec;
+            char tmp[100];
+            int len_str_data = 0;				
+            event.earthquake.time = (Time){iyr, jday, ihr, imn, sec};
+            event.earthquake.location = (Point3D){xlat, xlon, ezmr};
+            loc_data->stdmin = stdmin;
+            
+            if(DEBUG_PRINT) {
+                printf("\n");
+                printf(tmp);
+
+                printf(" Event ID: %s Finished\n", evid);
+                printf("\n");
+            }
+            int len_str_sum = 0;
+            
+            for (int j = 0; j < nsta; j++) {
+                double tarr = obstime[j] + dpot;
+                etoh(tarr, &iyr, &jday, &ihr, &imn, &dsec);
+                loc_data->tmp_min[j] = resmin[j] - avrmin;
+            }
+        }
+    } 
+	return event;
+} 
+
