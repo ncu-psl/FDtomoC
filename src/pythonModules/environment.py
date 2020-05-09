@@ -12,15 +12,17 @@ class CommonEnv(object):
 
 
 class LocEnv(CommonEnv):
-    def __init__(self):
-        self.loc_env = None
+    def __init__(self, locEnvField = None, commonEnvField = None):
+        self.locEnvField = locEnvField
+        self.commonEnvField = commonEnvField
 
     def create(self, file = None):
         if (file != None):
-            loc_env = LocEnv()
             tmp = _FDtomoC.ffi.new("char[]", file)
-            loc_env.loc_env = _FDtomoC.lib.setLocEnv(tmp)
-            loc_env.common_env = _FDtomoC.lib.setCommonEnv(tmp)
+            locEnvField = _FDtomoC.lib.setLocEnv(tmp)
+            commonEnvField = _FDtomoC.lib.setCommonEnv(tmp)
+            print(locEnvField)
+            loc_env = LocEnv(locEnvField, commonEnvField)
             return loc_env
 
 

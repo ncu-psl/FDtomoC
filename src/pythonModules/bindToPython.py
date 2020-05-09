@@ -2,15 +2,18 @@
 from cffi import FFI
 from subprocess import check_output
 import os
-from exportHeader import spec_header, grid_header, model_header, env_header, station_header, travelTimeTable
+from exportHeader import spec_header, grid_header, model_header, env_header, station_header, \
+                            travelTimeTable, event_header
 path = os.getcwd()
 ffi=FFI()
 header = spec_header.spec_header() + grid_header.grid_header() + model_header.model_header() \
-        + env_header.env_header() + station_header.station_header() + travelTimeTable.travel_time_header()
+        + env_header.env_header() + station_header.station_header() + travelTimeTable.travel_time_header() \
+        + event_header.event_header()    
 ffi.cdef(header)
 ffi.set_source("_FDtomoC",
      '''#include "FDtomo/make1d.h" 
         #include "FDtomo/sphfd.h"
+        #include "FDtomo/sphfdloc.h"
         #include "FDtomo/runlsqr.h"
         #include "FDtomo/sphrayderv.h"
         #include "common/earthquake.h"
@@ -18,6 +21,7 @@ ffi.set_source("_FDtomoC",
         #include "common/vhead.h"
         #include "common/velocity_model.h"
         #include "common/station.h" 
+        #include "common/earthquake.h"
     ''' ,
     #sources = [],
     include_dirs = [path + '/../../include'],

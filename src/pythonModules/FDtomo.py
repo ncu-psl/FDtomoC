@@ -1,11 +1,12 @@
-import mesh, coordinate, velocity_model, environment, station, travel_time
+import mesh, coordinate, velocity_model, environment, station, travel_time, event
 import _FDtomoC
 
 import abc
 
 file_path = "../../data/small/FDtomo01.spec"
 model1D_path = "../../data/small/TW_m30_mdl"
-stafile = "../../data/small/runs_files/stationloc_out.txt";
+stafile = "../../data/small/runs_files/stationloc_out.txt"
+leqsfil = "../../data/small/runs_files/arrivals/All.txt"
 
 
 loc_env = environment.LocEnv().create(file = file_path)
@@ -32,4 +33,11 @@ CoarseModel3D = velocity_model.VelocityModel3D().create(coarseCoordinate3D, fine
 fineModel3D = CoarseModel3D.transform(fineCoordinate3D)
 
 station_array = station.Station().createArray(file = stafile)
-table = travel_time.TravelTimeTable().create(fineModel3D, station_array[2])
+table_array = []
+for i in range(len(station_array)):
+   table = travel_time.TravelTimeTable().create(fineModel3D, station_array[i])
+   table_array.append(table)
+
+event_array = event.Event().createArray(leqsfil)
+for i in range(len(event_array)):
+    event.Event().singleLoc(fineCoordinate3D, table_array, event_array[i], loc_env)
