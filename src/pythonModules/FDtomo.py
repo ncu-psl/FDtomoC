@@ -1,10 +1,12 @@
-import mesh, coordinate, velocity_model, environment
+import mesh, coordinate, velocity_model, environment, station, travel_time
 import _FDtomoC
 
 import abc
 
 file_path = "../../data/small/FDtomo01.spec"
 model1D_path = "../../data/small/TW_m30_mdl"
+stafile = "../../data/small/runs_files/stationloc_out.txt";
+
 
 loc_env = environment.LocEnv().create(file = file_path)
 sphrayderv_env = environment.SphraydervEnv().create(file = file_path)
@@ -28,3 +30,6 @@ fineCoordinate1D = coordinate.Coordinate1D().create(fineMesh1D, 2, -4)
 fineVpModel = vpModel.transform(fineCoordinate1D)
 CoarseModel3D = velocity_model.VelocityModel3D().create(coarseCoordinate3D, fineVpModel)
 fineModel3D = CoarseModel3D.transform(fineCoordinate3D)
+
+station_array = station.Station().createArray(file = stafile)
+table = travel_time.TravelTimeTable().create(fineModel3D, station_array[2])

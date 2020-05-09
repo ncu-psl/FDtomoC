@@ -13,5 +13,6 @@ typedef struct{
 }SPHFD_DATA;
 
 travelTimeTable *sphfd(velocityModel3D, StationNode *);
+travelTimeTable sphfd_exec(velocityModel3D, Point3DDouble);
 int OUTPUT_SPHFD(SPHFD_DATA *, SPEC);
 #endif
