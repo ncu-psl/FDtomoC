@@ -10,8 +10,8 @@ void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityM
 	}
 	vpModel->velocity = (float *)calloc(MAX1D, sizeof(float));
 	vsModel->velocity = (float *)calloc(MAX1D, sizeof(float));
-	vpModel->coordinate.mesh.igrid = (float *)calloc(MAX1D, sizeof(int));
-	vsModel->coordinate.mesh.igrid = (float *)calloc(MAX1D, sizeof(int));
+	vpModel->coordinate.mesh.igrid = (int *)calloc(MAX1D, sizeof(int));
+	vsModel->coordinate.mesh.igrid = (int *)calloc(MAX1D, sizeof(int));
 
 	char aline[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];

@@ -63,10 +63,18 @@ Point3D getPoint3D(Point3D point, Coordinate3D coordinate){
 Mesh1D createMesh1D(int numberOfNode, int *igrid){
     Mesh1D mesh;
     mesh.numberOfNode = numberOfNode;
-	mesh.igrid = calloc(numberOfNode, sizeof(int));
-    memcpy(mesh.igrid, igrid, sizeof(float) * numberOfNode);
+	mesh.igrid = calloc(numberOfNode - 1, sizeof(int));
+    memcpy(mesh.igrid, igrid, sizeof(int) * (numberOfNode - 1));
     return mesh;
 }
+
+void copyMesh1D(Mesh1D *dest_mesh, Mesh1D *src_mesh){
+    int size = src_mesh->numberOfNode;
+    dest_mesh->numberOfNode = src_mesh->numberOfNode;
+    dest_mesh->igrid = malloc(sizeof(int) * (size - 1));
+    memcpy(dest_mesh->igrid, src_mesh->igrid, sizeof(int) * (size - 1));
+}
+
 
 Mesh3D setMesh3D(char *spec_file){
     Mesh3D mesh;
@@ -96,13 +104,30 @@ Mesh3D setMesh3D(char *spec_file){
 		}
     }
 
-    mesh.gridx = malloc(sizeof(float) * (mesh.numberOfNode.x - 1));
-    mesh.gridy = malloc(sizeof(float) * (mesh.numberOfNode.y - 1));
-    mesh.gridz = malloc(sizeof(float) * (mesh.numberOfNode.z - 1));
+    mesh.gridx = malloc(sizeof(int) * (mesh.numberOfNode.x - 1));
+    mesh.gridy = malloc(sizeof(int) * (mesh.numberOfNode.y - 1));
+    mesh.gridz = malloc(sizeof(int) * (mesh.numberOfNode.z - 1));
     setGrid(&mesh, spec_file);
     fclose(fp_spc);
     return mesh;
 }
+
+void copyMesh3D(Mesh3D *dest_mesh, Mesh3D *src_mesh){
+    int xSize = (int)src_mesh->numberOfNode.x;
+    int ySize = (int)src_mesh->numberOfNode.y;
+    int zSize = (int)src_mesh->numberOfNode.z;
+
+    *dest_mesh = *src_mesh;
+    dest_mesh->gridx = malloc(sizeof(int) * (xSize - 1));
+    dest_mesh->gridy = malloc(sizeof(int) * (ySize - 1));
+    dest_mesh->gridz = malloc(sizeof(int) * (zSize - 1));
+
+    memcpy(dest_mesh->gridx, src_mesh->gridx, sizeof(int) * (xSize - 1));
+    memcpy(dest_mesh->gridy, src_mesh->gridy, sizeof(int) * (ySize - 1));
+    memcpy(dest_mesh->gridz, src_mesh->gridz, sizeof(int) * (zSize - 1));
+}
+
+
 
 void setGrid(Mesh3D *mesh, char *spec_file){
     FILE *fp_spc;
@@ -128,7 +153,7 @@ void setGrid(Mesh3D *mesh, char *spec_file){
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 	sscanf(parval, "%d", &mesh->gridx[0]);
 	int k;
-	for (k = 1; k < mesh->numberOfNode.x; k++) {
+	for (k = 1; k < mesh->numberOfNode.x - 1; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &mesh->gridx[k]);
@@ -146,7 +171,7 @@ void setGrid(Mesh3D *mesh, char *spec_file){
 	ib = ie;
 	get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 	sscanf(parval, "%d", &mesh->gridy[0]);
-	for (k = 1; k < mesh->numberOfNode.y; k++) {
+	for (k = 1; k < mesh->numberOfNode.y - 1; k++) {
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &mesh->gridy[k]);
@@ -164,7 +189,7 @@ void setGrid(Mesh3D *mesh, char *spec_file){
 		ib = ie;
 		get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 		sscanf(parval, "%d", &mesh->gridz[0]);
-		for (k = 1; k < mesh->numberOfNode.z; k++) {
+		for (k = 1; k < mesh->numberOfNode.z - 1; k++) {
 			ib = ie;
 			get_field(fp_spc, aline, ib, &ie, parval, &nvl, &ierr);
 			sscanf(parval, "%d", &mesh->gridz[k]);
@@ -176,7 +201,7 @@ void setGrid(Mesh3D *mesh, char *spec_file){
 
 int getNumberOfFine(int numberOfNode, int *igrid){
     int sum = 1;
-    for(int i = 0; i < numberOfNode; i++){
+    for(int i = 0; i < numberOfNode - 1; i++){
         sum += igrid[i];
     }
     return sum;
@@ -187,9 +212,9 @@ Mesh3D generateFineMesh(Mesh3D mesh){
     new_mesh.numberOfNode.x = getNumberOfFine(mesh.numberOfNode.x, mesh.gridx);
     new_mesh.numberOfNode.y = getNumberOfFine(mesh.numberOfNode.y, mesh.gridy);
     new_mesh.numberOfNode.z = getNumberOfFine(mesh.numberOfNode.z, mesh.gridz);
-    new_mesh.gridx = malloc(sizeof(float) * new_mesh.numberOfNode.x - 1);
-    new_mesh.gridy = malloc(sizeof(float) * new_mesh.numberOfNode.y - 1);
-    new_mesh.gridz = malloc(sizeof(float) * new_mesh.numberOfNode.z - 1);
+    new_mesh.gridx = malloc(sizeof(int) * (new_mesh.numberOfNode.x - 1));
+    new_mesh.gridy = malloc(sizeof(int) * (new_mesh.numberOfNode.y - 1));
+    new_mesh.gridz = malloc(sizeof(int) * (new_mesh.numberOfNode.z - 1));
 
     for(int i = 0; i < new_mesh.numberOfNode.x - 1; i++){
         new_mesh.gridx[i] = 1;
@@ -206,7 +231,8 @@ Mesh3D generateFineMesh(Mesh3D mesh){
 
 Coordinate1D createCoordinate(Mesh1D mesh, int space, int origin){
     Coordinate1D coordinate;
-    coordinate.mesh = mesh;
+    copyMesh1D(&coordinate.mesh, &mesh);
+    printf("hiiiiiiii\n");
     coordinate.space = space;
     coordinate.origin = origin;
     return coordinate;

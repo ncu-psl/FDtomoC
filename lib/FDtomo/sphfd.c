@@ -6276,7 +6276,7 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
 	fprintf(stdout, "fzss =  %g\n", headout.fzs);
 
 	travel_time.time = time0;
-	travel_time.mesh = model.coordinate.mesh;
+	copyMesh3D(&travel_time.mesh, &model.coordinate.mesh);
 	fprintf(stderr, "wavefront done \n");
 	return travel_time;
 }
