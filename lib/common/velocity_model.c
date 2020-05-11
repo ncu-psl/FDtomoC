@@ -56,8 +56,10 @@ void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityM
 	
 	if(count == 0){
 		vpModel->coordinate.origin = h;
+		vsModel->coordinate.origin = h;
 	}else{
 		vpModel->coordinate.mesh.igrid[count - 1] = h - tmp;
+		vsModel->coordinate.mesh.igrid[count - 1] = h - tmp;
 	}
 	tmp = h;
 	interp[count] = pval[0];
@@ -65,6 +67,7 @@ void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityM
 	}
 	vpModel->coordinate.space = 1;
 	vpModel->coordinate.mesh.numberOfNode = count;
+	vsModel->coordinate.space = 1;
 	vsModel->coordinate.mesh.numberOfNode = count;
 	fclose(fp_one);
 	

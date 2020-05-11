@@ -10,3 +10,14 @@ void outputTravelTime(travelTimeTable time_table){
 	fclose(fp_tmp);
 }
 
+void appendTableNode(travelTimeTableNode **table_head, travelTimeTableNode *new_table_node){
+	if(*table_head == NULL){
+        *table_head = new_table_node;
+        return;
+    }
+    travelTimeTableNode *current =  *table_head;
+    while (current->next != NULL){
+        current = current->next;
+    }
+    current->next = new_table_node;
+}

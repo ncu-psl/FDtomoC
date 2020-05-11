@@ -1,6 +1,7 @@
 #ifndef TRAVEL_TIME
 #define TRAVEL_TIME
 #include "common/grid.h"
+#include "common/parameter.h"
 
 typedef struct{
     char name[100];
@@ -8,5 +9,12 @@ typedef struct{
     float *time;
 }travelTimeTable;
 
+typedef struct travelTimeTableNode_{
+    travelTimeTable table;
+    struct travelTimeTableNode_ *next;
+};
+
+typedef struct travelTimeTableNode_ travelTimeTableNode;
+void appendTableNode(travelTimeTableNode **, travelTimeTableNode *);
 void outputTravelTime(travelTimeTable);
 #endif
