@@ -39,6 +39,8 @@ StationNode *createStationList(char *file, int sph){
 	StationNode *station_head = NULL;
     char str_inp[100];
 	while(fgets(str_inp, sizeof(str_inp), fp_sta) != NULL){
+		if(str_inp[0] == '\n')
+			break;
         int zs = 0;
 		float stx = 0, sty = 0;
 		double fxs = 0, fys = 0, fzs = 0;
@@ -60,7 +62,7 @@ StationNode *createStationList(char *file, int sph){
 int getStationCount(StationNode *station_list){
 	if (station_list == NULL)
 		return 0;
-	int index = 0;
+	int index = 1;
 	StationNode *current = station_list;
 	while(station_list->next != NULL){
 		index++;

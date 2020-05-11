@@ -1,4 +1,6 @@
 #include "common/earthquake.h"
+#define DEBUG_PRINT true
+
 TimeNode *createTimeNode(int iyr, int jday, int ihr, int imn, float sec){
     TimeNode *new_time_node = (TimeNode *)malloc(sizeof(TimeNode));
     new_time_node->time.iyr = iyr;

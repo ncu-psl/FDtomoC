@@ -91,10 +91,11 @@
 #define _ATL_SECURE_NO_WARNINGS
 #pragma warning(disable : 4206 4221 4464 4710 5045)
 
-SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_list, Event *event_array,
-								int event_size, StationNode *station_list,SphraydervEnv sphrayderv_env, CommonEnv common_env) {
 
-	SPHRAYDERV_DATA *SPHRAYDERV = (SPHFDLOC_DATA *)malloc(sizeof(SPHFDLOC_DATA));
+
+SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_list, Event *event_array, int event_size, Station *station_array, int table_size, SphraydervEnv sphrayderv_env, CommonEnv common_env) {
+
+	SPHRAYDERV_DATA *SPHRAYDERV = (SPHRAYDERV_DATA *)malloc(sizeof(SPHRAYDERV_DATA));
 	SPHRAYDERV->mat = (sparse_matrix *)malloc(sizeof(sparse_matrix));
 	SPHRAYDERV->b = (float *)malloc(sizeof(float) * MMAX);
 	int *jndx = (int *)malloc(sizeof(int) * maxmbl);
@@ -214,6 +215,49 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	float xmax = x0 + (nx - 1) * df;
 	float ymax = y[0] + (ny - 1) * dq;
 	float zmax = z0 + (nz - 1) * h;
+
+	float *sp = malloc(sizeof(float) * nxyz * 2);
+	float *dat = malloc(sizeof(float) * maxobs);
+	float *rwts = malloc(sizeof(float) * maxobs);
+	float *resmin = malloc(sizeof(float) * maxobs);
+	float *tdelts = malloc(sizeof(float) * maxobs);
+	float *az1s = malloc(sizeof(float) * maxobs);
+	float *az2s = malloc(sizeof(float) * maxobs);
+	float *azs = malloc(sizeof(float) * maxobs);
+	float *ais = malloc(sizeof(float) * maxobs);
+	float *dtc = malloc(sizeof(float) * maxlst2);
+	float *vsum = malloc(sizeof(float) * maxkbl);
+
+	float **vm = malloc(sizeof(float *) * maxnbk);
+	for (int i = 0; i < maxnbk; i++){
+		vm[i] = malloc(sizeof(float) * maxobs);
+	}
+
+	float **vmp = malloc(sizeof(float *) * maxkbl);
+		for (int i = 0; i < maxkbl; i++){
+		vmp[i] = malloc(sizeof(float) * maxobs);
+	}
+
+	int **ind = malloc(sizeof(int *) * maxnbk);
+		for (int i = 0; i < maxnbk; i++){
+		ind[i] = malloc(sizeof(int) * maxobs);
+	}
+	
+	float am[maxobs][4];
+	float slats[nxm][nym], slons[nxm][nym];
+
+	float *mndex = malloc(sizeof(float) * nxyzm2);
+	float *indx = malloc(sizeof(float) * nxyzm2);
+	float *mhit = malloc(sizeof(float) * nxyzm2);
+
+	int mndm[maxkbl];
+	int inbk[maxobs];
+	int jsave[maxkbl];
+	int istn[maxobs];
+	float avrstn[maxlst][2], rstnsq[maxlst][2], facstn[maxlst][2];
+	int nobstn[maxlst][2];
+	float stlat[maxlst], stlon[maxlst], tcor[maxlst][2];
+	double stz[maxlst];
 
 	if (DEBUG_PRINT) {
 		printf("  xmax = %21.14lf       degrees\n", xmax / degrad);
@@ -336,11 +380,8 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	int nstr;
 	char str_inp[MAXSTRLEN];
 
-	float stlat[maxlst], stlon[maxlst], tcor[maxlst][2];
-	double stz[maxlst];
-	int numOfStations = getStationCount(station_list);
-	Station *station_array = StationList2Arr(station_list);
-	for (nstr = 0; nstr < numOfStations; nstr++){
+
+	for (nstr = 0; nstr < table_size; nstr++){
 		stlon[nstr] = station_array[nstr].location.x * degrad;
 		stlat[nstr] = hpi - glat(station_array[nstr].location.y * degrad);
 		stz[nstr] = station_array[nstr].location.z;
@@ -354,8 +395,7 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 		fprintf(fp_stc, " %d", nstr2);
 	}
 
-	float avrstn[maxlst][2], rstnsq[maxlst][2], facstn[maxlst][2];
-	int nobstn[maxlst][2];
+	
 	for (int i = 0; i < nstr; i++) {
 		for (int j = 0; j < 2; j++) {
 			avrstn[i][j] = 0;
@@ -368,7 +408,7 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	// ---- - set the data file to the local earthquake data file
 	FILE* fp_din = fp_eqs;
 	int mbl = 0;
-	int nhit[nxyzm2];
+	int *nhit = malloc(sizeof(int) * nxyz2);
 	for (int i1 = 0; i1 < nxyz2; i1++) {
 		nhit[i1] = 0;
 	}
@@ -383,14 +423,12 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	//    Read in event header
 	int evenum = 0;
 	int row_count = 0, ith = 0;
-	Event eventmp;
 a3: ;
 	if (evenum >= event_size) {
 		goto a60;
 	}
-	eventmp = event_array[evenum];
 
-	int *indsta = checkTravelTime(event_array[evenum], table_list, station_list);
+	int *indsta = checkTravelTime(event_array[evenum], table_list, table_size);
 	int *isgood = event_array[evenum].isgood;
 	int nsta = getTimeCount(event_array[evenum].observedTimeList);
 	float *obstime = getObsTime(event_array[evenum]);
@@ -398,20 +436,20 @@ a3: ;
 	char *phs = event_array[evenum].phase;
 	char (*sta)[MAXSTRLEN + 1] = event_array[evenum].station_name_list;
 
-	int kyr = eventmp.earthquake.time.iyr;
-	int kday = eventmp.earthquake.time.jday;
-	int khr = eventmp.earthquake.time.ihr;
-	int kmn = eventmp.earthquake.time.imn;
-	float esec = eventmp.earthquake.time.sec;
-	double xlat = eventmp.earthquake.location.x;
-	double xlon = eventmp.earthquake.location.y;
-	float dep = eventmp.earthquake.location.z;
+	int kyr = event_array[evenum].earthquake.time.iyr;
+	int kday = event_array[evenum].earthquake.time.jday;
+	int khr = event_array[evenum].earthquake.time.ihr;
+	int kmn = event_array[evenum].earthquake.time.imn;
+	float esec = event_array[evenum].earthquake.time.sec;
+	double xlat = event_array[evenum].earthquake.location.x;
+	double xlon = event_array[evenum].earthquake.location.y;
+	float dep = event_array[evenum].earthquake.location.z;
 	char evid[10];
-	strcpy(evid, eventmp.evid);
+	strcpy(evid, event_array[evenum].evid);
 
 	//	c---convert to epochal time
 	double dsec = esec;
-	double dpot = htoe2(eventmp.earthquake.time);
+	double dpot = htoe2(event_array[evenum].earthquake.time);
 
 	if (isshot == 0) {
 		if (istel == 0) {
@@ -443,25 +481,7 @@ a3: ;
 
 	double sfq;
 
-	float sp[nxyzm2];
-	float dat[maxobs];
-	float rwts[maxobs], resmin[maxobs];
-	float tdelts[maxobs], az1s[maxobs], az2s[maxobs];
-	float azs[maxobs], ais[maxobs];
-	float dtc[maxlst2];
-	float vm[maxnbk][maxobs], vmp[maxkbl][maxobs];
-	float vsum[maxkbl];
-	float am[maxobs][4];
-
-	float slats[nxm][nym], slons[nxm][nym];
-
-	int ind[maxnbk][maxobs];
-	int mndm[maxkbl];
-	int mndex[nxyzm2], indx[nxyzm2];
-	int mhit[nxyzm2];
-	int inbk[maxobs];
-	int jsave[maxkbl];
-	int istn[maxobs];
+	
 	int i, j, k, is, js, ks, ish, jsh, ksh, nseg, md, iscell, jscell, kscell, nk, nk2, nj, nj2;
 	int ies = 0, jes = 0, kes = 0;
 	float xis = 0, yjs = 0, zks = 0;

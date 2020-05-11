@@ -115,41 +115,42 @@
 // c   ds holds the smoothed perturbations
 // c   vo holds the original model
 // c   vn holds the new model
-float du[nxyzcm2], ds[nxyzcm2], vo[nxyzcm2], *vn;
+float du[nxyzcm2], ds[nxyzcm2], *vn;
 
 // c---vd are the pertubations from runlsqr
 float *vd;
 int *jndx;
 
-MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
+MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, RUNLSQR_DATA *RUNLSQR,
+							 int numberOfStations, MakenewmodEnv makenewmod_env, CommonEnv common_env) {
 	MAKENEWMOD_DATA *MAKENEWMOD = (MAKENEWMOD_DATA *)malloc(sizeof(MAKENEWMOD_DATA));
 	//initialize variable
-	int nxc = spec.grid.nxc, nyc = spec.grid.nyc, nzc = spec.grid.nzc, nx = spec.grid.nx,
-	    ny = spec.grid.ny, nz = spec.grid.nz;
-	double h = spec.grid.h, x0 = spec.grid.x0, *y = spec.grid.y, 
-	z0 = spec.grid.z0, dq = spec.grid.dq, df = spec.grid.df, x00 = spec.grid.x00, y00 = spec.grid.y00;
-	int *igridx = spec.grid.igridx, *igridy = spec.grid.igridy, *igridz = spec.grid.igridz;
-	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
-	char nmodfil[MAXSTRLEN + 1], oldvfil[MAXSTRLEN + 1], fmodfil[MAXSTRLEN + 1];
-	double fxs = 6.0134700169990685e-154, fys = 6.0134700169990685e-154, fzs = 6.0134700169990685e-154;
-	float azh;
-	double clath, clonh, czh;
-	double axo, ayo, azo, dx, dy, dz;
+	int nxc = coordinate.mesh.numberOfNode.x;
+	int nyc = coordinate.mesh.numberOfNode.y;
+	int nzc = coordinate.mesh.numberOfNode.z;
 
-	int istacor = spec.istacor, limitu = spec.limitu, ivpvs = spec.ivpvs, mavx = spec.mavx, mavy = spec.mavy, mavz = spec.mavz,
-	 	nsmooth = spec.nsmooth, ipscflg = spec.ipscflg, ido1d = spec.ido1d, ittnum = spec.ittnum;
-
-	float dvperc = spec.dvperc, pertscl = spec.pertscl;
-	strcpy(nmodfil, spec.nmodfil);
-	strcpy(oldvfil, spec.oldvfil);
-	strcpy(fmodfil, spec.fmodfil);
-
-	int nxh, nyh, nzh;
-	int len, ierr;
-	char stafile[MAXSTRLEN + 1], nstafil[MAXSTRLEN + 1];
-	strcpy(stafile, spec.stafile);
-	strcpy(nstafil, spec.nstafil);
+	int *igridx = coordinate.mesh.gridx;
+	int *igridy = coordinate.mesh.gridy;
+	int *igridz = coordinate.mesh.gridz;
 	
+	char aline[MAXSTRLEN + 1], bline[maxlst][MAXSTRLEN + 1];
+	char fmodfil[MAXSTRLEN + 1];
+
+	int istacor = common_env.istacor;
+	int ivpvs = common_env.ivpvs;
+
+	int limitu = makenewmod_env.limitu;
+	int mavx = makenewmod_env.mavx;
+	int mavy = makenewmod_env.mavy;
+	int mavz = makenewmod_env.mavz;
+	int nsmooth = makenewmod_env.nsmooth;
+	int ipscflg = makenewmod_env.ipscflg;
+	int ido1d = makenewmod_env.ido1d;
+	float dvperc = makenewmod_env.dvperc;
+	float pertscl = makenewmod_env.pertscl;
+
+	char nstafil[MAXSTRLEN + 1];
+
 	vn = (float *)malloc(sizeof(float) * nxyzcm2);
 
 
@@ -175,27 +176,7 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	memset(pcor, 0, sizeof(pcor));
 	memset(scor, 0, sizeof(scor));
 	if (istacor == 1) {
-		FILE * fp_sta = fopen(stafile, "r");
-		if (!fp_sta) {
-			printf("file open error: %s\n", stafile);
-			assert(0);
-		}
-		fgets(aline, 80, fp_sta);
-		while (strncmp(aline + 33, "      ", 6) != 0) {
-			nstr = nstr + 1;
-			if (nstr > maxlst) {
-				printf("  Error:  too many stations in list.. aborting\n");
-				assert(0);
-			}
-
-// c
-// c----In this version, sty and stx are in meters from the origin - Note that
-// c     the y coordinate is in the first column!  slat and slon are lats
-// c     and lons in decimal degrees
-// c
-		}
-		printf("  %d stations read in\n", nstr);
-		fclose(fp_sta);
+		nstr = numberOfStations;
 	}
 
 	int nstr2 = 2 * nstr;
@@ -290,97 +271,10 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 		fprintf(fp_nst, "\n");
 		fclose(fp_nst);
 	}
+	//powqkpowkqpok
 
-//c---read in old velocity model
-	char hdr[120];
-	FILE *fp_cor = fopen(oldvfil, "r");
-	if (!fp_cor) {
-		printf("file open error: %s\n", nstafil);
-		assert(0);
-	}
-	struct vhead headin;
-	fread(&headin, sizeof(char), nhbyte, fp_cor);
-
-	char head[5], type[5], syst[5];
-	char quant[5];
-	char flatten[5];
-	char hcomm[100];
-	{
-		char *offset = headin.header;
-		sscanf(offset, "%4s", head);
-		offset += strlen(head);
-		sscanf(offset, "%4s", type);
-		offset += strlen(type);
-		sscanf(offset, "%4s", syst);
-		offset += strlen(syst);
-		sscanf(offset, "%4s", quant);
-		offset += strlen(quant);
-		sscanf(offset, "%4s", flatten);
-		offset += strlen(flatten);
-		sscanf(offset, "%100s", hcomm);
-	}
-
-// c---see if this is a valid header
-	if (strcmp(head, "HEAD") != 0) {
-		printf(
-				"File does not contain valid header...attempting headerless read \n");
-		// len_rec = 4 * nxyzc2;
-		rewind(fp_cor);
-		if (!fp_cor) {
-			printf("(Error in c2f.c)read file error.\n");
-			assert(fp_cor);
-		}
-		fread(vo, sizeof(vo[0]), nxyzc2, fp_cor);
-
-//c---set trial header values
-		strcpy(head, "HEAD");
-		strcpy(syst, "CART");
-		strcpy(quant, "BMOD");
-		strcpy(flatten, "NOFL");
-		clath = headin.clat;
-		clonh = headin.clon;
-		czh = headin.cz;
-		azh = headin.az;
-		h = spec.grid.h;
-		axo = headin.x0;
-		ayo = headin.y0;
-		azo = headin.z0;
-		dx = spec.grid.h;
-		dy = spec.grid.h;
-		dz = spec.grid.h;
-		nxh = headin.nx;
-		nyh = headin.ny;
-		nzh = headin.nz;
-
-// c-----Grid specs
-		int ib = 0, ie = 0, lenv = 0, nvl = 0;
-		igridx = spec.grid.igridx;
-		igridy = spec.grid.igridy;
-		igridz = spec.grid.igridz;
-		
-	} else {
-		if (strcmp(type, "CORS") != 0) {
-			printf("  WARNING: input mesh does not appear to be COARSE: %s\n",
-					type);
-		}
-		if (strcmp(quant, "BMOD") != 0) {
-			printf("  WARNING: file does not appear to be a valid type: %s\n",
-					quant);
-		}
-
-		printf("  Reading in Coarse Mesh ...");
-		// int len_grd = 4 * (nxc + nyc + nzc - 3);
-		// len_rec = len_head + len_grd + 4 * nxyzc2;
-
-		fread(igridx, sizeof(igridx[0]), nxc - 1, fp_cor);
-		fread(igridy, sizeof(igridy[0]), nyc - 1, fp_cor);
-		fread(igridz, sizeof(igridz[0]), nzc - 1, fp_cor);
-		fread(vo, sizeof(vo[0]), nxyzc2, fp_cor);
-	}
-	fclose(fp_cor);
-	printf(".. Done \n");
-
-	for (int i = 0; i < nxyzc2; i++) {
+	float *vo = old_model.velocity;
+	for (int i = 0; i < nxyzc; i++) {
 		if (vo[i] < 0) {
 			printf("  Error:  %d %f\n", i, vo[i]);
 		}
@@ -622,7 +516,7 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 			for (int j = 0; j < nyc; j++) {
 				for (int i = 0; i < nxc; i++) {
 					int iiiii = nxc * nyc + nxc * j + i;
-					ds[iiiii] = ds[nx * j + i];
+					//ds[iiiii] = ds[nx * j + i];
 				}
 			}
 		}
@@ -760,29 +654,6 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 	// if (iz2d==1) nzs = 1;
 
 	trim(fmodfil);
-	
-	struct vhead headout;
-	headout.fxs = fxs;
-	headout.fys = fys;
-	headout.fzs = fzs;
-	headout.clat = clath;
-	headout.clon = clonh;
-	headout.cz = czh;
-	headout.x0 = axo;
-	headout.y0 = ayo;
-	headout.z0 = azo;
-	headout.dx = dx;
-	headout.dy = dy;
-	headout.dz = dz;
-	headout.az = azh;
-	headout.nx = nxh;
-	headout.ny = nyh;
-	headout.nz = nzh;
-
-	sprintf(hcomm, "Output from makenewmod.c Version %s using %s", VERSION, oldvfil);
-	hdr_appender(headout.header, 120,head,type,syst,quant,flatten,hcomm);
-
-	memcpy(&MAKENEWMOD->head, &headout, nhbyte);
 	memcpy(MAKENEWMOD->igridx, igridx, sizeof(igridx[0]) * (nxc - 1));
 	memcpy(MAKENEWMOD->igridy, igridy, sizeof(igridy[0]) * (nyc - 1));
 	memcpy(MAKENEWMOD->igridz, igridz, sizeof(igridz[0]) * (nzc - 1));
@@ -790,8 +661,8 @@ MAKENEWMOD_DATA *makenewmod(SPEC spec, RUNLSQR_DATA *RUNLSQR) {
 
 // c---compute a 1D average for the elements that were hit
 	FILE *fp_1dm=fopen("new1d.mod", "w");
-	z0 = spec.grid.z0;
-	h = spec.grid.h;
+	double z0 = coordinate.origin.z;
+	double h = coordinate.space.z;
 
 	float gz[nzcm];
 	gz[0]=z0;
@@ -927,4 +798,59 @@ int LOG_MAKENEWMOD(SPEC spec){
 
 	fclose(fp_log);
 	return 0;
+}
+
+MakenewmodEnv setMakeNewmodEnv(char *spec_file){
+	MakenewmodEnv makenewmod_env;
+	//default settings
+	makenewmod_env.mavx = 3;
+	makenewmod_env.mavy = 3;
+	makenewmod_env.mavz = 3;
+	makenewmod_env.nsmooth = 2;
+	makenewmod_env.limitu = 0;
+	makenewmod_env.ipscflg = 0;
+	makenewmod_env.dvperc = 0.05;
+	makenewmod_env.pertscl = 1.0;
+	makenewmod_env.ido1d = 0;
+	return makenewmod_env;
+}
+
+void setMakeNewmodVariables(MakenewmodEnv *makenewmod_env, char *spec_file){
+	FILE *fp_spc;
+    fp_spc = fopen(spec_file, "r");
+	if (!fp_spc) {
+		printf("(Error in read_spec.c)read fp_spc file error.\n");
+		assert(0);
+	}
+    
+    int len, ierr;
+    char pval[MAXSTRLEN + 1];
+
+	get_vars(fp_spc, "mavx ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->mavx);
+	get_vars(fp_spc, "mavy ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->mavy);
+	get_vars(fp_spc, "mavz ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->mavz);
+	get_vars(fp_spc, "nsmooth ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->nsmooth);
+	get_vars(fp_spc, "limitu ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->limitu);
+	get_vars(fp_spc, "ipscflg ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->ipscflg);
+	get_vars(fp_spc, "ipscflg ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->ipscflg);
+	get_vars(fp_spc, "pertscl ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%f", &makenewmod_env->pertscl);
+	get_vars(fp_spc, "do1d ", pval, &len, &ierr);
+	if (ierr == 0)
+		sscanf(pval, "%d", &makenewmod_env->ido1d);
 }

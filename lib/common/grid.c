@@ -232,7 +232,6 @@ Mesh3D generateFineMesh(Mesh3D mesh){
 Coordinate1D createCoordinate(Mesh1D mesh, int space, int origin){
     Coordinate1D coordinate;
     copyMesh1D(&coordinate.mesh, &mesh);
-    printf("hiiiiiiii\n");
     coordinate.space = space;
     coordinate.origin = origin;
     return coordinate;

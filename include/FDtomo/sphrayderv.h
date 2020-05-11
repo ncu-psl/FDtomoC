@@ -29,7 +29,7 @@ typedef struct{
 		headfil[MAXSTRLEN], entfile[MAXSTRLEN], stcfile[MAXSTRLEN], specfile[MAXSTRLEN];
 }SphraydervEnv;
 
-SPHRAYDERV_DATA *sphrayderv(velocityModel3D, travelTimeTable *, Event *, int, StationNode *, SphraydervEnv, CommonEnv);
+SPHRAYDERV_DATA *sphrayderv(velocityModel3D, travelTimeTable *, Event *, int, Station *, int, SphraydervEnv, CommonEnv);
 int OUTPUT_SPHFRAYDERV(SPHRAYDERV_DATA *, SPEC);
 int LOG_SPHFRAYDERV(SPEC);
 SphraydervEnv setSphraydervEnv(char *);
