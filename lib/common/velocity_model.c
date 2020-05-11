@@ -198,6 +198,9 @@ velocityModel3D transform3D(Coordinate3D coordinate, velocityModel3D model){
             } 
         }
     }
+	for(int i = 0; i < modelSize3D; i++){
+		model.velocity[i] = 1. / model.velocity[i];
+	}	
 	new_model.coordinate = coordinate;
 	new_model.velocity = velocity;
 	return new_model;
