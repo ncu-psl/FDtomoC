@@ -60,7 +60,7 @@ void appendEventNode(EventNode **, EventNode *);
 int getEventCount(EventNode *);
 EventNode *createEventList(char *);
 Event *EventList2Arr(EventNode *);
-int *checkTravelTime(Event , travelTimeTable *, StationNode *);
+int *checkTravelTime(Event , travelTimeTable *, int);
 float *getObsTime(Event);
 float *getPwt(Event);
 void setLocFiles(LocEnv *, char *);
