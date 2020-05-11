@@ -1,6 +1,7 @@
 #ifndef MAKENEWMOD_H_
 #define MAKENEWMOD_H_
 #include "FDtomo/runlsqr.h"
+#include "common/velocity_model.h"
 #define nhbyte 58 * 4
 
 typedef struct{
@@ -9,7 +10,16 @@ typedef struct{
     float *vn;
 
 }MAKENEWMOD_DATA;
-MAKENEWMOD_DATA *makenewmod(SPEC, RUNLSQR_DATA *);
+
+typedef struct{
+    int mavx, mavy, mavz, nsmooth, limitu, ipscflg, ido1d;
+    float dvperc, pertscl;
+
+}MakenewmodEnv;
+
+MAKENEWMOD_DATA *makenewmod(Coordinate3D, velocityModel3D, RUNLSQR_DATA *, int, MakenewmodEnv, CommonEnv);
 int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *, SPEC);
 int LOG_MAKENEWMOD(SPEC);
+MakenewmodEnv setMakeNewmodEnv(char *);
+void setMakeNewmodVariables(MakenewmodEnv *, char *);
 #endif
