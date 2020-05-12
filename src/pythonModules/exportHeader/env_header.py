@@ -33,6 +33,11 @@ def env_header():
         float damper;
         char nmodfil[MAXSTRLEN + 1], fresfil[MAXSTRLEN + 1];
     }RunlsqrEnv;
+
+    typedef struct{
+        int mavx, mavy, mavz, nsmooth, limitu, ipscflg, ido1d;
+        float dvperc, pertscl;
+    }MakenewmodEnv;
     """
 
     func = """
@@ -47,6 +52,8 @@ def env_header():
     RunlsqrEnv setRunlsqrEnv(char *);
     void setRunlsqrVariables(RunlsqrEnv *,char *);
     void setRunlsqrFiles(RunlsqrEnv *, char *);
+    MakenewmodEnv setMakeNewmodEnv(char *);
+    void setMakeNewmodVariables(MakenewmodEnv *, char *);
     """
 
     return header + func

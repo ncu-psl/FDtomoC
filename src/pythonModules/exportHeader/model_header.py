@@ -14,6 +14,20 @@ def model_header():
         Coordinate3D coordinate;
         float *velocity;
     }velocityModel3D;
+
+     typedef struct{
+        int n;
+        float *x;
+        int *jndx;
+        float *se;
+    }RUNLSQR_DATA;
+
+    typedef struct{
+        struct vhead head;
+        ...;
+        float *vn;
+
+    }MAKENEWMOD_DATA;
     '''
     func = '''
     void readVelocityModel1D(char *, velocityModel1D *, velocityModel1D *, char *);
@@ -25,6 +39,7 @@ def model_header():
     float trilinear_interpolation_base(Point3D , Point3D, Coordinate3D, velocityModel3D *);
     velocityModel3D change2ColumnMajor(velocityModel3D);
     void output3DModel(velocityModel3D, char *);
+    MAKENEWMOD_DATA *makenewmod(Coordinate3D, velocityModel3D, velocityModel3D, RUNLSQR_DATA *, int, MakenewmodEnv, CommonEnv);
     '''
 
     return typedef + func
