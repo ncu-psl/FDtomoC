@@ -121,7 +121,7 @@ float du[nxyzcm2], ds[nxyzcm2], *vn;
 float *vd;
 int *jndx;
 
-MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, RUNLSQR_DATA *RUNLSQR,
+MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, velocityModel3D vs_model, RUNLSQR_DATA *RUNLSQR,
 							 int numberOfStations, MakenewmodEnv makenewmod_env, CommonEnv common_env) {
 	MAKENEWMOD_DATA *MAKENEWMOD = (MAKENEWMOD_DATA *)malloc(sizeof(MAKENEWMOD_DATA));
 	//initialize variable
@@ -153,12 +153,10 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 
 	vn = (float *)malloc(sizeof(float) * nxyzcm2);
 
-
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
 
-	
 	int ima = mavx;
 	int jma = mavy;
 	int kma = mavz;
@@ -170,7 +168,6 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 	jma /= 2;
 	kma /= 2;
 
-// c-----open the station file; terminate with blank line or EOF
 	int nstr = 0;
 	float pcor[maxlst], scor[maxlst];
 	memset(pcor, 0, sizeof(pcor));
@@ -181,15 +178,15 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 
 	int nstr2 = 2 * nstr;
 	int nph = 2;
-
-//c---read corrections 
 	int nvar = 0;
 
 	nvar = RUNLSQR->n;
 	vd = RUNLSQR->x;
 	jndx = RUNLSQR->jndx;
 
-
+	for (int i = 0; i < nvar; i++) {
+		jndx[i]--;
+	}
 	printf("  %10d perturbations read in\n", nvar);
 
 //c---scale the corrections if required
@@ -272,11 +269,16 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 		fclose(fp_nst);
 	}
 	//powqkpowkqpok
-
-	float *vo = old_model.velocity;
+	float *vp = vp_model.velocity;
+	float *vs = vs_model.velocity;
 	for (int i = 0; i < nxyzc; i++) {
-		if (vo[i] < 0) {
-			printf("  Error:  %d %f\n", i, vo[i]);
+		if (vp[i] < 0) {
+			printf("  Error:  %d %f\n", i, vp[i]);
+			assert(0);
+		}
+		if (vs[i] < 0) {
+			printf("  Error:  %d %f\n", i, vs[i]);
+			assert(0);
 		}
 	}
 
@@ -295,7 +297,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 			int ipv = i;
 			if (ido1d == 1)
 				ipv = nxyc * i;
-			float voi = vo[ipv];
+			float voi = vp[ipv];
 			float vnew = 1.f / (du[i] + 1.f / voi);
 			float dvn = vnew - voi;
 			float vnewmin = voi * dvm1;
@@ -312,17 +314,20 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 		}
 // c	Vs or Vp/Vs section
 // c	  do i = nxyzc+1, nxyzc2
-
-		for (int i = maxvarc; i < maxvarc2; i++) {
+		for (int k = 0; k < maxvarc; k++) {
+			int ksv = k;
+			int i = k + maxvarc;
 			int isv = i;
-			if (ido1d == 1)
+			if (ido1d == 1){
+				ksv = nxyc * k;
 				isv = nxyzc + nxyc * (i - maxvarc);
-			float voi = vo[isv];
+			}
+			float voi = vs[k];
 			float vnewmin = voi * dvm1;
 			float vnewmax = voi * dvm2;
 // c    Case of du = d(Vp/Vs)
 			if (ivpvs == 1) {
-				float rold = vo[isv - nxyzc] / voi;
+				float rold = vp[ksv] / voi;
 				float rnew = du[i] + rold;
 				float vnew = vn[i - maxvarc] / rnew;
 				if (vnew > vnewmax) {
@@ -468,7 +473,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 // c----redefine vo to be Vp/Vs if necessary (perturbation is d(vp/vs) if ivpvs is 1).
 	if (ivpvs == 1) {
 		for (int i = 0; i < nxyzc; i++) {
-			vo[i + nxyzc] = vo[i] / vo[i + nxyzc];
+			vs[i] = vp[i] / vs[i];
 		}
 	}
 
@@ -533,7 +538,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 		if (ido1d == 1)
 			ivar = i / nxyc;
 		ddu = ds[ivar];
-		vold = vo[i];
+		vold = vp[i];
 		vnew = 1.f / (ddu + (1.f / vold));
 		dv = vnew - vold;
 		if (i == 0) {
@@ -570,12 +575,15 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D old_model, 
 	v_min_old = FLT_MAX, v_max_old = FLT_MIN;
 	ioff = nxyzc;
 	for (int k = 0; k < nxyzc; k++) {
+		int s_index = k;
 		int i = k + ioff;
 		int ivar = i;
-		if (ido1d == 1)
+		if (ido1d == 1){
 			ivar = k / nxyc + nzc;
+			s_index = k / nxyc;
+		}
 		ddu = ds[ivar];
-		vold = vo[i];
+		vold = vs[s_index];
 		if (ivpvs == 1) {
 			vnew = vold + ddu;
 			dv = ddu;

@@ -17,7 +17,7 @@ typedef struct{
 
 }MakenewmodEnv;
 
-MAKENEWMOD_DATA *makenewmod(Coordinate3D, velocityModel3D, RUNLSQR_DATA *, int, MakenewmodEnv, CommonEnv);
+MAKENEWMOD_DATA *makenewmod(Coordinate3D, velocityModel3D, velocityModel3D, RUNLSQR_DATA *, int, MakenewmodEnv, CommonEnv);
 int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *, SPEC);
 int LOG_MAKENEWMOD(SPEC);
 MakenewmodEnv setMakeNewmodEnv(char *);
