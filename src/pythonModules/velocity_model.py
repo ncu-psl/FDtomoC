@@ -47,3 +47,14 @@ class VelocityModel3D(VelocityModel):
         model3D = VelocityModel3D()
         model3D.modelField = _FDtomoC.lib.transform3D(coordinate3D.coordinateField, self.modelField)
         return model3D
+
+    def makeNewModel(self, coordinate, vp_model, vs_model, perturbation, table_size, new_model_env):
+        corField = coordinate.coordinateField
+        vpModelField = vp_model.modelField
+        vsModelField = vs_model.modelField
+        perturbationField = perturbation.perturbationField
+
+        makenewmodEnvField = new_model_env.makenewmodEnvField
+        commonEnvField = new_model_env.commonEnvField
+
+        _FDtomoC.lib.makenewmod(corField, vpModelField, vsModelField, perturbationField, table_size, makenewmodEnvField, commonEnvField)
