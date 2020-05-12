@@ -197,7 +197,7 @@ double rcent;
 static double z0r;
 int endian();
 int litend;
-travelTimeTable sphfd_exec(velocityModel3D, Point3DDouble);
+travelTimeTable sphfd_exec(velocityModel3D, Station);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
 travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
@@ -207,16 +207,14 @@ travelTimeTable *sphfd(velocityModel3D model, StationNode *station_head)
 	StationNode *currentStation = station_head;
 	int index = 0;
 	for(int i = 0; i < numOfStations; i++){
-		Point3DDouble location = currentStation->data.location; 
-		travle_time_array[i] = sphfd_exec(model, location);
-		strcpy(travle_time_array[i].name, currentStation->data.name);
+		travle_time_array[i] = sphfd_exec(model, currentStation->data);
 		currentStation = currentStation->next;
 	}
 
 	return travle_time_array;
 }
 
-travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
+travelTimeTable sphfd_exec(velocityModel3D model, Station station)
 {
 	travelTimeTable travel_time;
 	
@@ -343,9 +341,9 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
 
 	fprintf(stderr, "Starting sphfd: by S. Roecker 2003, RPI\n");
 
-	fxs = location.x;
-	fys = location.y;
-	fzs = location.z;
+	fxs = station.location.x;
+	fys = station.location.y;
+	fzs = station.location.z;
 	nx = model.coordinate.mesh.numberOfNode.x;
 	ny = model.coordinate.mesh.numberOfNode.y;
 	nz = model.coordinate.mesh.numberOfNode.z;
@@ -405,9 +403,9 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
 		{
 			if (savsrc == 1)
 			{
-				fxs=location.x;
-				fys=location.y;
-				fzs=location.z;
+				fxs=station.location.x;
+				fys=station.location.y;
+				fzs=station.location.z;
 				fxss = fxs;
 				fyss = fys;
 				fzss = fzs;
@@ -431,9 +429,9 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
 		}
 		else
 		{
-			fxs=location.x;
-			fys=location.y;
-			fzs=location.z;
+			fxs=station.location.x;
+			fys=station.location.y;
+			fzs=station.location.z;
 			fxs *= degrad;
 			fys *= degrad;
 			/*  Use this to ignore the geocentic converstion to test with Haijiang
@@ -6277,6 +6275,7 @@ travelTimeTable sphfd_exec(velocityModel3D model, Point3DDouble location)
 
 	travel_time.time = time0;
 	copyMesh3D(&travel_time.mesh, &model.coordinate.mesh);
+	strcpy(travel_time.name, station.name);
 	fprintf(stderr, "wavefront done \n");
 	return travel_time;
 }

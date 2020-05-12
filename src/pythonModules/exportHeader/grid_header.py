@@ -56,6 +56,7 @@ def grid_header():
     Coordinate3D setCoordinate(char *);
     Coordinate3D change2Sphere(Coordinate3D, int);
     Point3D searchFineBase(Point3D, Coordinate3D);
+    void copyMesh3D(Mesh3D *, Mesh3D *);
     """
 
     return header + func

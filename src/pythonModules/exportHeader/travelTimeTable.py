@@ -11,8 +11,8 @@ def travel_time_header():
 
     func = """
     travelTimeTable *sphfd(velocityModel3D, StationNode *);
-    travelTimeTable sphfd_exec(velocityModel3D, Point3DDouble);
-    void outputTravelTime(travelTimeTable);
+    travelTimeTable sphfd_exec(velocityModel3D, Station);
+    void outputTravelTime(travelTimeTable, char *);
     """
 
     return header + func

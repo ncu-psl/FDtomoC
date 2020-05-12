@@ -1,6 +1,6 @@
 #include "common/travel_time.h"
-void outputTravelTime(travelTimeTable time_table){
-	FILE *fp_tmp = fopen(time_table.name, "wb");
+void outputTravelTime(travelTimeTable time_table, char *filename){
+	FILE *fp_tmp = fopen(filename, "wb");
 	if(!fp_tmp){
 		printf("Error happens while output travel time !\n");
 		assert(0);
