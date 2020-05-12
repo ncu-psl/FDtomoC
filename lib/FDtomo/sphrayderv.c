@@ -147,11 +147,10 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 
 	char VERSION[10] = "2004.0923";
 	char parval[MAXSTRLEN];
-	char locdfil[MAXSTRLEN + 1], telrerr[MAXSTRLEN + 1], 
+	char telrerr[MAXSTRLEN + 1], 
     	dtdsfil[MAXSTRLEN + 1], resfile[MAXSTRLEN + 1], hitfile[MAXSTRLEN + 1], 
 		dtdhfil[MAXSTRLEN + 1], bookfil[MAXSTRLEN + 1], sclefil[MAXSTRLEN + 1]; 
 
-	strcpy(locdfil, sphrayderv_env.locdfil);
 	strcpy(telrerr, sphrayderv_env.telrerr);
 	strcpy(dtdsfil, sphrayderv_env.dtdsfil);
 	strcpy(resfile, sphrayderv_env.resfile);
@@ -272,11 +271,6 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	//c
 	//c     Note that at present this is hardwired(shots wired to m2)
 	int m1 = -1, m2 = -2;
-	FILE* fp_eqs = fopen(locdfil, "r");
-	if (!fp_eqs) {
-		printf("Error on opening file: %s\n", locdfil);
-		assert(0);
-	}
 	FILE* fp_ray = NULL;
 	if (iraystat) {
 		fp_ray = fopen(raystat, "w");
@@ -406,7 +400,7 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	}
 
 	// ---- - set the data file to the local earthquake data file
-	FILE* fp_din = fp_eqs;
+	FILE* fp_din = NULL;
 	int mbl = 0;
 	int *nhit = malloc(sizeof(int) * nxyz2);
 	for (int i1 = 0; i1 < nxyz2; i1++) {
@@ -1928,9 +1922,6 @@ a60:
 					goto a3;
 				}
 			}
-		}
-		if (fp_eqs) {
-			fclose(fp_eqs);
 		}
 		if (fp_sht) {
 			fclose(fp_sht);

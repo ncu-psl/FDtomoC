@@ -10,7 +10,11 @@ class TravelTimeTable(object):
         self.tableField = tableField
 
     def create(self, model, station):
-        location = station.stationField.location
-        tableField = _FDtomoC.lib.sphfd_exec(model.modelField, location)
+        stationField = station.stationField
+        tableField = _FDtomoC.lib.sphfd_exec(model.modelField, stationField)
         travel_time_table = TravelTimeTable(tableField = tableField)
         return travel_time_table
+
+    def output(self, filename):
+        tmp = _FDtomoC.ffi.new("char[]", filename)
+        _FDtomoC.lib.outputTravelTime(self.tableField, tmp)

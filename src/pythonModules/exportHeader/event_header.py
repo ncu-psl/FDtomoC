@@ -2,6 +2,8 @@
 from cffi import FFI
 def event_header():
     header = """
+    #define SIZEOFA 200000000
+    #define NMAX 2500000
     #define maxobs 800
     typedef struct{
         int iyr, jday, ihr, imn;
@@ -35,6 +37,22 @@ def event_header():
         struct EventNode_ *next;
     };
     typedef struct EventNode_ EventNode;
+
+    typedef struct{
+        float elements[SIZEOFA];
+        int column_elements[SIZEOFA];
+        int elements_row[NMAX];
+        int *jndx;
+        int number_columns;
+        int number_rows;
+        int total_elements;
+    }sparse_matrix;
+
+    typedef struct{
+        sparse_matrix *mat;
+        float *b;
+    }SPHRAYDERV_DATA;
+
     """
 
     func = """
@@ -48,10 +66,13 @@ def event_header():
     int getEventCount(EventNode *);
     EventNode *createEventList(char *);
     Event *EventList2Arr(EventNode *);
-    int *checkTravelTime(Event , travelTimeTable *, StationNode *);
+    int *checkTravelTime(Event , travelTimeTable *, int);
     float *getObsTime(Event);
     float *getPwt(Event);
     Event singleLoc(Coordinate3D, travelTimeTable *, Event, int, LocEnv);
+    Event *sphfdloc(Coordinate3D, travelTimeTable *, EventNode *, int, LocEnv);
+    SPHRAYDERV_DATA *sphrayderv(velocityModel3D, travelTimeTable *, Event *, int, Station *, int, SphraydervEnv, CommonEnv);
+    RUNLSQR_DATA *runlsqr(SPHRAYDERV_DATA *, RunlsqrEnv, CommonEnv);
     """
 
     return header + func
