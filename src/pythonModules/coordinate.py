@@ -4,7 +4,7 @@ from cffi import FFI
 import _FDtomoC
 
 class Coordinate(object):
-    def __init__(self, mesh = None, space = None, origin = None):
+    def __init__(self, mesh = None, origin = None,  space = None):
         self.mesh = mesh 
         self.space = space
         self.origin = origin
@@ -23,12 +23,16 @@ class Coordinate1D(Coordinate):
 
 
 class Coordinate3D(Coordinate):
-    def create(self, mesh = None, space = None, origin = None, file = None):
+    def create(self, mesh = None, origin = None, space = None, file = None):
         if (file != None):
             coordinate = Coordinate3D()
             tmp = _FDtomoC.ffi.new("char[]", file)
             coordinate.coordinateField = _FDtomoC.lib.setCoordinate(tmp)
             return coordinate
+
+        coordinate = Coordinate3D(mesh, origin, space)
+        coordinate.getField()
+        return coordinate
 
     def setMesh(self, mesh):
         origin = self.coordinateField.origin
@@ -44,3 +48,8 @@ class Coordinate3D(Coordinate):
                                                                  })
         self.coordinateField = new_coordinateField[0]
         
+    def getField(self):
+        self.coordinateField = _FDtomoC.ffi.new("Coordinate3D *")
+        self.coordinateField.origin = self.origin
+        self.coordinateField.space = self.space
+        self.setMesh(self.mesh)
