@@ -1,8 +1,11 @@
-import mesh, coordinate, velocity_model, environment, station, travel_time, event
+import coordinate, velocity_model, environment, station, travel_time, event
+from velocity_model import VelocityModel1D, VelocityModel3D
+from mesh import Mesh1D, Mesh3D
+from station import Station
+from event import Event
 import _FDtomoC
-
 import abc
-
+from tomography import *
 file_path = "../../data/small/FDtomo01.spec"
 model1D_path = "../../data/small/TW_m30_mdl"
 stafile = "../../data/small/runs_files/stationloc_out.txt"
@@ -13,8 +16,38 @@ sphrayderv_env = environment.SphraydervEnv().create(file = file_path)
 runlsqr_env = environment.RunlsqrEnv().create(file = file_path)
 makenewmod_env = environment.MakenewmodEnv().create(file = file_path)
 
+environment = {'loc_env' : loc_env, 'sphrayderv_env' : sphrayderv_env, 'runlsqr_env' : runlsqr_env, 'makenewmod_env' : makenewmod_env}
 
-mesh3D = mesh.Mesh3D().create(file = file_path)
+coarseMesh3D = Mesh3D().create(file = file_path)
+fineMesh3D = coarseMesh3D.generateFineMesh()
+
+event = Event().createArray(leqsfil)
+station = Station().createArray(file = stafile)
+
+vpModel = VelocityModel1D()
+vsModel = VelocityModel1D()
+VelocityModel1D().setVelocityModel(model1D_path, vpModel, vsModel)
+
+TomographyBuilder() \
+    .Environment(environment) \
+    .Event(event) \
+    .Station(station) \
+    .VelocityModel() \
+        .Coordinate() \
+            .Mesh(coarseMesh3D, fineMesh3D) \
+            .Origin([120.9, 23.8, -4.0]) \
+            .Space([2,2,2]) \
+        .ReferenceModel(vpModel, vsModel) \
+    .execute() 
+
+'''
+loc_env = environment.LocEnv().create(file = file_path)
+sphrayderv_env = environment.SphraydervEnv().create(file = file_path)
+runlsqr_env = environment.RunlsqrEnv().create(file = file_path)
+makenewmod_env = environment.MakenewmodEnv().create(file = file_path)
+
+
+mesh3D = Mesh3D().create(file = file_path)
 coarseCoordinate3D = coordinate.Coordinate3D().create(file = file_path)
 fineCoordinate3D = coordinate.Coordinate3D().create(file = file_path)
 fineMesh3D = mesh3D.generateFineMesh()
@@ -58,3 +91,4 @@ table_size = len(table_array)
 derv, residual_vector = event.Event().sphRaytracing(CoarseVpModel3D, table_array, new_event_array, event_size, station_array, table_size, sphrayderv_env)
 perturbation = event.Event().runlsqr(derv, residual_vector, runlsqr_env)
 velocity_model.VelocityModel3D().makeNewModel(coarseCoordinate3D, CoarseVpModel3D, CoarseVsModel3D, perturbation, table_size, makenewmod_env)
+'''
