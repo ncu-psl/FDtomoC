@@ -115,15 +115,14 @@
 // c   ds holds the smoothed perturbations
 // c   vo holds the original model
 // c   vn holds the new model
-float du[nxyzcm2], ds[nxyzcm2], *vn;
+float du[nxyzcm2], ds[nxyzcm2];
 
 // c---vd are the pertubations from runlsqr
 float *vd;
 int *jndx;
 
-MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, velocityModel3D vs_model, RUNLSQR_DATA *RUNLSQR,
+void makenewmod(Coordinate3D coordinate, velocityModel3D *vp_model, velocityModel3D *vs_model, RUNLSQR_DATA *RUNLSQR,
 							 int numberOfStations, MakenewmodEnv makenewmod_env, CommonEnv common_env) {
-	MAKENEWMOD_DATA *MAKENEWMOD = (MAKENEWMOD_DATA *)malloc(sizeof(MAKENEWMOD_DATA));
 	//initialize variable
 	int nxc = coordinate.mesh.numberOfNode.x;
 	int nyc = coordinate.mesh.numberOfNode.y;
@@ -151,11 +150,13 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 
 	char nstafil[MAXSTRLEN + 1];
 
-	vn = (float *)malloc(sizeof(float) * nxyzcm2);
-
 	int nxyc = nxc * nyc;
 	int nxyzc = nxyc * nzc;
 	int nxyzc2 = nxyzc * 2;
+
+	float *new_vp = (float *)malloc(sizeof(float) * nxyzc);
+	float *new_vs = (float *)malloc(sizeof(float) * nxyzc);
+
 
 	int ima = mavx;
 	int jma = mavy;
@@ -269,8 +270,8 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 		fclose(fp_nst);
 	}
 	//powqkpowkqpok
-	float *vp = vp_model.velocity;
-	float *vs = vs_model.velocity;
+	float *vp = vp_model->velocity;
+	float *vs = vs_model->velocity;
 	for (int i = 0; i < nxyzc; i++) {
 		if (vp[i] < 0) {
 			printf("  Error:  %d %f\n", i, vp[i]);
@@ -310,7 +311,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 				dvn = vnewmin - voi;
 				du[i] = 1.f / vnewmin - 1.f / voi;
 			}
-			vn[i] = voi + dvn;
+			new_vp[i] = voi + dvn;
 		}
 // c	Vs or Vp/Vs section
 // c	  do i = nxyzc+1, nxyzc2
@@ -329,13 +330,13 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 			if (ivpvs == 1) {
 				float rold = vp[ksv] / voi;
 				float rnew = du[i] + rold;
-				float vnew = vn[i - maxvarc] / rnew;
+				float vnew = new_vp[i - maxvarc] / rnew;
 				if (vnew > vnewmax) {
-					rnew = vn[i - maxvarc] / vnewmax;
+					rnew = new_vp[i - maxvarc] / vnewmax;
 					du[i] = rnew - rold;
 				}
 				if (vnew < vnewmin) {
-					rnew = vn[i - maxvarc] / vnewmin;
+					rnew = new_vp[i - maxvarc] / vnewmin;
 					du[i] = rnew - rold;
 				}
 			} else {
@@ -562,7 +563,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 			if (vold < v_min_old)
 				v_min_old = vold;
 		}
-		vn[i] = vnew;
+		new_vp[i] = vnew;
 	}
 	printf("  dvpmax, dvpmin = %15.8E %15.8E\n", dv_max, dv_min);
 	printf("  Old Vp max, New Vp max = %12.8f %15.8f\n", v_max_old, v_max_new);
@@ -613,7 +614,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 			if (vold < v_min_old)
 				v_min_old = vold;
 		}
-		vn[i] = vnew;
+		new_vs[k] = vnew;
 	}
 
 	if (ivpvs == 1) {
@@ -633,10 +634,15 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 // c---convert Vp/Vs back to Vs if necessary
 	if (ivpvs==1) {
 	  for(int k=0;k<nxyzc;k++) {
-	    int i = k + nxyzc;
-	    vn[i] = vn[k]/vn[i];
+	    new_vs[k] = new_vp[k] / new_vs[k];
 	  }
 	}
+
+	free(vp_model->velocity);
+	free(vs_model->velocity);
+	vp_model->velocity = new_vp;
+	vs_model->velocity = new_vs;
+
 
 // c     WRITE NEW MODEL (CHECK TO HANDLE 2D FIRST)
 	if (ix2d==1) {
@@ -645,7 +651,8 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 			int nk = nxs*nyc*k;
 			for(int j=0;j<nyc;j++) {
 				int iiiii = nk+nxs*j;
-				vn[iiiii] = vn[2*nyc*k+2*j];
+				//vn[iiiii] = vn[2*nyc*k+2*j];
+				assert(0); //vn should be changed to vs or vp
 			}
 		}
 	}
@@ -655,19 +662,16 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 			int nk = nxc*nys*k;
 			for(int i=0;i<nxc;i++){
 				int iiiii = nk+i;
-				vn[iiiii] = vn[nxc*2*k+i];
+				//vn[iiiii] = vn[nxc*2*k+i];
+				assert(0); //vn should be changed to vs or vp
 			}
 		}
 	}
 	// if (iz2d==1) nzs = 1;
 
-	trim(fmodfil);
-	memcpy(MAKENEWMOD->igridx, igridx, sizeof(igridx[0]) * (nxc - 1));
-	memcpy(MAKENEWMOD->igridy, igridy, sizeof(igridy[0]) * (nyc - 1));
-	memcpy(MAKENEWMOD->igridz, igridz, sizeof(igridz[0]) * (nzc - 1));
-	MAKENEWMOD->vn = vn;
-
 // c---compute a 1D average for the elements that were hit
+// should be modified
+/*
 	FILE *fp_1dm=fopen("new1d.mod", "w");
 	double z0 = coordinate.origin.z;
 	double h = coordinate.space.z;
@@ -704,8 +708,7 @@ MAKENEWMOD_DATA *makenewmod(Coordinate3D coordinate, velocityModel3D vp_model, v
 		fprintf(fp_1dm, "%7.2f%10.5f%10.5f I\n", gz[i], du[i], du[i+nzc]);
 	}
 	fclose(fp_1dm);
-	
-	return MAKENEWMOD;
+	*/
 }
 
 int OUTPUT_MAKENEWMOD(MAKENEWMOD_DATA *MAKENEWMOD, SPEC spec){
