@@ -26,7 +26,7 @@ class Coordinate3D(Coordinate):
     def create(self, mesh = None, origin = None, space = None, file = None):
         if (file != None):
             coordinate = Coordinate3D()
-            tmp = _FDtomoC.ffi.new("char[]", file)
+            tmp = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
             coordinate.coordinateField = _FDtomoC.lib.setCoordinate(tmp)
             return coordinate
 

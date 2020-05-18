@@ -11,7 +11,7 @@ class Event(object):
         self.eventField = eventField
 
     def createArray(self, file = None):
-        filename = _FDtomoC.ffi.new("char[]", file)
+        filename = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
         eventField_list = _FDtomoC.lib.createEventList(filename)
         eventField_array = _FDtomoC.lib.EventList2Arr(eventField_list)
         
@@ -28,7 +28,7 @@ class Event(object):
         tmp = _FDtomoC.ffi.new("travelTimeTable[]", tableFieldArray)
         locEnvField = locEnv.locEnvField
 
-        filename = _FDtomoC.ffi.new("char[]", file)
+        filename = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
         eventField_list = _FDtomoC.lib.createEventList(filename)
 
         table_size = len(tmp)

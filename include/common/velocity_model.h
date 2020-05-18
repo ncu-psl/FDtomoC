@@ -27,5 +27,7 @@ Point3D getPoint3DModel(Point3D, velocityModel3D *);
 float trilinear_interpolation_base(Point3D , Point3D, Coordinate3D, velocityModel3D *);
 velocityModel3D change2ColumnMajor(velocityModel3D);
 void output3DModel(velocityModel3D, char *);
-
+void freeModel3D(velocityModel3D *);
+void freeModel1D(velocityModel1D *);
+velocityModel1D *createModel1D();
 #endif

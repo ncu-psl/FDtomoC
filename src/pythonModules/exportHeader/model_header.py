@@ -39,7 +39,10 @@ def model_header():
     float trilinear_interpolation_base(Point3D , Point3D, Coordinate3D, velocityModel3D *);
     velocityModel3D change2ColumnMajor(velocityModel3D);
     void output3DModel(velocityModel3D, char *);
-    MAKENEWMOD_DATA *makenewmod(Coordinate3D, velocityModel3D, velocityModel3D, RUNLSQR_DATA *, int, MakenewmodEnv, CommonEnv);
+    void freeModel3D(velocityModel3D *);
+    void freeModel1D(velocityModel1D *);
+    velocityModel1D *createModel1D();
+    void makenewmod(Coordinate3D, velocityModel3D *, velocityModel3D *, RUNLSQR_DATA *, int, MakenewmodEnv, CommonEnv);
     '''
 
     return typedef + func

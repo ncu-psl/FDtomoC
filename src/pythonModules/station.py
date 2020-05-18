@@ -18,7 +18,7 @@ class Station(object):
 
     def createArray(self, station = None, file = None):
         if(file != None):
-            filename = _FDtomoC.ffi.new("char[]", file)
+            filename = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
             stationField_list = _FDtomoC.lib.createStationList(filename, 1)
             stationField_array = _FDtomoC.lib.StationList2Arr(stationField_list)
 

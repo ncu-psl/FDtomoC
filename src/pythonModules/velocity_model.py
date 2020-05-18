@@ -7,6 +7,7 @@ class VelocityModel(object):
         self.coordinate = coordinate
         self.velocity = velocity
         self.modelField = None
+        self.modelFieldPtr = None
 
     @abc.abstractmethod
     def create(self):
@@ -20,19 +21,21 @@ class VelocityModel(object):
 class VelocityModel1D(VelocityModel):
     def setVelocityModel(self, file, vpModel, vsModel):
         interp = _FDtomoC.ffi.new("char *")
-        vpModelField = _FDtomoC.ffi.new("velocityModel1D *")
-        vsModelField = _FDtomoC.ffi.new("velocityModel1D *")
-        tmp = _FDtomoC.ffi.new("char[]", file)
+        vpModelField = _FDtomoC.ffi.gc(_FDtomoC.lib.createModel1D(), _FDtomoC.lib.freeModel1D)
+        vsModelField = _FDtomoC.ffi.gc(_FDtomoC.lib.createModel1D(), _FDtomoC.lib.freeModel1D)
+        tmp = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
         _FDtomoC.lib.readVelocityModel1D(tmp, vpModelField, vsModelField, interp)
         vpModel.modelField = vpModelField[0]
         vsModel.modelField = vsModelField[0]
+        vpModel.modelFieldPtr = vpModelField  # keep alive memory of velocity model
+        vsModel.modelFieldPtr = vsModelField
 
     def transform(self, coordinate1D):
         model = VelocityModel1D()
         tmp = ""
         for i in range(coordinate1D.coordinateField.mesh.numberOfNode):
             tmp = tmp + 'I'
-        tmp = _FDtomoC.ffi.new("char[]", tmp)
+        tmp = _FDtomoC.ffi.new("char[]", tmp.encode('ascii'))
         model.modelField = _FDtomoC.lib.transform1D(coordinate1D.coordinateField, self.modelField, tmp)
         return model        
 
@@ -50,11 +53,13 @@ class VelocityModel3D(VelocityModel):
 
     def makeNewModel(self, coordinate, vp_model, vs_model, perturbation, table_size, new_model_env):
         corField = coordinate.coordinateField
-        vpModelField = vp_model.modelField
-        vsModelField = vs_model.modelField
+
+        vpModelFieldPtr = _FDtomoC.ffi.new("velocityModel3D *", vp_model.modelField)
+        vsModelFieldPtr = _FDtomoC.ffi.new("velocityModel3D *", vs_model.modelField)
+
         perturbationField = perturbation.perturbationField
 
         makenewmodEnvField = new_model_env.makenewmodEnvField
         commonEnvField = new_model_env.commonEnvField
 
-        _FDtomoC.lib.makenewmod(corField, vpModelField, vsModelField, perturbationField, table_size, makenewmodEnvField, commonEnvField)
+        _FDtomoC.lib.makenewmod(corField, vpModelFieldPtr, vsModelFieldPtr, perturbationField, table_size, makenewmodEnvField, commonEnvField)

@@ -46,7 +46,7 @@ class Mesh3D(Mesh):
     def create(self, file = None, numberOfNode = None, grid = None):
         if (file != None):
             mesh = Mesh3D()
-            tmp = _FDtomoC.ffi.new("char[]", file)
+            tmp = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
             mesh.meshField = _FDtomoC.lib.setMesh3D(tmp)
             return mesh
 

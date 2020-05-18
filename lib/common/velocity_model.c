@@ -242,3 +242,21 @@ void output3DModel(velocityModel3D model, char *filename){
 	fclose(fp_tmp);
 }
 
+void freeModel3D(velocityModel3D *model){
+	free(model->coordinate.mesh.gridx);
+	free(model->coordinate.mesh.gridy);
+	free(model->coordinate.mesh.gridz);
+	free(model->velocity);
+}
+
+void freeModel1D(velocityModel1D *model){
+	free(model->velocity);
+	free(model->coordinate.mesh.igrid);
+}
+
+velocityModel1D *createModel1D(){
+	velocityModel1D *model = malloc(sizeof(velocityModel1D));
+	model->velocity = NULL;
+	model->coordinate.mesh.igrid = NULL;
+	return model;
+}
