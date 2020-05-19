@@ -521,14 +521,15 @@ a3: ;
 		float rdevs = 0;
 		isgood[i] = 1;
 
-		kn = indsta[i];
+		iph = 0;
+		if (phs[i] == 'S'){
+			iph = 1;
+			kn = kn - table_size;
+		}
 		xs = stlon[kn];
 		ys = stlat[kn];
 		zs = stz[kn];
 
-		iph = 0;
-		if (phs[i] == 'S')
-			iph = 1;
 		int iphm1 = iph;
 		float tc = tcor[kn][iph];
 		istn[i] = kn + nstr * iphm1;

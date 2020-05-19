@@ -202,8 +202,8 @@ int *checkTravelTime(Event event, travelTimeTable *table_array, int table_size){
         for (int j = 0; j < table_size; j++){
             if(strcmp(event.station_name_list[i], table_array[j].name) == 0){
                 timeIndex[i] = j;
-                if(event.phase == 'S')
-                    timeIndex[i] = j + numbOfObservation;
+                if(event.phase[i] == 'S')
+                    timeIndex[i] = j + table_size;
                 break;
             }
         }
