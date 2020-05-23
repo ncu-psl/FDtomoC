@@ -1,5 +1,6 @@
 import abc
 from cffi import FFI
+from point import Point
 import _FDtomoC
 
 class Mesh(object):
@@ -21,35 +22,55 @@ class Mesh(object):
         return NotImplemented
 
     @abc.abstractmethod
-    def translate(self):
+    def getField(self):
         return NotImplemented
 
+    @abc.abstractmethod
+    def getClass(self):
+        return NotImplemented
 
 class Mesh1D(Mesh):
     def create(self, file = None, numberOfNode = None, igrid = None):
         mesh = Mesh1D(numberOfNode, igrid)
-        tmp = _FDtomoC.ffi.new("int[]", igrid)
-        mesh.meshField = _FDtomoC.lib.createMesh1D(numberOfNode, tmp)
+        mesh.meshField = mesh.getField()
         return mesh
 
     def getSize(self):
         return self.numberOfNode
 
-    def translate(self):
-        mesh = _FDtomoC.ffi.new("Mesh1D *", {'numberOfNode' : self.numberOfNode})
+    def getField(self):
         igrid = _FDtomoC.ffi.new("int[]", self.igrid)
-        mesh.igrid = igrid
-        self.mesh = mesh
+        #meshFieldPtr = _FDtomoC.ffi.new("Mesh1D *", {'numberOfNode' : self.numberOfNode, 'igrid' : igrid})
+        meshField = _FDtomoC.lib.createMesh1D(self.numberOfNode, igrid)
+        return meshField
 
+    def getClass(self):
+        self.numberOfNode = self.meshField.numberOfNode
+        self.igrid = _FDtomoC.ffi.unpack(self.meshField.igrid)
 
 class Mesh3D(Mesh):
-    def create(self, file = None, numberOfNode = None, grid = None):
+    def __init__(self, numberOfNode = None, gridx = None, gridy = None, gridz = None):
+        if numberOfNode == None:
+            self.numberOfNode = Point()
+        else:
+            self.numberOfNode = numberOfNode
+        self.gridx = gridx
+        self.gridy = gridy
+        self.gridz = gridz
+
+    def create(self, file = None, numberOfNode = None, gridx = None, gridy = None, gridz = None):
         if (file != None):
             mesh = Mesh3D()
             tmp = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
             mesh.meshField = _FDtomoC.lib.setMesh3D(tmp)
+            mesh.numberOfNode.pointField = mesh.meshField.numberOfNode
+            mesh.getClass()
             return mesh
 
+        mesh = Mesh3D(numberOfNode, gridx, gridy, gridz)
+        mesh.meshField = mesh.getField()
+        mesh.numberOfNode.pointField = mesh.meshField.numberOfNode
+        return mesh
 
     def getSize(self):
         size = 0
@@ -60,14 +81,22 @@ class Mesh3D(Mesh):
     def generateFineMesh(self):
         mesh = Mesh3D()
         mesh.meshField = _FDtomoC.lib.generateFineMesh(self.meshField)
+        mesh.numberOfNode.pointField = mesh.meshField.numberOfNode
+        mesh.getClass()
         return mesh
 
-    def translate(self):
-        gridx = _FDtomoC.ffi.new("int[]", self.igrid[0])
-        gridy = _FDtomoC.ffi.new("int[]", self.igrid[1])
-        gridz = _FDtomoC.ffi.new("int[]", self.igrid[2])
-        meshField = _FDtomoC.ffi.new("Mesh3D *", {'numberOfNode' : self.numberOfNode, 'gridx' : gridx, \
+    def getField(self):
+        pointField = self.numberOfNode.getField()
+        gridx = _FDtomoC.ffi.new("int[]", self.gridx)
+        gridy = _FDtomoC.ffi.new("int[]", self.gridy)
+        gridz = _FDtomoC.ffi.new("int[]", self.gridz)
+        meshFieldPtr = _FDtomoC.ffi.new("Mesh3D *", {'numberOfNode' : pointField, 'gridx' : gridx, \
                                                 'gridy' : gridy, 'gridz' : gridz})
 
-        self.meshField = meshField
-        return self
+        return meshFieldPtr[0]
+
+    def getClass(self):
+        self.gridx = _FDtomoC.ffi.unpack(self.meshField.gridx, int(self.meshField.numberOfNode.x) - 1)
+        self.gridy = _FDtomoC.ffi.unpack(self.meshField.gridy, int(self.meshField.numberOfNode.y) - 1)
+        self.gridz = _FDtomoC.ffi.unpack(self.meshField.gridz, int(self.meshField.numberOfNode.z) - 1)
+        self.numberOfNode.getClass()

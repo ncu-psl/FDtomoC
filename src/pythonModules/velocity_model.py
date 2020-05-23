@@ -21,14 +21,12 @@ class VelocityModel(object):
 class VelocityModel1D(VelocityModel):
     def setVelocityModel(self, file, vpModel, vsModel):
         interp = _FDtomoC.ffi.new("char *")
-        vpModelField = _FDtomoC.ffi.gc(_FDtomoC.lib.createModel1D(), _FDtomoC.lib.freeModel1D)
-        vsModelField = _FDtomoC.ffi.gc(_FDtomoC.lib.createModel1D(), _FDtomoC.lib.freeModel1D)
+        vpModelField = _FDtomoC.ffi.new("velocityModel1D *")
+        vsModelField = _FDtomoC.ffi.new("velocityModel1D *")
         tmp = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
         _FDtomoC.lib.readVelocityModel1D(tmp, vpModelField, vsModelField, interp)
         vpModel.modelField = vpModelField[0]
         vsModel.modelField = vsModelField[0]
-        vpModel.modelFieldPtr = vpModelField  # keep alive memory of velocity model
-        vsModel.modelFieldPtr = vsModelField
 
     def transform(self, coordinate1D):
         model = VelocityModel1D()
