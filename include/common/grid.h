@@ -55,6 +55,7 @@ void setGrid(Mesh3D *, char *);
 int getNumberOfFine(int , int *);
 Mesh3D generateFineMesh(Mesh3D);
 Coordinate1D createCoordinate(Mesh1D, int, int);
+Coordinate3D createCoordinate3D(Mesh3D, Point3DDouble, Point3DDouble);
 Coordinate3D setCoordinate(char *);
 Coordinate3D change2Sphere(Coordinate3D, int);
 Point3D searchFineBase(Point3D, Coordinate3D);

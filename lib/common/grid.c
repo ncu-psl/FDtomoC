@@ -228,6 +228,14 @@ Mesh3D generateFineMesh(Mesh3D mesh){
     return new_mesh;
 }
 
+Coordinate3D createCoordinate3D(Mesh3D mesh, Point3DDouble space, Point3DDouble origin){
+    Coordinate3D coordinate;
+    copyMesh3D(&coordinate.mesh, &mesh);
+    coordinate.space = space;
+    coordinate.origin = origin;
+    return coordinate;
+}
+
 
 Coordinate1D createCoordinate(Mesh1D mesh, int space, int origin){
     Coordinate1D coordinate;
