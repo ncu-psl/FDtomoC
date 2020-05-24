@@ -21,3 +21,13 @@ void appendTableNode(travelTimeTableNode **table_head, travelTimeTableNode *new_
     }
     current->next = new_table_node;
 }
+
+travelTimeTable createTable(Mesh3D mesh, char *name, float *time){
+	travelTimeTable table;
+	int size = sizeOfMesh3D(mesh);
+	table.time = malloc(sizeof(float) * size);
+	copyMesh3D(&table.mesh, &mesh);
+	memcpy(table.name, name, strlen(name) + 1);
+	memcpy(table.time, time, sizeof(float) * size);
+	return table;
+}

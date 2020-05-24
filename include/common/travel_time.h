@@ -17,4 +17,5 @@ typedef struct travelTimeTableNode_{
 typedef struct travelTimeTableNode_ travelTimeTableNode;
 void appendTableNode(travelTimeTableNode **, travelTimeTableNode *);
 void outputTravelTime(travelTimeTable, char *);
+travelTimeTable createTable(Mesh3D, char *, float *);
 #endif
