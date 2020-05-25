@@ -58,6 +58,9 @@ class Coordinate3D(Coordinate):
     def create(self, mesh = None, space = None, origin = None, file = None):
         if (file != None):
             coordinate = Coordinate3D()
+            coordinate.mesh = Mesh3D()
+            coordinate.space = PointDouble()
+            coordinate.origin = PointDouble()
             tmp = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
             coordinate.coordinateField = _FDtomoC.lib.setCoordinate(tmp)
             coordinate.mesh.meshField = coordinate.coordinateField.mesh

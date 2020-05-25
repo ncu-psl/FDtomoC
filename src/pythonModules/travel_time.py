@@ -1,4 +1,6 @@
 import abc
+from mesh import Mesh3D
+from point import Point
 from cffi import FFI
 import _FDtomoC
 
@@ -11,10 +13,31 @@ class TravelTimeTable(object):
 
     def create(self, model, station):
         stationField = station.stationField
-        tableField = _FDtomoC.lib.sphfd_exec(model.modelField, stationField)
-        travel_time_table = TravelTimeTable(tableField = tableField)
+        travel_time_table = TravelTimeTable()
+        travel_time_table.mesh = Mesh3D()
+        travel_time_table.tableField = _FDtomoC.lib.sphfd_exec(model.modelField, stationField)
+        travel_time_table.mesh.meshField = travel_time_table.tableField.mesh
+        travel_time_table.mesh.numberOfNode.pointField = travel_time_table.tableField.mesh.numberOfNode
+        travel_time_table.getClass()
+        travel_time_table.tableField = None
+        travel_time_table.mesh.meshField = None
+        travel_time_table.mesh.numberOfNode.pointField = None
         return travel_time_table
 
     def output(self, filename):
         tmp = _FDtomoC.ffi.new("char[]", filename)
         _FDtomoC.lib.outputTravelTime(self.tableField, tmp)
+
+    def getClass(self):
+        self.mesh.getClass()
+        size = int(self.mesh.numberOfNode.x * self.mesh.numberOfNode.y * self.mesh.numberOfNode.z)
+        self.time = _FDtomoC.ffi.unpack(self.tableField.time, size)
+        self.name = _FDtomoC.ffi.string(self.tableField.name)
+
+    def getField(self):
+        meshField = self.mesh.getField()
+        name = self.name
+        time = _FDtomoC.ffi.new("float[]", self.time)
+        #tableFieldPtr = _FDtomoC.ffi.new("travelTimeTable *", {'mesh' : meshField, 'name' : name, 'time' : time})
+        tableField = _FDtomoC.lib.createTable(meshField, name, time)
+        return tableField
