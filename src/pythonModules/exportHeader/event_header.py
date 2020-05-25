@@ -59,6 +59,7 @@ def event_header():
     TimeNode *createTimeNode(int, int, int, int, float);
     void insertTime(TimeNode *, Time);
     void appendTimeNode(TimeNode **, TimeNode *);
+    TimeNode *TimeList2Arr(Time *, int);
     int getTimeCount(TimeNode *);
     EventNode *createEventNode(Earthquake, char station_name_list[maxobs][MAXSTRLEN + 1], TimeNode *,
                                 char *, float *, int *, char *);

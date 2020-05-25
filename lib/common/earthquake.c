@@ -34,6 +34,27 @@ void appendTimeNode(TimeNode **time_head, TimeNode *new_time_node){
     current->next = new_time_node;
 }
 
+TimeNode *TimeList2Arr(Time *time_array, int array_size){
+    if(time_array == NULL){
+        printf("Error happens while tansform list to array!");
+        assert(0);
+    }
+    TimeNode *time_head = NULL;
+    for(int i = 0; i < array_size; i++){
+        int iyr = time_array[i].ihr;
+        int jday = time_array[i].jday;
+        int ihr = time_array[i].ihr;
+        int imn = time_array[i].imn;
+        float sec = time_array[i].sec;
+        TimeNode *current = createTimeNode(iyr, jday, ihr, imn, sec);
+        appendTimeNode(&time_head, current);
+    }
+
+    return time_head;
+}
+
+
+
 int getTimeCount(TimeNode *time_list){
     if (time_list == NULL)  
         return 0;
