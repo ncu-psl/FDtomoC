@@ -19,9 +19,6 @@ class TravelTimeTable(object):
         travel_time_table.mesh.meshField = travel_time_table.tableField.mesh
         travel_time_table.mesh.numberOfNode.pointField = travel_time_table.tableField.mesh.numberOfNode
         travel_time_table.getClass()
-        travel_time_table.tableField = None
-        travel_time_table.mesh.meshField = None
-        travel_time_table.mesh.numberOfNode.pointField = None
         return travel_time_table
 
     def output(self, filename):
@@ -41,3 +38,8 @@ class TravelTimeTable(object):
         #tableFieldPtr = _FDtomoC.ffi.new("travelTimeTable *", {'mesh' : meshField, 'name' : name, 'time' : time})
         tableField = _FDtomoC.lib.createTable(meshField, name, time)
         return tableField
+
+    def removeField(self):
+        self.tableField = None
+        self.mesh.meshField = None
+        self.mesh.numberOfNode.pointField = None
