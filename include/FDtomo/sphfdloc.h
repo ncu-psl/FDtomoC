@@ -8,7 +8,7 @@ typedef struct{
     char event[20000];
 }SPHFDLOC_DATA;
 
-Event *sphfdloc(Coordinate3D, travelTimeTable *, EventNode *, int, LocEnv);
+Event *sphfdloc(Coordinate3D, travelTimeTable *, int, Event *, int, LocEnv);
 int OUTPUT_SPHFDLOC(SPHFDLOC_DATA **, SPEC);
 int LOG_SPHFDLOC(SPEC);
 Event singleLoc(Coordinate3D, travelTimeTable *, Event, int, LocEnv);

@@ -12,7 +12,7 @@ typedef struct{
     float *time0;
 }SPHFD_DATA;
 
-travelTimeTable *sphfd(velocityModel3D, StationNode *);
+travelTimeTable *sphfd(velocityModel3D, Station *, int);
 travelTimeTable sphfd_exec(velocityModel3D, Station);
 int OUTPUT_SPHFD(SPHFD_DATA *, SPEC);
 #endif
