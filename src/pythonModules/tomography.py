@@ -8,6 +8,7 @@ from residual import ResidualVector
 from derivative import Derivative
 from environment import CommonEnv, SphraydervEnv, LocEnv, RunlsqrEnv, MakenewmodEnv
 import _FDtomoC
+from mpi4py import MPI
 
 class TomographyBuilder(object):
     def __init__(self):
@@ -32,10 +33,11 @@ class TomographyBuilder(object):
         return self.event_builder
     
     def Station(self, station):
-        if type(station == list):
-            self.station_list.extend(station)
-        else:
-            self.station_list.append(station)
+        if(station != None):
+            if type(station == list):
+                self.station_list.extend(station)
+            else:
+                self.station_list.append(station)
         return self
     
     def VelocityModel(self, velocity_model = None):
@@ -46,57 +48,131 @@ class TomographyBuilder(object):
         self.environment = env
         return self
     
-    def execute(self):
+    def execute(self, mode = None):
         if (self.event_builder != None):
             self.event_list.append(self.event_builder.getValue())
+
+        loc_env = self.environment['loc_env']
+        sphrayderv_env = self.environment['sphrayderv_env']
+        runlsqr_env = self.environment['runlsqr_env']
+        makenewmod_env = self.environment['makenewmod_env']
         
         coarseMesh3D = self.velocity_model_builder.coordinateBuilder.coarse_mesh
         fineMesh3D = self.velocity_model_builder.coordinateBuilder.fine_mesh
         origin = self.velocity_model_builder.coordinateBuilder.origin
         space = self.velocity_model_builder.coordinateBuilder.space
-
+        
         numberOfNode = int(coarseMesh3D.meshField.numberOfNode.z)
         igrid = _FDtomoC.ffi.unpack(coarseMesh3D.meshField.gridz, numberOfNode - 1)
+        zSpace = int(space.z)
+        zOrigin = int(origin.z)
         coarseMesh1D = Mesh1D().create(numberOfNode = numberOfNode, igrid = igrid)
-        cooarseCoordinate1D = Coordinate1D().create(coarseMesh1D, 2, -4)
-
+        cooarseCoordinate1D = Coordinate1D().create(coarseMesh1D, zSpace, zOrigin)
+        
         vpModel1D = self.velocity_model_builder.vp_model
         vsModel1D = self.velocity_model_builder.vs_model
         coarseVpModel1D = vpModel1D.transform(cooarseCoordinate1D)
         coarseVsModel1D = vsModel1D.transform(cooarseCoordinate1D)
-
-        coarseCoordinate3D = Coordinate3D().create(coarseMesh3D, origin, space)
+        
+        coarseCoordinate3D = Coordinate3D().create(coarseMesh3D, space, origin)
         CoarseVpModel3D = VelocityModel3D().create(coarseCoordinate3D, coarseVpModel1D)
         CoarseVsModel3D = VelocityModel3D().create(coarseCoordinate3D, coarseVsModel1D)
-        
-        fineCoordinate3D = Coordinate3D().create(fineMesh3D, origin, space)
+
+        fineCoordinate3D = Coordinate3D().create(fineMesh3D, space, origin)
         fineVpModel3D = CoarseVpModel3D.transform(fineCoordinate3D)
         fineVsModel3D = CoarseVsModel3D.transform(fineCoordinate3D)
 
-        table_list = []
-        print(self.station_list[0].stationField.location.x)
-        print(fineVpModel3D.modelField.coordinate.mesh.numberOfNode.x)
-        for i in range(len(self.station_list)):
-            table = TravelTimeTable().create(fineVpModel3D, self.station_list[i])
-            table_list.append(table)
+        if(mode == "MPI"):
+            comm = MPI.COMM_WORLD
+            rank = comm.Get_rank()
+            size = comm.Get_size()
+            table_array = []
+
+            for i in range(len(self.station_list)):
+                if(rank == (i % size)):
+                    table = TravelTimeTable().create(fineVpModel3D, self.station_list[i])
+                    table.removeField()
+                    table_array.append(table)
+
+            table_array = comm.gather(table_array, root = 0)
+            table_array = comm.bcast(table_array, root = 0)
+
+            new_table_array = []
+            for k in range(len(self.station_list)):
+                station_name = _FDtomoC.ffi.string(self.station_list[k].stationField.name)
+                for i in range(len(table_array)):
+                    for j in range(len(table_array[i])):
+                        if table_array[i][j].name == station_name:
+                            table_array[i][j].tableField = table_array[i][j].getField()
+                            new_table_array.append(table_array[i][j])
+
+            new_event_array = []
+            for i in range(len(self.event_list)):
+                if (rank == (i % size)):
+                    new_event = Event().singleLoc(fineCoordinate3D, new_table_array, self.event_list[i], loc_env)
+                    new_event.removeField()
+                    new_event_array.append(new_event)
+
+            new_event_array = comm.gather(new_event_array, root = 0)
 
 
-        loc_env = self.environment['loc_env']
-        new_event_list = []
-        for i in range(len(self.event_list)):
-            new_event = Event().singleLoc(fineCoordinate3D, table_list, self.event_list[i], loc_env)
-            new_event_list.append(new_event)
+            event_array = []
+            if (rank == 0):
+                for i in range(len(new_event_array)):
+                    for j in range(len(new_event_array[i])):
+                        new_event_array[i][j].eventField = new_event_array[i][j].getField()
+                        event_array.append(new_event_array[i][j])
+                    
+                event_size = len(event_array)
+                table_size = len(new_table_array)
+                derv, residual_vector = Event().sphRaytracing(CoarseVpModel3D, new_table_array, event_array, event_size, self.station_list, table_size, sphrayderv_env)
+                perturbation = Event().runlsqr(derv, residual_vector, runlsqr_env)
+                VelocityModel3D().makeNewModel(coarseCoordinate3D, CoarseVpModel3D, CoarseVsModel3D, perturbation, table_size, makenewmod_env)
+        
+        elif(mode == "Omp"):
+            stationFieldArray = [self.station_list[i].stationField for i in range(len(self.station_list))]
+            stationFieldArrayPtr = _FDtomoC.ffi.new("Station[]", stationFieldArray)
 
+            tableArrayField = _FDtomoC.lib.sphfd(fineVpModel3D.modelField, stationFieldArrayPtr, len(stationFieldArray))
 
-        sphrayderv_env = self.environment['sphrayderv_env']
-        runlsqr_env = self.environment['runlsqr_env']
-        makenewmod_env = self.environment['makenewmod_env']
-        event_size = len(new_event_list)
-        table_size = len(table_list)
-        derv, residual_vector = Event().sphRaytracing(CoarseVpModel3D, table_list, new_event_list, event_size, self.station_list, table_size, sphrayderv_env)
-        perturbation = Event().runlsqr(derv, residual_vector, runlsqr_env)
-        VelocityModel3D().makeNewModel(coarseCoordinate3D, CoarseVpModel3D, CoarseVsModel3D, perturbation, table_size, makenewmod_env)
+            eventFieldArray = [self.event_list[i].eventField for i in range(len(self.event_list))]
+            eventFieldArrayPtr = _FDtomoC.ffi.new("Event[]", eventFieldArray)
 
+            table_size = len(stationFieldArray)
+            event_size = len(eventFieldArray)
+            eventFieldArray = _FDtomoC.lib.sphfdloc(fineCoordinate3D.coordinateField, tableArrayField, table_size, eventFieldArrayPtr, event_size, loc_env.locEnvField)
+
+            data = _FDtomoC.lib.sphrayderv(CoarseVpModel3D.modelField, tableArrayField, eventFieldArray, event_size, stationFieldArrayPtr, table_size, sphrayderv_env.sphraydervEnvField, sphrayderv_env.commonEnvField)
+            perturbation = _FDtomoC.lib.runlsqr(data, runlsqr_env.runlsqrEnvField, runlsqr_env.commonEnvField)
+
+            vpModelFieldPtr = _FDtomoC.ffi.new("velocityModel3D *", CoarseVpModel3D.modelField)
+            vsModelFieldPtr = _FDtomoC.ffi.new("velocityModel3D *", CoarseVsModel3D.modelField)
+
+            _FDtomoC.lib.makenewmod(coarseCoordinate3D.coordinateField, vpModelFieldPtr, \
+                        vsModelFieldPtr, perturbation, table_size, makenewmod_env.makenewmodEnvField, makenewmod_env.commonEnvField)
+
+        elif(mode == "Sequential"):
+            table_list = []
+            for i in range(len(self.station_list)):
+                table = TravelTimeTable().create(fineVpModel3D, self.station_list[i])
+                table_list.append(table)
+
+            for i in range(len(self.station_list)):
+                table = TravelTimeTable().create(fineVsModel3D, self.station_list[i])
+                #table_list.append(table)
+            
+            new_event_list = []
+            for i in range(len(self.event_list)):
+                new_event = Event().singleLoc(fineCoordinate3D, table_list, self.event_list[i], loc_env)
+                new_event_list.append(new_event)
+
+            event_size = len(new_event_list)
+            table_size = int(len(table_list))
+            
+            derv, residual_vector = Event().sphRaytracing(CoarseVpModel3D, table_list, new_event_list, event_size, self.station_list, table_size, sphrayderv_env)
+            perturbation = Event().runlsqr(derv, residual_vector, runlsqr_env)
+            VelocityModel3D().makeNewModel(coarseCoordinate3D, CoarseVpModel3D, CoarseVsModel3D, perturbation, table_size, makenewmod_env)
+        
         return             
         
 class EventBuilder():    
@@ -158,7 +234,7 @@ class VelocityModelBuilder():
     def __getattr__(self, name):
         def _method_missing(*args, **kwargs):
             if(name == 'execute'):
-                return self.tomography_builder.execute()
+                return self.tomography_builder.execute(*args, **kwargs)
 
         return _method_missing
         
@@ -168,10 +244,6 @@ class VelocityModelBuilder():
         return self
 
     def Coordinate(self, coordinate = None):
-        if (coordinate != None):
-            self.coordinate = coordinate
-            return self
-        
         self.coordinateBuilder = CoordinateBuilder(self)
         return  self.coordinateBuilder
     
@@ -243,7 +315,6 @@ class ObservationBuilder():
 class CoordinateBuilder():
     def __init__(self, velocity_model_builder):
         self.velocity_model_builder = velocity_model_builder
-        self.cooridinate = []
         self.coarse_mesh = None
         self.fine_mesh = None
         self.origin = None
