@@ -68,6 +68,18 @@ Mesh1D createMesh1D(int numberOfNode, int *igrid){
     return mesh;
 }
 
+Mesh3D createMesh3D(Point3D numberOfNode, int *gridx, int *gridy, int *gridz){
+    Mesh3D mesh;
+    mesh.numberOfNode = numberOfNode;
+    mesh.gridx = malloc((numberOfNode.x - 1) * sizeof(int));
+    mesh.gridy = malloc((numberOfNode.y - 1) * sizeof(int));
+    mesh.gridz = malloc((numberOfNode.z - 1) * sizeof(int));
+    memcpy(mesh.gridx, gridx, sizeof(int) * (numberOfNode.x - 1));
+    memcpy(mesh.gridy, gridy, sizeof(int) * (numberOfNode.y - 1));
+    memcpy(mesh.gridz, gridz, sizeof(int) * (numberOfNode.z - 1));
+    return mesh;
+}
+
 void copyMesh1D(Mesh1D *dest_mesh, Mesh1D *src_mesh){
     int size = src_mesh->numberOfNode;
     dest_mesh->numberOfNode = src_mesh->numberOfNode;

@@ -48,6 +48,7 @@ float *getYAxis(Coordinate3D);
 float *getZAxis(Coordinate3D);
 Point3D getPoint3D(Point3D, Coordinate3D);
 Mesh1D createMesh1D(int, int *);
+Mesh3D createMesh3D(Point3D, int *, int *, int *);
 void copyMesh1D(Mesh1D *, Mesh1D *);
 Mesh3D setMesh3D(char *);
 void copyMesh3D(Mesh3D *, Mesh3D *);
