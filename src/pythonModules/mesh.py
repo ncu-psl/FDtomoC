@@ -90,10 +90,12 @@ class Mesh3D(Mesh):
         gridx = _FDtomoC.ffi.new("int[]", self.gridx)
         gridy = _FDtomoC.ffi.new("int[]", self.gridy)
         gridz = _FDtomoC.ffi.new("int[]", self.gridz)
+        meshField = _FDtomoC.lib.createMesh3D(pointField, gridx, gridy, gridz)
+        '''
         meshFieldPtr = _FDtomoC.ffi.new("Mesh3D *", {'numberOfNode' : pointField, 'gridx' : gridx, \
                                                 'gridy' : gridy, 'gridz' : gridz})
-
-        return meshFieldPtr[0]
+        '''
+        return meshField
 
     def getClass(self):
         self.gridx = _FDtomoC.ffi.unpack(self.meshField.gridx, int(self.meshField.numberOfNode.x) - 1)

@@ -521,6 +521,7 @@ a3: ;
 		float rdevs = 0;
 		isgood[i] = 1;
 
+		kn = indsta[i];
 		iph = 0;
 		if (phs[i] == 'S'){
 			iph = 1;

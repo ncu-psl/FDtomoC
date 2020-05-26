@@ -12,7 +12,7 @@ void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityM
 	vsModel->velocity = (float *)calloc(MAX1D, sizeof(float));
 	vpModel->coordinate.mesh.igrid = (int *)calloc(MAX1D, sizeof(int));
 	vsModel->coordinate.mesh.igrid = (int *)calloc(MAX1D, sizeof(int));
-
+	
 	char aline[MAXSTRLEN + 1];
 	char pval[MAXSTRLEN + 1];
 
@@ -62,7 +62,7 @@ void readVelocityModel1D(char *model1D_path, velocityModel1D *vpModel, velocityM
 		vsModel->coordinate.mesh.igrid[count - 1] = h - tmp;
 	}
 	tmp = h;
-	interp[count] = pval[0];
+	//interp[count] = pval[0];
 	count++;
 	}
 	vpModel->coordinate.space = 1;
@@ -124,7 +124,9 @@ velocityModel3D create3DModel(Coordinate3D coordinate, velocityModel1D model) {
 		printf("Error happens while getting velocity!\n");
 		assert(0);
 	}
-	model3D.coordinate = coordinate;
+	model3D.coordinate.origin = coordinate.origin;
+	model3D.coordinate.space = coordinate.space;
+	copyMesh3D(&model3D.coordinate.mesh, &coordinate.mesh);
 	return model3D;
 }
 
@@ -198,13 +200,16 @@ velocityModel3D transform3D(Coordinate3D coordinate, velocityModel3D model){
                 float vel = trilinear_interpolation_base(point, base, coordinate, &model);
 				velocity[index] = 1.f / vel;
                 index++;
-            } 
+			}
         }
     }
+	
 	for(int i = 0; i < modelSize3D; i++){
 		model.velocity[i] = 1. / model.velocity[i];
 	}	
-	new_model.coordinate = coordinate;
+	new_model.coordinate.origin = coordinate.origin;
+	new_model.coordinate.space = coordinate.space;
+	copyMesh3D(&new_model.coordinate.mesh, &coordinate.mesh);
 	new_model.velocity = velocity;
 	return new_model;
 }
