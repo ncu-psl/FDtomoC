@@ -61,3 +61,5 @@ class VelocityModel3D(VelocityModel):
         commonEnvField = new_model_env.commonEnvField
 
         _FDtomoC.lib.makenewmod(corField, vpModelFieldPtr, vsModelFieldPtr, perturbationField, table_size, makenewmodEnvField, commonEnvField)
+        vp_model.modelField = vpModelFieldPtr[0]
+        vs_model.modelField = vsModelFieldPtr[0]
