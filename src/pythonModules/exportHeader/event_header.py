@@ -71,7 +71,7 @@ def event_header():
     float *getObsTime(Event);
     float *getPwt(Event);
     Event singleLoc(Coordinate3D, travelTimeTable *, Event, int, LocEnv);
-    Event *sphfdloc(Coordinate3D, travelTimeTable *, int, Event *, int, LocEnv);
+    EventNode *sphfdloc(Coordinate3D, travelTimeTable *, int, Event *, int, LocEnv);
     SPHRAYDERV_DATA *sphrayderv(velocityModel3D, travelTimeTable *, Event *, int, Station *, int, SphraydervEnv, CommonEnv);
     RUNLSQR_DATA *runlsqr(SPHRAYDERV_DATA *, RunlsqrEnv, CommonEnv);
     """

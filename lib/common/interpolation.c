@@ -58,8 +58,9 @@ float *linear_interpolation_array(float *c, float *x, float *y, int csize, int x
     float *fc = (float *)malloc(sizeof(float) * csize);
     for(int i = 0; i < csize; i++){
         int ik;
-		for (ik = 0; ik < xsize; ik++) {
-			if (x[ik] > c[i])
+		float ctmp = c[i];
+		for (ik = 1; ik < xsize; ik++) {
+			if (x[ik] > ctmp)
 				break;
 		}
 		ik--;

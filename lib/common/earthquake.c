@@ -34,6 +34,17 @@ void appendTimeNode(TimeNode **time_head, TimeNode *new_time_node){
     current->next = new_time_node;
 }
 
+void copyTimeList(TimeNode **dest, TimeNode *src){
+    TimeNode *current = src;
+    while(current != NULL){
+        TimeNode *new_time_node = (TimeNode *)malloc(sizeof(TimeNode));
+        new_time_node->next = NULL;
+        new_time_node->time = current->time;
+        appendTimeNode(dest, new_time_node);
+        current = current->next;
+    }
+}
+
 TimeNode *TimeList2Arr(Time *time_array, int array_size){
     if(time_array == NULL){
         printf("Error happens while tansform list to array!");
