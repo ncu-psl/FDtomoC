@@ -200,6 +200,17 @@ int litend;
 travelTimeTable sphfd_exec(velocityModel3D, Station);
 #pragma omp threadprivate(ext_par, litend, rcent, z0r)
 
+travelTimeTable *sphfdAll(velocityModel3D vpModel, velocityModel3D vsModel, Station *station_array, int numOfStations){
+	travelTimeTable *travle_time_array = (travelTimeTable *)malloc(sizeof(travelTimeTable) * numOfStations * 2);
+	#pragma omp parallel for
+	for(int i = 0; i < numOfStations; i++){
+		travle_time_array[i] = sphfd_exec(vpModel, station_array[i]);
+		travle_time_array[i + numOfStations] = sphfd_exec(vsModel, station_array[i]);
+	}
+
+	return travle_time_array;
+}
+
 travelTimeTable *sphfd(velocityModel3D model, Station *station_array, int numOfStations)
 {
 	travelTimeTable *travle_time_array = (travelTimeTable *)malloc(sizeof(travelTimeTable) * numOfStations);
