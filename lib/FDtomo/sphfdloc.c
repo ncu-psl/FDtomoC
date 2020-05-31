@@ -1074,7 +1074,9 @@ int LOG_SPHFDLOC(SPEC spec){
 
 Event singleLoc(Coordinate3D coordinate, travelTimeTable *table_array, Event event,
                  int table_size, LocEnv loc_env){
-
+	
+	Event new_event = event;
+	new_event.observedTimeList = NULL;
     double hpi = 1.570796f, degrad = 0.017453292f;
 	double tmp = coordinate.origin.y;
 	double h = coordinate.space.x;
@@ -1533,8 +1535,9 @@ Event singleLoc(Coordinate3D coordinate, travelTimeTable *table_array, Event eve
             sec = dsec;
             char tmp[100];
             int len_str_data = 0;				
-            event.earthquake.time = (Time){iyr, jday, ihr, imn, sec};
-            event.earthquake.location = (Point3D){xlat, xlon, ezmr};
+            new_event.earthquake.time = (Time){iyr, jday, ihr, imn, sec};
+            new_event.earthquake.location = (Point3D){xlat, xlon, ezmr};
+			copyTimeList(&new_event.observedTimeList, event.observedTimeList);
             loc_data->stdmin = stdmin;
             
             if(DEBUG_PRINT) {
@@ -1552,7 +1555,9 @@ Event singleLoc(Coordinate3D coordinate, travelTimeTable *table_array, Event eve
                 loc_data->tmp_min[j] = resmin[j] - avrmin;
             }
         }
+		return new_event;
     } 
-	return event;
+	new_event.evid[0] = '0';
+	return new_event;
 } 
 

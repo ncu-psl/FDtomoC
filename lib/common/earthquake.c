@@ -52,7 +52,7 @@ TimeNode *TimeList2Arr(Time *time_array, int array_size){
     }
     TimeNode *time_head = NULL;
     for(int i = 0; i < array_size; i++){
-        int iyr = time_array[i].ihr;
+        int iyr = time_array[i].iyr;
         int jday = time_array[i].jday;
         int ihr = time_array[i].ihr;
         int imn = time_array[i].imn;

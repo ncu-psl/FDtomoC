@@ -8,7 +8,7 @@ from residual import ResidualVector
 from derivative import Derivative
 from environment import CommonEnv, SphraydervEnv, LocEnv, RunlsqrEnv, MakenewmodEnv
 import _FDtomoC
-#from mpi4py import MPI
+from mpi4py import MPI
 
 class TomographyBuilder(object):
     def __init__(self):
@@ -88,49 +88,67 @@ class TomographyBuilder(object):
                 comm = MPI.COMM_WORLD
                 rank = comm.Get_rank()
                 size = comm.Get_size()
-                table_array = []
+                vptable_array = []
+                vstable_array = []
 
                 for i in range(len(self.station_list)):
                     if(rank == (i % size)):
-                        table = TravelTimeTable().create(fineVpModel3D, self.station_list[i])
-                        table.removeField()
-                        table_array.append(table)
+                        vptable = TravelTimeTable().create(fineVpModel3D, self.station_list[i])
+                        vstable = TravelTimeTable().create(fineVsModel3D, self.station_list[i])
+                        vptable.removeField()
+                        vstable.removeField()
+                        vptable_array.append(vptable)
+                        vstable_array.append(vstable)
 
-                table_array = comm.gather(table_array, root = 0)
-                table_array = comm.bcast(table_array, root = 0)
+                vptable_array = comm.gather(vptable_array, root = 0)
+                vstable_array = comm.gather(vstable_array, root = 0)
+                vptable_array = comm.bcast(vptable_array, root = 0)
+                vstable_array = comm.bcast(vstable_array, root = 0)
 
                 new_table_array = []
                 for k in range(len(self.station_list)):
                     station_name = _FDtomoC.ffi.string(self.station_list[k].stationField.name)
-                    for i in range(len(table_array)):
-                        for j in range(len(table_array[i])):
-                            if table_array[i][j].name == station_name:
-                                table_array[i][j].tableField = table_array[i][j].getField()
-                                new_table_array.append(table_array[i][j])
+                    for i in range(len(vptable_array)):
+                        for j in range(len(vptable_array[i])):
+                            if vptable_array[i][j].name == station_name:
+                                vptable_array[i][j].tableField = vptable_array[i][j].getField()
+                                new_table_array.append(vptable_array[i][j])
 
+                for k in range(len(self.station_list)):
+                    station_name = _FDtomoC.ffi.string(self.station_list[k].stationField.name)
+                    for i in range(len(vstable_array)):
+                        for j in range(len(vstable_array[i])):
+                            if vstable_array[i][j].name == station_name:
+                                vstable_array[i][j].tableField = vstable_array[i][j].getField()
+                                new_table_array.append(vstable_array[i][j])
+                
                 new_event_array = []
                 for i in range(len(self.event_list)):
                     if (rank == (i % size)):
                         new_event = Event().singleLoc(fineCoordinate3D, new_table_array, self.event_list[i], loc_env)
-                        new_event.removeField()
-                        new_event_array.append(new_event)
-
+                        if(new_event != -1):
+                            new_event.removeField()
+                            new_event_array.append(new_event)
+                
                 new_event_array = comm.gather(new_event_array, root = 0)
 
 
                 event_array = []
                 if (rank == 0):
+                    new_table_array[0].output(new_table_array[0].name)
+                    _FDtomoC.lib.output3DModel(CoarseVpModel3D.modelField, "tmp.mod".encode("ascii"))
+                    _FDtomoC.lib.output3DModel(fineVpModel3D.modelField, "tmp1.mod".encode("ascii"))
                     for i in range(len(new_event_array)):
                         for j in range(len(new_event_array[i])):
                             new_event_array[i][j].eventField = new_event_array[i][j].getField()
                             event_array.append(new_event_array[i][j])
                         
                     event_size = len(event_array)
-                    table_size = len(new_table_array)
+                    table_size = int(len(new_table_array)/2)
                     derv, residual_vector = Event().sphRaytracing(CoarseVpModel3D, new_table_array, event_array, event_size, self.station_list, table_size, sphrayderv_env)
                     perturbation = Event().runlsqr(derv, residual_vector, runlsqr_env)
                     VelocityModel3D().makeNewModel(coarseCoordinate3D, CoarseVpModel3D, CoarseVsModel3D, perturbation, table_size, makenewmod_env)
-            
+                
             elif(mode == "Omp"):
                 stationFieldArray = [self.station_list[i].stationField for i in range(len(self.station_list))]
                 stationFieldArrayPtr = _FDtomoC.ffi.new("Station[]", stationFieldArray)
@@ -171,7 +189,8 @@ class TomographyBuilder(object):
                 new_event_list = []
                 for i in range(len(self.event_list)):
                     new_event = Event().singleLoc(fineCoordinate3D, table_list, self.event_list[i], loc_env)
-                    new_event_list.append(new_event)
+                    if(new_event != -1):
+                        new_event_list.append(new_event)
 
                 event_size = len(new_event_list)
                 table_size = int(len(table_list)/2)

@@ -426,7 +426,7 @@ a3: ;
 	int *isgood = event_array[evenum].isgood;
 	int nsta = getTimeCount(event_array[evenum].observedTimeList);
 	float *obstime = getObsTime(event_array[evenum]);
-	float *pwt = getPwt(event_array[nev]);
+	float *pwt = getPwt(event_array[evenum]);
 	char *phs = event_array[evenum].phase;
 	char (*sta)[MAXSTRLEN + 1] = event_array[evenum].station_name_list;
 
@@ -483,7 +483,7 @@ a3: ;
 	int wsum = 0, ncwrt = 0;
 	char mark;
 	char stn[maxsta][6], pha[maxsta];
-
+	
 	if (istel == 0) {
 		ex = xlon * degrad;
 		ey = hpi - glat(xlat * degrad);
@@ -514,7 +514,6 @@ a3: ;
 	
 	// *****Start Loop over Phases*****
 	for (i = 0; i < nsta; i++) {
-
 		// ------clear derivative array
 		float *du = calloc(maxvar, sizeof(float));
 		inbk[i] = 0;

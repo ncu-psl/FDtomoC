@@ -97,19 +97,20 @@ class Event(object):
         for time in self.observation.time_list:
             time.timeField = None
 
-    def sphlocating(self, coordinate, table_array, locEnv, file):
+    def sphlocating(self, coordinate, table_array, locEnv, event_array):
         corField = coordinate.coordinateField
         tableFieldArray = [table_array[i].tableField for i in range(len(table_array))]
-        tmp = _FDtomoC.ffi.new("travelTimeTable[]", tableFieldArray)
+        tableFieldArrayPtr = _FDtomoC.ffi.new("travelTimeTable[]", tableFieldArray)
+
+        eventFieldArray = [event_array[i].eventField for i in range(len(event_array))]
+        eventFieldArrayPtr = _FDtomoC.ffi.new("Event[]", eventFieldArray)
+
         locEnvField = locEnv.locEnvField
 
-        filename = _FDtomoC.ffi.new("char[]", file.encode('ascii'))
-        eventField_list = _FDtomoC.lib.createEventList(filename)
-
-        table_size = len(tmp)
-        eventFieldArray = _FDtomoC.lib.sphfdloc(corField, tmp, eventField_list, table_size, locEnvField)
-        listSize = _FDtomoC.lib.getEventCount(eventField_list)
-        event_array_tmp = _FDtomoC.ffi.unpack(eventFieldArray, listSize)
+        table_size = len(tableFieldArray)
+        event_size = len(eventFieldArray)
+        eventFieldArray = _FDtomoC.lib.sphfdloc(corField, tableFieldArrayPtr, table_size, eventFieldArrayPtr, event_size, locEnvField)
+        event_array_tmp = _FDtomoC.ffi.unpack(eventFieldArray, event_size)
         event_array = [Event(eventField = i) for i in event_array_tmp]
 
         return event_array
@@ -121,26 +122,26 @@ class Event(object):
         tmp = _FDtomoC.ffi.new("travelTimeTable[]", tableFieldArray)
         eventField = event.eventField
         locEnvField = locEnv.locEnvField
-        table_size = len(tmp)
+        table_size = int(len(tmp)/2)
 
         newEventField = _FDtomoC.lib.singleLoc(corField, tmp, eventField, table_size, locEnvField)
+        if(newEventField.evid[0] == b'0'):
+            return -1
+        else:
+            newEvent = Event()
+            newEvent.earthquake = Earthquake()
+            newEvent.earthquake.location = Point()
+            newEvent.earthquake.time = Time()
+            newEvent.observation = Observation()
+            newEvent.observation.setting = Setting()
 
-        newEvent = Event()
-        newEvent.earthquake = Earthquake()
-        newEvent.earthquake.location = Point()
-        newEvent.earthquake.time = Time()
-        newEvent.observation = Observation()
-        newEvent.observation.setting = Setting()
+            newEvent.eventField = newEventField
+            newEvent.earthquake.earthquakeField = newEventField.earthquake
+            newEvent.earthquake.location.pointField = newEventField.earthquake.location
+            newEvent.earthquake.time.timeField = newEventField.earthquake.time
 
-        newEvent.eventField = newEventField
-        newEvent.earthquake.earthquakeField = newEventField.earthquake
-        newEvent.earthquake.location.pointField = newEventField.earthquake.location
-        newEvent.earthquake.time.timeField = newEventField.earthquake.time
-
-        newEvent.getClass()
-
-
-        return newEvent
+            newEvent.getClass()
+            return newEvent
 
     def sphRaytracing(self, model, table_array, event_array, event_size, station_array, table_size, sphrayderv_env):
         modelField = model.modelField

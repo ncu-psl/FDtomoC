@@ -26,7 +26,7 @@ ffi.set_source("_FDtomoC",
     ''' ,
     #sources = [],
     include_dirs = [path + '/../../include'],
-    libraries =['_common', 'makenewmod', 'runlsqr', 'sphrayderv', 'sphfdloc', 'sphfd'],
+    libraries =['_common', 'makenewmod', 'runlsqr', 'sphrayderv', 'sphfdloc', 'sphfd', 'make1d'],
     library_dirs = [path + '/../../build/lib/common', path + '/../../build/lib/FDtomo']
     )
 
