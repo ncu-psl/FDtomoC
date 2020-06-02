@@ -215,7 +215,7 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	float ymax = y[0] + (ny - 1) * dq;
 	float zmax = z0 + (nz - 1) * h;
 
-	float *sp = malloc(sizeof(float) * nxyz * 2);
+	float *sp = malloc(sizeof(float) * nxyzm2);
 	float *dat = malloc(sizeof(float) * maxobs);
 	float *rwts = malloc(sizeof(float) * maxobs);
 	float *resmin = malloc(sizeof(float) * maxobs);
@@ -417,11 +417,11 @@ SPHRAYDERV_DATA *sphrayderv(velocityModel3D coarseModel, travelTimeTable *table_
 	//    Read in event header
 	int evenum = 0;
 	int row_count = 0, ith = 0;
+	float *du = calloc(maxvar, sizeof(float));
 a3: ;
 	if (evenum >= event_size) {
 		goto a60;
 	}
-
 	int *indsta = checkTravelTime(event_array[evenum], table_list, table_size);
 	int *isgood = event_array[evenum].isgood;
 	int nsta = getTimeCount(event_array[evenum].observedTimeList);
@@ -515,7 +515,7 @@ a3: ;
 	// *****Start Loop over Phases*****
 	for (i = 0; i < nsta; i++) {
 		// ------clear derivative array
-		float *du = calloc(maxvar, sizeof(float));
+		memset(du, 0, maxvar * sizeof(du[0]));
 		inbk[i] = 0;
 		float rdevs = 0;
 		isgood[i] = 1;
@@ -726,7 +726,7 @@ a3: ;
 		dt = 0;
 		for (int iii = 0; iii < 8; iii++) {
 			dt += ds[iii] * table_list[timeIndex].time[ipt[iii]];
-		}
+		}		
 
 		// --- For local events, ttel = 0. For teles, ttel is the time to the base of the model.
 		dt += ttel;

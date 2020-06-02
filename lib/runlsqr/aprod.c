@@ -12,10 +12,6 @@
 
 void aprod(int mode, int m, int n, float *x, float *y, int leniw, int lenrw, int *iw, float *rw, float *a, int *na,
 		int *ja) {
-	// x=(float *)malloc(sizeof(float)*n);
-	// y=(float *)malloc(sizeof(float)*m);
-	iw=(int *)malloc(sizeof(int)*leniw);
-	rw=(float *)malloc(sizeof(float)*lenrw);
 
 	if (mode == 1) {
 		mode1(m, x, y, a, na, ja);
@@ -25,9 +21,7 @@ void aprod(int mode, int m, int n, float *x, float *y, int leniw, int lenrw, int
 		printf("mode = %d is unknow\n", mode);
 		assert(0);
 	}
-	
-	free(iw);
-	free(rw);
+
 }
 
 // c--------------------------------------------------------------------------

@@ -139,7 +139,7 @@ RUNLSQR_DATA *runlsqr(SPHRAYDERV_DATA *SPHRAYDERV, RunlsqrEnv runlsqr_env, Commo
 	ja = SPHRAYDERV->mat->column_elements;
 	b = SPHRAYDERV->b;
 
-	
+
 // c---------------------------------------------------------------------
 // c
 // c  solve the problem defined by aprod, damp, and b
@@ -180,8 +180,8 @@ RUNLSQR_DATA *runlsqr(SPHRAYDERV_DATA *SPHRAYDERV, RunlsqrEnv runlsqr_env, Commo
 		printf(" least-squares test problem      p(%8d%8d  %10.6f%10.2f%8d\n\n\n", m, n, damp, conlim, intlim);
 	}
 
-	x = (float *)malloc(sizeof(float) * NMAX);
-	se = (float *)malloc(sizeof(float) * NMAX);
+	x = calloc(NMAX, sizeof(float));
+	se = calloc(NMAX, sizeof(float));
 
 	lsqr(m, n, damp, 1, 1, ja, a, u, v, w, x, se, atoL, btol, conlim, intlim, fp_nout, istop, anorm, acond, &rnorm, &arnorm, &xnorm);
 // c-----------------------------------------------------------------------
