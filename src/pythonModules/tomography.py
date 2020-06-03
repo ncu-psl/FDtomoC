@@ -136,13 +136,20 @@ class TomographyBuilder(object):
                 event_array = []
                 if (rank == 0):
                     new_table_array[0].output(new_table_array[0].name)
-                    _FDtomoC.lib.output3DModel(CoarseVpModel3D.modelField, "tmp.mod".encode("ascii"))
-                    _FDtomoC.lib.output3DModel(fineVpModel3D.modelField, "tmp1.mod".encode("ascii"))
                     for i in range(len(new_event_array)):
                         for j in range(len(new_event_array[i])):
                             new_event_array[i][j].eventField = new_event_array[i][j].getField()
                             event_array.append(new_event_array[i][j])
-                        
+                                        
+                    for i in range(len(event_array) - 1):
+                        min_index = i
+                        for j in range(i+1, len(event_array)):
+                            event_id1 = int((event_array[min_index].observation.setting.event_id))
+                            event_id2 = int((event_array[j].observation.setting.event_id))
+                            if event_id1 > event_id2:
+                                min_index = j
+                        event_array[min_index], event_array[i] = event_array[i], event_array[min_index]
+
                     event_size = len(event_array)
                     table_size = int(len(new_table_array)/2)
                     derv, residual_vector = Event().sphRaytracing(CoarseVpModel3D, new_table_array, event_array, event_size, self.station_list, table_size, sphrayderv_env)
