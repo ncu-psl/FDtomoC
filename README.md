@@ -45,8 +45,10 @@ bash run.sh "../data/small/FDtomo.spec"
 ```
 
 ## Development tree
+```
+D:.
 ├─FDtomo   // Fortran version
 ├─FDtomoC  // Reorganized C version 
 ├─FDtomo-C-old  //C-Benchmark version
 └─FDtomoPy // Python version
-
+```
